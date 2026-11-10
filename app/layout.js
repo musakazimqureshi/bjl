@@ -1,0 +1,8 @@
+import './globals.css';
+import { LangProvider } from '../lib/i18n';
+import Header from '../components/Header';
+export const metadata = { title: 'Battagram Junior League – Season 1', description: 'BJL tape ball cricket tournament' };
+export default function RootLayout({ children }) {
+  return (<html lang="en"><head><meta name="viewport" content="width=device-width, initial-scale=1" /></head>
+    <body><LangProvider><Header /><main>{children}</main></LangProvider></body></html>);
+}
