@@ -1,12 +1,13 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useLang } from '../../lib/i18n';
 import { supabase } from '../../lib/supabase';
 const POS = [['batter','Batter'],['bowler','Bowler'],['all_rounder','All-Rounder'],['wicket_keeper','Wicket-Keeper']];
 const MOB = /^(03\d{9}|\+923\d{9})$/;
 const blank = () => ({ name:'', mobile:'', age:'', position:'', file:null });
 export default function Register() {
-  const { t } = useLang();
+  const { t } = useLang(); const router = useRouter();
   const [team, setTeam] = useState({ name:'', manager_name:'', manager_mobile:'', cap:'', vice:'' });
   const [pl, setPl] = useState(Array.from({ length: 15 }, blank));
   const [err, setErr] = useState(''); const [ref, setRef] = useState(''); const [busy, setBusy] = useState(false);
@@ -19,10 +20,10 @@ export default function Register() {
     for (let i = 0; i < 15; i++) {
       const p = pl[i];
       if (!p.name.trim() || !p.age || !p.position || !p.file) return setErr(t('eMissing') + ' (#' + (i + 1) + ')');
-      if (!MOB.test(p.mobile)) return setErr(t('eMob') + ' #' + (i + 1));
+      if ((String(i) === team.cap || String(i) === team.vice) && !MOB.test(p.mobile)) return setErr(t('eMob') + ' #' + (i + 1));
       if (!['image/jpeg', 'image/png'].includes(p.file.type) || p.file.size > 2 * 1024 * 1024) return setErr(t('ePhoto') + ' #' + (i + 1));
     }
-    if (new Set(pl.map(p => p.mobile)).size < 15) return setErr(t('eDup'));
+    if (pl[+team.cap].mobile === pl[+team.vice].mobile) return setErr(t('eDup'));
     setBusy(true);
     try {
       const folder = crypto.randomUUID();
@@ -32,13 +33,13 @@ export default function Register() {
         const path = `${folder}/${i}.${ext}`;
         const { error } = await supabase.storage.from('player-photos').upload(path, p.file);
         if (error) throw error;
-        players.push({ name: p.name.trim(), mobile: p.mobile, age: +p.age, position: p.position, photo_path: path });
+        players.push({ name: p.name.trim(), mobile: (String(i) === team.cap || String(i) === team.vice) ? p.mobile : '', age: +p.age, position: p.position, photo_path: path });
       }
       const { data, error } = await supabase.rpc('submit_team', {
         t: { name: team.name.trim(), manager_name: team.manager_name.trim(), manager_mobile: team.manager_mobile,
              captain_index: +team.cap, vice_index: +team.vice }, p: players });
       if (error) throw error;
-      setRef(data);
+      setRef(data); router.push('/pay?ref=' + encodeURIComponent(data));
     } catch (x) { setErr(x.message || String(x)); }
     setBusy(false);
   }
@@ -58,7 +59,7 @@ export default function Register() {
     </div>
     {pl.map((p, i) => (<div className="card" key={i}><b>{t('player')} {i + 1} / 15</b>
       <input placeholder={t('pname')} value={p.name} onChange={e => up(i, 'name', e.target.value)} />
-      <input placeholder={t('mob')} inputMode="numeric" value={p.mobile} onChange={e => up(i, 'mobile', e.target.value)} />
+      {(String(i) === team.cap || String(i) === team.vice) && <input placeholder={t('mobLead')} inputMode="numeric" value={p.mobile} onChange={e => up(i, 'mobile', e.target.value)} />}
       <input placeholder={t('age')} type="number" min="5" max="60" value={p.age} onChange={e => up(i, 'age', e.target.value)} />
       <select value={p.position} onChange={e => up(i, 'position', e.target.value)}><option value="">{t('pos')}</option>
         {POS.map(([v, l]) => <option key={v} value={v}>{t(l)}</option>)}</select>

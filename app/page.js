@@ -10,6 +10,7 @@ export default function Home() {
   const full = s.confirmed >= 30 || !s.open;
   return (<>
     <section className="hero">
+      <div className="ayat" lang="ar" dir="rtl">لَا فَتَى إِلَّا عَلِيٌّ لَا سَيْفَ إِلَّا ذُو الْفَقَارِ</div>
       <div className="shield" style={{display:'inline-block',fontSize:'2rem'}}>BJL</div>
       <h1>{t('title')}</h1><p>{t('season')}</p><p>{t('loc')}</p>
       <div className="row">
