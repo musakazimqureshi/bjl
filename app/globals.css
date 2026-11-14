@@ -17,3 +17,16 @@ label{font-size:.9rem;color:#ccc}.err{background:#5a0d0d;padding:10px;border-rad
 .ayat{font-family:'Amiri','Noto Naskh Arabic','Traditional Arabic',serif;font-size:clamp(1.5rem,5.5vw,2.4rem);color:#fff;text-shadow:0 0 14px #e0242b;margin-bottom:14px;line-height:1.9}
 .players{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}.pl{text-align:center}
 .ph{width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid var(--red2);display:flex;align-items:center;justify-content:center;font-size:2.2rem;background:#111;margin:auto}
+.two{display:grid;grid-template-columns:1fr;gap:12px}@media(min-width:700px){.two{grid-template-columns:1fr 1fr}}
+.mc h3{margin:0 0 8px;color:var(--red2)}.team{font-size:1.5rem;font-weight:800}.lose{color:#bbb}.vsx{color:var(--red2);font-weight:900;margin:4px 0}
+.ann img,.gal img{width:100%;border-radius:10px;display:block}.ann{border:1px solid #e0242b88;box-shadow:0 0 18px #b0121255}
+.gal{display:grid;grid-template-columns:1fr 1fr;gap:12px}.gal figure{margin:0;text-align:center}.gal img{aspect-ratio:1/1;object-fit:cover;border:2px solid var(--red2)}
+@media(prefers-reduced-motion:no-preference){.ann{animation:fl 6s ease-in-out infinite}.ann:hover{box-shadow:0 0 28px #e0242b99}@keyframes fl{50%{transform:translateY(-4px)}}}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.tabs .btn.on{background:#fff;color:#000}
+:root{--gold:#d4af37}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.8rem;font-weight:700}.badge.v{background:#0d4a1f;color:#7dff9b}.badge.n{background:#5a0d0d;color:#ff9b9b}
+.ph.sm{width:70px;height:70px;font-size:1.4rem}.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px;margin-top:12px}
+.modal{position:fixed;inset:0;background:#000c;display:flex;align-items:center;justify-content:center;z-index:50;padding:12px}
+.mbox{background:var(--card);border:1px solid var(--red2);border-radius:14px;max-width:760px;width:100%;max-height:90vh;overflow:auto;padding:16px}
+.credit{text-align:center;font-size:.72rem;color:var(--gold);opacity:.7;letter-spacing:.08em;padding:24px 0 16px}
+.frame{max-width:340px;margin:16px auto}.frame img{width:100%;border-radius:12px;border:2px solid var(--gold);box-shadow:0 0 22px #b0121277;display:block}

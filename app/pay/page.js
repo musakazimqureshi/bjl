@@ -3,10 +3,11 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useLang } from '../../lib/i18n';
 import { supabase } from '../../lib/supabase';
+import { shrink } from '../../lib/img';
 import { EASYPAISA, CONTACTS } from '../../lib/config';
 export default function Pay() {
   const { t } = useLang();
-  const [ref, setRef] = useState(''); const [file, setFile] = useState(null);
+  const [ref, setRef] = useState(''); const [txn, setTxn] = useState(''); const [file, setFile] = useState(null);
   const [err, setErr] = useState(''); const [done, setDone] = useState(false); const [busy, setBusy] = useState(false); const [copied, setCopied] = useState(false);
   useEffect(() => { const r = new URLSearchParams(window.location.search).get('ref'); if (r) setRef(r); }, []);
   async function copy() {
@@ -15,14 +16,15 @@ export default function Pay() {
   async function submit(e) {
     e.preventDefault(); setErr('');
     if (!ref.trim() || !file) return setErr(t('payMissing'));
-    if (!['image/jpeg', 'image/png'].includes(file.type) || file.size > 3 * 1024 * 1024) return setErr(t('payFile'));
+    if (!['image/jpeg', 'image/png'].includes(file.type) || file.size > 15 * 1024 * 1024) return setErr(t('payFile'));
     setBusy(true);
     try {
       const r = ref.trim().toUpperCase();
-      const path = `${r}/${Date.now()}.${file.type === 'image/png' ? 'png' : 'jpg'}`;
-      const { error: e1 } = await supabase.storage.from('payments').upload(path, file);
+      const path = `${r}/${Date.now()}.jpg`;
+      const blob = await shrink(file, 1400);
+      const { error: e1 } = await supabase.storage.from('payments').upload(path, blob, { contentType: 'image/jpeg' });
       if (e1) throw e1;
-      const { error: e2 } = await supabase.rpc('submit_payment', { p_ref: r, p_path: path });
+      const { error: e2 } = await supabase.rpc('submit_payment', { p_ref: r, p_path: path, p_txn: txn.trim() || null });
       if (e2) throw e2;
       setDone(true);
     } catch (x) { setErr(x.message || String(x)); }
@@ -42,6 +44,7 @@ export default function Pay() {
     <div className="card">
       <label>{t('refLabel')}</label><input value={ref} onChange={e => setRef(e.target.value)} dir="ltr" />
       <small>{t('saveRef')}</small><br />
+      <label>{t('txnOpt')}</label><input value={txn} onChange={e => setTxn(e.target.value)} dir="ltr" />
       <label>{t('shot')}</label><input type="file" accept="image/jpeg,image/png" onChange={e => setFile(e.target.files[0])} />
     </div>
     {err && <div className="err">{err}</div>}
