@@ -6,12 +6,13 @@ const pub = p => supabase.storage.from('player-photos').getPublicUrl(p).data.pub
 const LBL = { batter: 'Batter', bowler: 'Bowler', all_rounder: 'All-Rounder', wicket_keeper: 'Wicket-Keeper' };
 export default function Teams() {
   const { t } = useLang();
-  const [list, setList] = useState(null); const [sel, setSel] = useState(null);
+  const [list, setList] = useState(null); const [sel, setSel] = useState(null); const [q, setQ] = useState('');
   useEffect(() => { supabase.rpc('public_teams').then(({ data }) => setList(data || [])); }, []);
   const badge = v => <span className={'badge ' + (v ? 'v' : 'n')}>{v ? '✓ ' + t('verifiedBadge') : t('notVerifiedBadge')}</span>;
   return (<><h2>{t('teams')}</h2>
+    <input placeholder={t('search')} value={q} onChange={e => setQ(e.target.value)} />
     {list && list.length === 0 && <p>{t('none')}</p>}
-    <div className="two">{(list || []).map(x => (
+    <div className="two">{(list || []).filter(x => x.name.toLowerCase().includes(q.trim().toLowerCase())).map(x => (
       <div className="card" key={x.id} onClick={() => setSel(x)} style={{ cursor: 'pointer' }}>
         <b>{x.name}</b> <small>{x.reg_id}</small><div>{badge(x.verified)}</div>
         <div className="players">{(x.players || []).slice(0, 2).map((c, i) => (<div key={i} className="pl"><img className="ph sm" src={pub(c.photo)} alt="" /><div>{c.name}</div><small>{t(i === 0 ? 'cap1' : 'cap2')}</small></div>))}</div>
