@@ -7,7 +7,7 @@ const okImg = f => f && ['image/jpeg', 'image/png', 'image/webp'].includes(f.typ
 export default function Admin() {
   const [ready, setReady] = useState(false); const [isAdmin, setIsAdmin] = useState(false); const [logged, setLogged] = useState(false);
   const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
-  const [tab, setTab] = useState('teams'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
+  const [tab, setTab] = useState('overview'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
   const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
   async function check() {
     try {
@@ -52,6 +52,12 @@ export default function Admin() {
     const { error } = await supabase.from('teams').update({ payment: val, payment_rejection_reason: reason }).eq('id', tm.id);
     if (!error && last) await supabase.from('payments').update({ status: val === 'verified' ? 'verified' : val === 'rejected' ? 'rejected' : 'submitted', rejection_reason: reason }).eq('id', last.id);
     setMsg(error ? error.message : 'ہو گیا ✔'); loadTeams();
+  }
+  async function setTeamStatus(tm, status) {
+    let reason = null;
+    if (status === 'rejected') { reason = prompt('ٹیم مسترد کرنے کی وجہ لکھیں'); if (!reason) return; }
+    const { error } = await supabase.from('teams').update({ status, rejection_reason: reason }).eq('id', tm.id);
+    setMsg(error ? error.message : 'ٹیم کی تصدیق کی حالت محفوظ ہو گئی ✔'); loadTeams();
   }
   async function delTeam(tm) {
     if (!confirm('پوری ٹیم ہمیشہ کے لیے حذف کریں؟')) return;
@@ -139,6 +145,7 @@ export default function Admin() {
   if (!logged) return (<form onSubmit={login} className="card"><h2>Admin Login</h2>
     <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} dir="ltr" autoComplete="username" />
     <input placeholder="Password" type="password" value={pw} onChange={e => setPw(e.target.value)} dir="ltr" autoComplete="current-password" />
+    <p><a href="/reset-password?role=admin" className="tlink">Forgot Password?</a></p>
     {msg && <div className="err">{msg}</div>}<button className="btn">Login</button></form>);
   if (!isAdmin) return (<div className="card"><div className="err">آپ ایڈمن نہیں ہیں۔</div><button className="btn" onClick={logout}>Logout</button></div>);
   const inp = (k, label, type = 'text') => (<><label>{label}</label><input type={type} list={['winner_team', 'loser_team', 'next_a', 'next_b'].includes(k) ? 'tn' : undefined} value={c[k] || ''} onChange={e => set(k, e.target.value)} /></>);
@@ -149,9 +156,27 @@ export default function Admin() {
     <h2>BJL Admin</h2>
     <datalist id="tn">{teams.map(x => <option key={x.id} value={x.name} />)}</datalist>
     <div className="tabs">
-      {[['teams', 'ٹیمیں'], ['match', 'میچ سینٹر'], ['ann', 'اعلانات'], ['people', 'ٹیم تصاویر'], ['moms', 'BJL Moments'], ['quotes', 'اقوال'], ['set', 'سیٹنگ']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
+      {[['overview', 'Overview'], ['teams', 'ٹیمیں'], ['match', 'میچ سینٹر'], ['ann', 'اعلانات'], ['people', 'ٹیم تصاویر'], ['moms', 'BJL Moments'], ['quotes', 'اقوال'], ['set', 'سیٹنگ']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
       <button className="btn" onClick={logout}>Logout</button></div>
     {msg && <div className="good">{msg}</div>}
+    {tab === 'overview' && (<>
+      <div className="card"><h3>Dashboard Overview</h3><p>آپ کے ٹورنامنٹ کا مکمل خلاصہ</p>
+        <div className="two">
+          <div className="card"><b>کل ٹیمیں</b><div className="big">{teams.length}</div></div>
+          <div className="card"><b>ٹیم منظور شدہ</b><div className="big">{teams.filter(x => x.status === 'approved').length}</div></div>
+          <div className="card"><b>ادائیگی تصدیق شدہ</b><div className="big">{teams.filter(x => x.payment === 'verified').length}</div></div>
+          <div className="card"><b>ادائیگی زیرِ تصدیق</b><div className="big">{teams.filter(x => x.payment === 'submitted').length}</div></div>
+          <div className="card"><b>کل کھلاڑی</b><div className="big">{teams.reduce((n, x) => n + (x.players || []).length, 0)}</div></div>
+          <div className="card"><b>اعلانات</b><div className="big">{ann.length}</div></div>
+        </div>
+      </div>
+      <div className="card"><h3>فوری رسائی</h3><div className="row" style={{justifyContent:'flex-start'}}>
+        <button className="btn" onClick={() => setTab('teams')}>ٹیمیں اور ادائیگیاں</button>
+        <button className="btn alt" onClick={() => setTab('match')}>میچ اور نتائج</button>
+        <button className="btn alt" onClick={() => setTab('ann')}>اعلانات اور تصاویر</button>
+        <button className="btn alt" onClick={() => setTab('set')}>ویب سائٹ سیٹنگز</button>
+      </div></div>
+    </>)}
     {tab === 'match' && (<><div className="card"><h3>آج کا فاتح</h3>
       {tsel('winner_team', 'جیتنے والی ٹیم')}{tsel('loser_team', 'مخالف (ہارنے والی) ٹیم')}{inp('winner_result', 'نتیجہ / مختصر اعلان (اختیاری)')}{inp('winner_date', 'میچ کی تاریخ', 'date')}{show('winner_show', 'ہوم پیج پر دکھائیں')}
       <button className="btn" onClick={() => save(['winner_team', 'loser_team', 'winner_result', 'winner_date', 'winner_show'])}>محفوظ کریں</button></div>
@@ -198,15 +223,18 @@ export default function Admin() {
       <button className="btn" onClick={() => save(['falak_whatsapp', 'falak_btn', 'falak_msg', 'registration_open'])}>محفوظ کریں</button></div>)}
     {tab === 'teams' && (<><div className="card">کل ٹیمیں: {teams.length} · تصدیق شدہ: {teams.filter(x => x.payment === 'verified').length}</div>
       {teams.map(tm => { const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
-        return (<div className="card" key={tm.id}><b>{tm.name}</b> <small>{tm.reg_id}</small> {tm.payment === 'verified' ? '✅ VERIFIED' : '❌ NOT VERIFIED'}
+        return (<div className="card" key={tm.id}><b>{tm.name}</b> <small>{tm.reg_id}</small>
+          <div>Team: <span className={'badge ' + (tm.status === 'approved' ? 'v' : 'n')}>{tm.status || 'pending'}</span> · Payment: <span className={'badge ' + (tm.payment === 'verified' ? 'v' : 'n')}>{tm.payment || 'pending'}</span></div>
           <div dir="ltr">{tm.captain_email}</div><div dir="ltr">C1: {ps[0] && ps[0].name} {ps[0] && ps[0].mobile} | C2: {ps[1] && ps[1].name} {ps[1] && ps[1].mobile}</div>
           {last && <div dir="ltr">Txn: {last.transaction_id || '-'} <button className="btn alt" onClick={() => shot(last)}>Screenshot</button></div>}
           {tm.payment_rejection_reason && <small>رد کرنے کی وجہ: {tm.payment_rejection_reason}</small>}
           <details><summary>15 کھلاڑی</summary>{ps.map(pp => (<div key={pp.id} style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '6px 0' }}>
             <img src={pub(pp.photo_path)} alt="" width="48" height="48" style={{ borderRadius: 8, objectFit: 'cover' }} />{pp.name} · {pp.age} · {pp.position}</div>))}</details>
           <div className="row" style={{ justifyContent: 'flex-start' }}>
-            <button className="btn" onClick={() => setPay(tm, 'verified')}>✓ تصدیق</button>
-            <button className="btn alt" onClick={() => setPay(tm, 'notverified')}>غیر تصدیق شدہ</button>
+            <button className="btn" onClick={() => setTeamStatus(tm, 'approved')}>✓ ٹیم منظور</button>
+            <button className="btn alt" onClick={() => setTeamStatus(tm, 'rejected')}>ٹیم مسترد</button>
+            <button className="btn" onClick={() => setPay(tm, 'verified')}>✓ ادائیگی منظور</button>
+            <button className="btn alt" onClick={() => setPay(tm, 'notverified')}>ادائیگی زیرِ تصدیق</button>
             <button className="btn alt" onClick={() => setPay(tm, 'rejected')}>مسترد</button>
             <button className="btn alt" onClick={() => delTeam(tm)}>حذف</button></div></div>); })}</>)}
   </div>);
