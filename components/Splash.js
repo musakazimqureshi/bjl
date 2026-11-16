@@ -92,12 +92,10 @@ export default function Splash() {
   }, [playIntro]);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('bjl_welcome_sound_v1') === '1';
-      soundOnRef.current = saved;
-      setSoundOn(saved);
-    } catch (e) {}
-    showWelcome(true);
+    // Sound starts muted on each fresh page visit until the visitor taps the sound button.
+    soundOnRef.current = false;
+    setSoundOn(false);
+    showWelcome(false);
 
     let hiddenAt = 0;
     const onVisibility = () => {
@@ -122,7 +120,6 @@ export default function Splash() {
     const next = !soundOnRef.current;
     soundOnRef.current = next;
     setSoundOn(next);
-    try { localStorage.setItem('bjl_welcome_sound_v1', next ? '1' : '0'); } catch (e) {}
     if (next) playIntro();
     else if (audioRef.current) {
       audioRef.current.close().catch(() => {});
