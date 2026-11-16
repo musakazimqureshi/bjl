@@ -121,6 +121,7 @@ export default function Admin() {
     {msg && <div className="err">{msg}</div>}<button className="btn">Login</button></form>);
   if (!isAdmin) return (<div className="card"><div className="err">آپ ایڈمن نہیں ہیں۔</div><button className="btn" onClick={logout}>Logout</button></div>);
   const inp = (k, label, type = 'text') => (<><label>{label}</label><input type={type} list={['winner_team', 'loser_team', 'next_a', 'next_b'].includes(k) ? 'tn' : undefined} value={c[k] || ''} onChange={e => set(k, e.target.value)} /></>);
+  const tsel = (k, label) => (<><label>{label}</label><select value={c[k] || ''} onChange={e => set(k, e.target.value)}><option value="">— ٹیم منتخب کریں —</option>{c[k] && !teams.some(x => x.name === c[k]) && <option value={c[k]}>{c[k]}</option>}{teams.map(x => <option key={x.id} value={x.name}>{x.name}</option>)}</select></>);
   const show = (k, l) => (<label><input type="checkbox" checked={c[k] !== '0'} onChange={e => set(k, e.target.checked ? '1' : '0')} style={{ width: 'auto' }} /> {l}</label>);
   const pa = p => supabase.storage.from('announcements').getPublicUrl(p).data.publicUrl;
   return (<div>
@@ -131,11 +132,11 @@ export default function Admin() {
       <button className="btn" onClick={logout}>Logout</button></div>
     {msg && <div className="good">{msg}</div>}
     {tab === 'match' && (<><div className="card"><h3>آج کا فاتح</h3>
-      {inp('winner_team', 'جیتنے والی ٹیم')}{inp('loser_team', 'ہارنے والی ٹیم')}{inp('winner_date', 'میچ کی تاریخ', 'date')}{show('winner_show', 'ہوم پیج پر دکھائیں')}
-      <button className="btn" onClick={() => save(['winner_team', 'loser_team', 'winner_date', 'winner_show'])}>محفوظ کریں</button></div>
+      {tsel('winner_team', 'جیتنے والی ٹیم')}{tsel('loser_team', 'مخالف (ہارنے والی) ٹیم')}{inp('winner_result', 'نتیجہ / مختصر اعلان (اختیاری)')}{inp('winner_date', 'میچ کی تاریخ', 'date')}{show('winner_show', 'ہوم پیج پر دکھائیں')}
+      <button className="btn" onClick={() => save(['winner_team', 'loser_team', 'winner_result', 'winner_date', 'winner_show'])}>محفوظ کریں</button></div>
       <div className="card"><h3>اگلا میچ</h3>
-        {inp('next_a', 'ٹیم A')}{inp('next_b', 'ٹیم B')}{inp('next_date', 'تاریخ', 'date')}{inp('next_time', 'وقت', 'time')}{show('next_show', 'ہوم پیج پر دکھائیں')}
-        <button className="btn" onClick={() => save(['next_a', 'next_b', 'next_date', 'next_time', 'next_show'])}>محفوظ کریں</button></div></>)}
+        {tsel('next_a', 'ٹیم A')}{tsel('next_b', 'ٹیم B')}{inp('next_date', 'تاریخ', 'date')}{inp('next_time', 'وقت', 'time')}{inp('next_venue', 'مقام (خالی ہو تو: Dab Ground, Battagram)')}{show('next_show', 'ہوم پیج پر دکھائیں')}
+        <button className="btn" onClick={() => save(['next_a', 'next_b', 'next_date', 'next_time', 'next_venue', 'next_show'])}>محفوظ کریں</button></div></>)}
     {tab === 'ann' && (<><form className="card" onSubmit={addAnn}><h3>نیا اعلان</h3>
       <label>عنوان</label><input value={f.title} onChange={e => setF({ ...f, title: e.target.value })} />
       <label>تفصیل</label><input value={f.description} onChange={e => setF({ ...f, description: e.target.value })} />
