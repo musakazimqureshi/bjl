@@ -31,11 +31,16 @@ export default function TeamLogin() {
   };
   return (<>
     <h2>{tx('Team Login', 'ٹیم لاگ اِن')}</h2>
-    {!user ? (<form className="card" onSubmit={login}>
+    {resetMode ? (<form className="card" onSubmit={saveNewPassword}>
+      <p>{tx('Set a new password for your team account.', 'اپنے ٹیم اکاؤنٹ کے لیے نیا پاسورڈ بنائیں۔')}</p>
+      <input placeholder={tx('New password', 'نیا پاسورڈ')} type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} dir="ltr" />
+      <input placeholder={tx('Confirm new password', 'نئے پاسورڈ کی تصدیق')} type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} dir="ltr" />
+      {msg && <div className="err">{msg}</div>}<button className="btn">{tx('Update Password', 'پاسورڈ تبدیل کریں')}</button></form>) : !user ? (<form className="card" onSubmit={login}>
       <p>{tx('Your login is created by the organizer. Use the Gmail you gave at registration.', 'آپ کا لاگ اِن منتظم بناتا ہے۔ وہی جی میل استعمال کریں جو رجسٹریشن میں دیا تھا۔')}</p>
       <input placeholder="Gmail" value={email} onChange={e => setEmail(e.target.value)} dir="ltr" />
       <input placeholder={tx('Password', 'پاسورڈ')} type="password" value={pw} onChange={e => setPw(e.target.value)} dir="ltr" />
-      {msg && <div className="err">{msg}</div>}<button className="btn">{tx('Login', 'لاگ اِن')}</button></form>) : (<>
+      {msg && <div className="err">{msg}</div>}<button className="btn">{tx('Login', 'لاگ اِن')}</button>
+      <button type="button" className="btn alt" onClick={sendPasswordReset} style={{marginTop: '10px'}}>{tx('Forgot Password?', 'پاسورڈ بھول گئے؟')}</button></form>) : (<>
       <button className="btn alt" onClick={logout}>{tx('Logout', 'لاگ آؤٹ')}</button>
       {teams && teams.length === 0 && <div className="card">{tx('No team is linked to this email yet. Please contact the organizer.', 'اس ای میل سے کوئی ٹیم جڑی ہوئی نہیں۔ براہ کرم منتظم سے رابطہ کریں۔')}</div>}
       {(teams || []).map(tm => { const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); return (
