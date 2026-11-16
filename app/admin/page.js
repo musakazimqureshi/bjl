@@ -10,10 +10,24 @@ export default function Admin() {
   const [tab, setTab] = useState('teams'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
   const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
   async function check() {
-    const { data: { session } } = await supabase.auth.getSession();
-    setLogged(!!session);
-    if (session) { const { data } = await supabase.from('admins').select('id').eq('id', session.user.id); setIsAdmin(!!(data && data.length)); }
-    setReady(true);
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      setLogged(!!session);
+      if (!session) {
+        setIsAdmin(false);
+      } else {
+        const { data, error } = await supabase.from('admins').select('id').eq('id', session.user.id).maybeSingle();
+        if (error) throw error;
+        setIsAdmin(!!data);
+      }
+    } catch (error) {
+      setLogged(false);
+      setIsAdmin(false);
+      setMsg(error?.message || 'لاگ اِن چیک نہیں ہو سکا۔');
+    } finally {
+      setReady(true);
+    }
   }
   async function load() {
     const { data } = await supabase.rpc('public_content'); setC(data || {});
@@ -45,7 +59,14 @@ export default function Admin() {
   }
   useEffect(() => { check(); }, []);
   useEffect(() => { if (isAdmin) { load(); loadTeams(); } }, [isAdmin]);
-  async function login(e) { e.preventDefault(); setMsg(''); const { error } = await supabase.auth.signInWithPassword({ email, password: pw }); if (error) return setMsg(error.message); check(); }
+  async function login(e) {
+    e.preventDefault();
+    setMsg('');
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: pw });
+    if (error) return setMsg(error.message);
+    setPw('');
+    await check();
+  }
   async function logout() { await supabase.auth.signOut(); setLogged(false); setIsAdmin(false); }
   const set = (k, v) => setC(x => ({ ...x, [k]: v }));
   async function save(keys) {
