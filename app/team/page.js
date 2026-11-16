@@ -14,14 +14,36 @@ export default function TeamLogin() {
     const { data, error } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').eq('captain_email', (u.email || '').toLowerCase());
     if (error) setMsg(error.message); setTeams(data || []);
   }
-  useEffect(() => {\n    supabase.auth.getSession().then(({ data: { session } }) => { if (session) { setUser(session.user); load(session.user); } });\n    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {\n      if (event === 'PASSWORD_RECOVERY') { setResetMode(true); setUser(null); setTeams(null); setMsg(''); }\n    });\n    return () => subscription.unsubscribe();\n  }, []);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => { if (session) { setUser(session.user); load(session.user); } });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') { setResetMode(true); setUser(null); setTeams(null); setMsg(''); }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
   async function login(e) {
     e.preventDefault(); setMsg('');
     const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: pw });
     if (error) return setMsg(tx('Wrong email or password.', 'ای میل یا پاسورڈ غلط ہے۔'));
     setUser(data.user); load(data.user);
   }
-  async function sendPasswordReset() {\n    setMsg('');\n    if (!email.trim()) return setMsg(tx('Enter your registered Gmail first.', 'پہلے اپنی رجسٹرڈ جی میل درج کریں۔'));\n    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/team` });\n    if (error) return setMsg(error.message);\n    setMsg(tx('Password reset link sent. Check your Gmail inbox and spam folder.', 'پاسورڈ تبدیل کرنے کا لنک آپ کی جی میل پر بھیج دیا گیا ہے۔ Inbox اور Spam چیک کریں۔'));\n  }\n  async function saveNewPassword(e) {\n    e.preventDefault(); setMsg('');\n    if (newPassword.length < 8) return setMsg(tx('Use at least 8 characters.', 'کم از کم 8 حروف کا پاسورڈ رکھیں۔'));\n    if (newPassword !== confirmPassword) return setMsg(tx('Passwords do not match.', 'دونوں پاسورڈ ایک جیسے نہیں ہیں۔'));\n    const { error } = await supabase.auth.updateUser({ password: newPassword });\n    if (error) return setMsg(error.message);\n    setNewPassword(''); setConfirmPassword(''); setResetMode(false); setMsg(tx('Password updated. Please log in with your new password.', 'پاسورڈ تبدیل ہو گیا۔ اب نئے پاسورڈ سے لاگ اِن کریں۔'));\n    await supabase.auth.signOut();\n  }\n  async function logout() { await supabase.auth.signOut(); setUser(null); setTeams(null); }
+  async function sendPasswordReset() {
+    setMsg('');
+    if (!email.trim()) return setMsg(tx('Enter your registered Gmail first.', 'پہلے اپنی رجسٹرڈ جی میل درج کریں۔'));
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/team` });
+    if (error) return setMsg(error.message);
+    setMsg(tx('Password reset link sent. Check your Gmail inbox and spam folder.', 'پاسورڈ تبدیل کرنے کا لنک آپ کی جی میل پر بھیج دیا گیا ہے۔ Inbox اور Spam چیک کریں۔'));
+  }
+  async function saveNewPassword(e) {
+    e.preventDefault(); setMsg('');
+    if (newPassword.length < 8) return setMsg(tx('Use at least 8 characters.', 'کم از کم 8 حروف کا پاسورڈ رکھیں۔'));
+    if (newPassword !== confirmPassword) return setMsg(tx('Passwords do not match.', 'دونوں پاسورڈ ایک جیسے نہیں ہیں۔'));
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) return setMsg(error.message);
+    setNewPassword(''); setConfirmPassword(''); setResetMode(false); setMsg(tx('Password updated. Please log in with your new password.', 'پاسورڈ تبدیل ہو گیا۔ اب نئے پاسورڈ سے لاگ اِن کریں۔'));
+    await supabase.auth.signOut();
+  }
+  async function logout() { await supabase.auth.signOut(); setUser(null); setTeams(null); }
   const status = tm => {
     const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
     if (tm.payment === 'verified') return tx('Payment verified ✓', 'ادائیگی تصدیق شدہ ✓');
