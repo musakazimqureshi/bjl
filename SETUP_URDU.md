@@ -22,3 +22,18 @@
 ## D. کپتان کا لاگ اِن
 `/admin` ← ٹیمیں ← کپتان کا جی میل کاپی ← Supabase ← Authentication ← Users ← Add user (وہی جی میل + آپ کا پاسورڈ + Auto Confirm) ← کپتان `/team` پر لاگ اِن کرے۔
 Supabase ← Authentication ← Providers ← Email ← "Allow new users to sign up" بند رکھیں۔
+
+## E. نیا Admin Dashboard اور ٹیم کی منظوری
+- `/admin` کھولیں۔ Admin Login کے بعد پہلا صفحہ Overview ہوگا۔
+- Overview میں کل ٹیمیں، منظور شدہ ٹیمیں، تصدیق شدہ ادائیگیاں، زیرِ تصدیق ادائیگیاں، کھلاڑی اور اعلانات نظر آئیں گے۔
+- ٹیم کے کارڈ میں **ٹیم منظور / ٹیم مسترد** اور **ادائیگی منظور / ادائیگی زیرِ تصدیق** الگ الگ ہیں۔
+- کپتان کا اکاؤنٹ بنانے کے لیے ٹیم کے کارڈ میں **کپتان کا لاگ اِن اکاؤنٹ بنائیں** دبائیں۔ Gmail رجسٹریشن والی ای میل سے ملنی چاہیے۔ ابتدائی پاس ورڈ کم از کم 8 حروف یا نمبروں کا رکھیں اور کپتان کو محفوظ طریقے سے دیں۔
+- کپتان `/team` پر اپنی Gmail اور ابتدائی پاس ورڈ سے لاگ اِن کرے گا۔ ہر ٹیم صرف اپنے ریکارڈ دیکھ سکتی ہے۔
+
+## F. Forgot Password کی ضروری سیٹنگ
+- Admin اور Team Login دونوں پر Forgot Password موجود ہے۔
+- Supabase Dashboard → Authentication → URL Configuration → Redirect URLs میں یہ URL شامل کریں:
+  `https://bjl-alpha.vercel.app/reset-password`
+- اگر Vercel Preview پر بھی ٹیسٹ کرنا ہو تو Preview URL بھی Redirect URLs میں شامل کریں۔
+- پاس ورڈ Reset کے لیے پرانا پاس ورڈ نہیں مانگا جائے گا؛ رجسٹرڈ Gmail پر آنے والے Reset Link سے New Password اور Confirm New Password محفوظ ہوں گے۔
+- نیا پاس ورڈ کم از کم 8 حروف یا نمبروں کا ہوگا۔ 1 سے 8 ہندسوں کا مختصر پاس ورڈ محفوظ نہیں ہے، اس لیے اسے قبول نہیں کیا جائے گا۔
