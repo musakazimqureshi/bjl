@@ -149,10 +149,10 @@ export default function Splash() {
       setVisible(false);
       return;
     }
-    // Sound stays muted until the visitor enables it with a tap.
-    soundOnRef.current = false;
-    setSoundOn(false);
-    showWelcome(false);
+    // Attempt sound automatically on each welcome screen. Browsers may require a tap.
+    soundOnRef.current = true;
+    setSoundOn(true);
+    showWelcome(true);
 
     let hiddenAt = 0;
     const onVisibility = () => {
@@ -174,6 +174,11 @@ export default function Splash() {
   }, [pathname, showWelcome]);
 
   const toggleSound = () => {
+    // If autoplay was blocked, the first tap unlocks audio rather than turning it off.
+    if (soundOnRef.current && (!audioRef.current || audioRef.current.state === 'suspended')) {
+      playIntro();
+      return;
+    }
     const next = !soundOnRef.current;
     soundOnRef.current = next;
     setSoundOn(next);
@@ -194,7 +199,7 @@ export default function Splash() {
         <div className="sp-s">THE GAME BEGINS HERE</div>
       </div>
       <button className="sp-sound" onClick={toggleSound} type="button" aria-label={soundOn ? 'Turn welcome sound off' : 'Turn welcome sound on'}>
-        {soundOn ? '🔊 SOUND ON' : '🔇 SOUND OFF · TAP TO ENABLE'}
+        {soundOn ? '🔊 SOUND ON · TAP TO MUTE' : '🔇 SOUND OFF · TAP TO ENABLE'}
       </button>
       <div className="sp-organizer"><small>ORGANIZED BY</small><strong>FALAK QURESHI</strong></div>
     </div>
