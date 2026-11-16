@@ -21,7 +21,7 @@ export default function TeamLogin() {
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!active) return;
-      if (session) { setUser(session.user); load(session.user); }
+      if (session) { setUser(session.user); queueMicrotask(() => load(session.user)); }
       else { setUser(null); setTeams(null); }
     });
     return () => { active = false; subscription.unsubscribe(); };
