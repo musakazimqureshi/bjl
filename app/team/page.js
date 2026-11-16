@@ -9,16 +9,12 @@ export default function TeamLogin() {
   const { lang } = useLang(); const tx = (e, u) => (lang === 'ur' ? u : e);
   const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
   const [user, setUser] = useState(null); const [teams, setTeams] = useState(null);
-  const [resetMode, setResetMode] = useState(false); const [newPassword, setNewPassword] = useState(''); const [confirmPassword, setConfirmPassword] = useState('');
   async function load(u) {
     const { data, error } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').eq('captain_email', (u.email || '').toLowerCase());
     if (error) setMsg(error.message); setTeams(data || []);
   }
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => { if (session) { setUser(session.user); load(session.user); } });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') { setResetMode(true); setUser(null); setTeams(null); setMsg(''); }
-    });
     return () => subscription.unsubscribe();
   }, []);
   async function login(e) {
@@ -26,22 +22,6 @@ export default function TeamLogin() {
     const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: pw });
     if (error) return setMsg(tx('Wrong email or password.', 'ای میل یا پاسورڈ غلط ہے۔'));
     setUser(data.user); load(data.user);
-  }
-  async function sendPasswordReset() {
-    setMsg('');
-    if (!email.trim()) return setMsg(tx('Enter your registered Gmail first.', 'پہلے اپنی رجسٹرڈ جی میل درج کریں۔'));
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/team` });
-    if (error) return setMsg(error.message);
-    setMsg(tx('Password reset link sent. Check your Gmail inbox and spam folder.', 'پاسورڈ تبدیل کرنے کا لنک آپ کی جی میل پر بھیج دیا گیا ہے۔ Inbox اور Spam چیک کریں۔'));
-  }
-  async function saveNewPassword(e) {
-    e.preventDefault(); setMsg('');
-    if (newPassword.length < 8) return setMsg(tx('Use at least 8 characters.', 'کم از کم 8 حروف کا پاسورڈ رکھیں۔'));
-    if (newPassword !== confirmPassword) return setMsg(tx('Passwords do not match.', 'دونوں پاسورڈ ایک جیسے نہیں ہیں۔'));
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    if (error) return setMsg(error.message);
-    setNewPassword(''); setConfirmPassword(''); setResetMode(false); setMsg(tx('Password updated. Please log in with your new password.', 'پاسورڈ تبدیل ہو گیا۔ اب نئے پاسورڈ سے لاگ اِن کریں۔'));
-    await supabase.auth.signOut();
   }
   async function logout() { await supabase.auth.signOut(); setUser(null); setTeams(null); }
   const status = tm => {
@@ -53,16 +33,11 @@ export default function TeamLogin() {
   };
   return (<>
     <h2>{tx('Team Login', 'ٹیم لاگ اِن')}</h2>
-    {resetMode ? (<form className="card" onSubmit={saveNewPassword}>
-      <p>{tx('Set a new password for your team account.', 'اپنے ٹیم اکاؤنٹ کے لیے نیا پاسورڈ بنائیں۔')}</p>
-      <input placeholder={tx('New password', 'نیا پاسورڈ')} type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} dir="ltr" />
-      <input placeholder={tx('Confirm new password', 'نئے پاسورڈ کی تصدیق')} type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} dir="ltr" />
-      {msg && <div className="err">{msg}</div>}<button className="btn">{tx('Update Password', 'پاسورڈ تبدیل کریں')}</button></form>) : !user ? (<form className="card" onSubmit={login}>
+    {!user ? (<form className="card" onSubmit={login}>
       <p>{tx('Your login is created by the organizer. Use the Gmail you gave at registration.', 'آپ کا لاگ اِن منتظم بناتا ہے۔ وہی جی میل استعمال کریں جو رجسٹریشن میں دیا تھا۔')}</p>
       <input placeholder="Gmail" value={email} onChange={e => setEmail(e.target.value)} dir="ltr" />
       <input placeholder={tx('Password', 'پاسورڈ')} type="password" value={pw} onChange={e => setPw(e.target.value)} dir="ltr" />
-      {msg && <div className="err">{msg}</div>}<button className="btn">{tx('Login', 'لاگ اِن')}</button>
-      <button type="button" className="btn alt" onClick={sendPasswordReset} style={{marginTop: '10px'}}>{tx('Forgot Password?', 'پاسورڈ بھول گئے؟')}</button></form>) : (<>
+      {msg && <div className="err">{msg}</div>}<button className="btn">{tx('Login', 'لاگ اِن')}</button></form>) : (<>
       <button className="btn alt" onClick={logout}>{tx('Logout', 'لاگ آؤٹ')}</button>
       {teams && teams.length === 0 && <div className="card">{tx('No team is linked to this email yet. Please contact the organizer.', 'اس ای میل سے کوئی ٹیم جڑی ہوئی نہیں۔ براہ کرم منتظم سے رابطہ کریں۔')}</div>}
       {(teams || []).map(tm => { const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); return (
