@@ -14,8 +14,17 @@ export default function TeamLogin() {
     if (error) setMsg(error.message); setTeams(data || []);
   }
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => { if (session) { setUser(session.user); load(session.user); } });
-    return () => subscription.unsubscribe();
+    let active = true;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!active) return;
+      if (session) { setUser(session.user); load(session.user); }
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) return;
+      if (session) { setUser(session.user); load(session.user); }
+      else { setUser(null); setTeams(null); }
+    });
+    return () => { active = false; subscription.unsubscribe(); };
   }, []);
   async function login(e) {
     e.preventDefault(); setMsg('');
@@ -37,12 +46,13 @@ export default function TeamLogin() {
       <p>{tx('Your login is created by the organizer. Use the Gmail you gave at registration.', 'آپ کا لاگ اِن منتظم بناتا ہے۔ وہی جی میل استعمال کریں جو رجسٹریشن میں دیا تھا۔')}</p>
       <input placeholder="Gmail" value={email} onChange={e => setEmail(e.target.value)} dir="ltr" />
       <input placeholder={tx('Password', 'پاسورڈ')} type="password" value={pw} onChange={e => setPw(e.target.value)} dir="ltr" />
+      <p><Link href="/reset-password?role=team">{tx('Forgot Password?', 'پاسورڈ بھول گئے؟')}</Link></p>
       {msg && <div className="err">{msg}</div>}<button className="btn">{tx('Login', 'لاگ اِن')}</button></form>) : (<>
       <button className="btn alt" onClick={logout}>{tx('Logout', 'لاگ آؤٹ')}</button>
       {teams && teams.length === 0 && <div className="card">{tx('No team is linked to this email yet. Please contact the organizer.', 'اس ای میل سے کوئی ٹیم جڑی ہوئی نہیں۔ براہ کرم منتظم سے رابطہ کریں۔')}</div>}
       {(teams || []).map(tm => { const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); return (
         <div className="card" key={tm.id}><h3>{tm.name} <small>{tm.reg_id}</small></h3>
-          <span className={'badge ' + (tm.payment === 'verified' ? 'v' : 'n')}>{tm.payment === 'verified' ? '✓ VERIFIED' : 'NOT VERIFIED'}</span>
+          <span className={'badge ' + (tm.status === 'approved' ? 'v' : 'n')}>{tm.status === 'approved' ? tx('Team approved ✓', 'ٹیم منظور شدہ ✓') : tx('Team verification pending', 'ٹیم کی تصدیق زیرِ انتظار')}</span>
           <p>{status(tm)}</p>
           {tm.payment !== 'verified' && <Link className="btn" href={'/pay?ref=' + tm.reg_id}>{tx('Go to Payment', 'ادائیگی کے صفحے پر جائیں')}</Link>}
           <div className="pgrid">{ps.map((p, i) => (<div key={p.id} className="pl"><img className="ph sm" src={pub(p.photo_path)} alt="" /><div>{p.name}</div>
