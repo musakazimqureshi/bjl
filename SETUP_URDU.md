@@ -34,6 +34,6 @@ Supabase ← Authentication ← Providers ← Email ← "Allow new users to sign
 - Admin اور Team Login دونوں پر Forgot Password موجود ہے۔
 - Supabase Dashboard → Authentication → URL Configuration → Redirect URLs میں یہ URL شامل کریں:
   `https://bjl-alpha.vercel.app/reset-password`
-- اگر Vercel Preview پر بھی ٹیسٹ کرنا ہو تو Preview URL بھی Redirect URLs میں شامل کریں۔
+- موجودہ Preview برانچ کے ٹیسٹ کے لیے یہ URL بھی شامل کریں: `https://bjl-git-admin-dashboard-foundation-mukq.vercel.app/reset-password`
 - پاس ورڈ Reset کے لیے پرانا پاس ورڈ نہیں مانگا جائے گا؛ رجسٹرڈ Gmail پر آنے والے Reset Link سے New Password اور Confirm New Password محفوظ ہوں گے۔
 - نیا پاس ورڈ کم از کم 8 حروف یا نمبروں کا ہوگا۔ 1 سے 8 ہندسوں کا مختصر پاس ورڈ محفوظ نہیں ہے، اس لیے اسے قبول نہیں کیا جائے گا۔
