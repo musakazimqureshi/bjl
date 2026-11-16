@@ -43,14 +43,7 @@ label{font-size:.9rem;color:#ccc}.err{background:#5a0d0d;padding:10px;border-rad
 .qt{font-family:'Noto Nastaliq Urdu','Jameel Noori Nastaleeq',serif;max-width:760px;margin:0 auto 12px;min-height:200px;line-height:2.4}
 .qn{color:var(--gold);font-size:1rem}.qb{font-size:clamp(1.15rem,4.2vw,1.55rem);margin:8px 0;color:#fff}.qr{color:#ccc;font-size:.95rem;line-height:2}
 @media(prefers-reduced-motion:no-preference){.qt{animation:qf .8s ease}@keyframes qf{from{opacity:0}to{opacity:1}}}
-.ms{position:relative;margin-bottom:12px}.msi{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;cursor:pointer;display:block;border:1px solid #b0121266}
-.msb{position:absolute;top:38%;background:#000a;color:#fff;border:1px solid var(--gold);border-radius:50%;width:42px;height:42px;cursor:pointer}.msb.l{left:8px}.msb.r{right:8px}
-.msc{margin:8px 0}.strip{display:flex;gap:6px;overflow-x:auto;padding:4px 0}.strip img{height:56px;width:76px;object-fit:cover;border-radius:6px;opacity:.5;cursor:pointer;flex:none}.strip img.on{opacity:1;outline:2px solid var(--gold)}
-@media(prefers-reduced-motion:no-preference){.msi{animation:qf .7s ease}}
-@media(min-width:900px){.msi{aspect-ratio:16/9}}
-.team{font-size:1.7rem;font-weight:900;line-height:1.3}.lose{font-size:.95rem;color:#bbb;margin-top:4px}.dl{color:#ff8a8a;font-weight:700;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase}
-.dt{font-size:.9rem;color:#ccc;margin-top:4px}.tlink{background:none;border:0;color:inherit;font:inherit;font-weight:inherit;text-decoration:underline dotted var(--gold);cursor:pointer;padding:0}
-.fwa{position:fixed;bottom:14px;right:14px;background:#25d366;color:#04210f;padding:11px 16px;border-radius:30px;font-weight:800;box-shadow:0 4px 16px #000a;z-index:40}
-main{padding-bottom:84px}
-.pp img{width:100%;aspect-ratio:3/4;object-fit:cover;object-position:center top;border-radius:8px;display:block;border:1px solid #b0121255}
-.org{margin-top:26px}
+
+/* BJL home page match and content tiles */
+.match-pair{align-items:stretch;margin-top:14px}.square-card{min-height:220px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;border:1px solid #b01212;border-radius:14px;box-shadow:inset 0 0 0 2px #b0121222,0 4px 18px #0008;padding:16px}.square-card h3{font-size:1rem;letter-spacing:.04em}.winner-card{border-color:var(--gold);box-shadow:inset 0 0 0 2px #d4af3722,0 0 16px #d4af3722}.team-link{display:block;color:#fff;text-align:center}.team-link:hover{color:var(--gold);text-decoration:underline}.match-meta{display:flex;flex-direction:column;gap:4px;margin-top:12px;font-size:.9rem}.tap-hint{color:var(--gold);margin-top:8px}.feature-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}.feature-box{min-width:0;border:1px solid #b0121288;border-radius:12px;padding:8px;background:#19191e;box-shadow:inset 0 0 0 1px #b0121222}.feature-box h2{font-size:.92rem;line-height:1.4;min-height:2.6em;margin:4px 2px 8px}.feature-box .card{margin:6px 0;padding:9px}.feature-box .ann img{aspect-ratio:1/1;object-fit:cover}.feature-box .ann h3{font-size:.9rem}.feature-box .ann p{font-size:.78rem}.feature-empty{min-height:120px;display:flex;align-items:center;justify-content:center;text-align:center;color:#bbb;font-size:.85rem}.feature-box .mom{grid-template-columns:1fr 1fr;gap:5px}.feature-box .mom img{aspect-ratio:1/1}.ppl .pp:first-child{border:2px solid var(--gold);box-shadow:0 0 20px #d4af3755}.ppl .pp:first-child img{border:2px solid var(--gold)}
+@media(max-width:420px){.feature-pair{gap:7px}.feature-box{padding:6px}.feature-box h2{font-size:.78rem}.feature-box .card{padding:7px}.feature-box .ann p{font-size:.72rem}.square-card{min-height:205px;padding:10px}.match-meta{font-size:.78rem}}

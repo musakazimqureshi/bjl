@@ -1,57 +1,58 @@
 'use client';
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useLang } from '../../lib/i18n';
 import { supabase } from '../../lib/supabase';
 import { shrink } from '../../lib/img';
-import { EASYPAISA, CONTACTS } from '../../lib/config';
-export default function Pay() {
-  const { t } = useLang();
-  const [ref, setRef] = useState(''); const [txn, setTxn] = useState(''); const [file, setFile] = useState(null);
-  const [err, setErr] = useState(''); const [done, setDone] = useState(false); const [busy, setBusy] = useState(false); const [copied, setCopied] = useState(false);
-  useEffect(() => { const r = new URLSearchParams(window.location.search).get('ref'); if (r) setRef(r); }, []);
-  async function copy() {
-    try { await navigator.clipboard.writeText(EASYPAISA.number); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch (e) {}
-  }
+const POS = [['batter','Batter'],['bowler','Bowler'],['all_rounder','All-Rounder'],['wicket_keeper','Wicket-Keeper']];
+const MOB = /^(03\d{9}|\+923\d{9})$/;
+const blank = () => ({ name:'', mobile:'', age:'', position:'', file:null });
+export default function Register() {
+  const { t } = useLang(); const router = useRouter();
+  const [team, setTeam] = useState('');
+  const [pl, setPl] = useState(Array.from({ length: 15 }, blank));
+  const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
+  const up = (i, k, v) => setPl(p => p.map((x, j) => j === i ? { ...x, [k]: v } : x));
+  const block = (i, title, mobile) => { const p = pl[i]; return (<div className="card" key={i}><b>{title}</b>
+    <input placeholder={t('pname')} value={p.name} onChange={e => up(i, 'name', e.target.value)} />
+    {mobile && <input placeholder={t('mobLead')} inputMode="numeric" dir="ltr" value={p.mobile} onChange={e => up(i, 'mobile', e.target.value)} />}
+    <input placeholder={t('age')} type="number" min="5" max="60" value={p.age} onChange={e => up(i, 'age', e.target.value)} />
+    <select value={p.position} onChange={e => up(i, 'position', e.target.value)}><option value="">{t('pos')}</option>
+      {POS.map(([v, l]) => <option key={v} value={v}>{t(l)}</option>)}</select>
+    <label>{t('photo')}</label><input type="file" accept="image/jpeg,image/png" onChange={e => up(i, 'file', e.target.files[0])} /></div>); };
   async function submit(e) {
     e.preventDefault(); setErr('');
-    if (!ref.trim() || !file) return setErr(t('payMissing'));
-    if (!['image/jpeg', 'image/png'].includes(file.type) || file.size > 15 * 1024 * 1024) return setErr(t('payFile'));
+    if (!team.trim()) return setErr(t('eTeam'));
+    for (let i = 0; i < 15; i++) {
+      const p = pl[i]; const n = ' #' + (i + 1);
+      if (!p.name.trim() || !p.age || !p.position || !p.file) return setErr(t('eMissing') + n);
+      if (i < 2 && !MOB.test(p.mobile)) return setErr(t('eMob') + n);
+      if (!['image/jpeg', 'image/png'].includes(p.file.type) || p.file.size > 15 * 1024 * 1024) return setErr(t('ePhoto') + n);
+    }
+    if (pl[0].mobile === pl[1].mobile) return setErr(t('eDup'));
     setBusy(true);
     try {
-      const r = ref.trim().toUpperCase();
-      const path = `${r}/${Date.now()}.jpg`;
-      const blob = await shrink(file, 1400);
-      const { error: e1 } = await supabase.storage.from('payments').upload(path, blob, { contentType: 'image/jpeg' });
-      if (e1) throw e1;
-      const { error: e2 } = await supabase.rpc('submit_payment', { p_ref: r, p_path: path, p_txn: txn.trim() || null });
-      if (e2) throw e2;
-      setDone(true);
+      const folder = crypto.randomUUID(); const players = [];
+      for (let i = 0; i < 15; i++) {
+        const p = pl[i]; const path = `${folder}/${i}.jpg`;
+        const blob = await shrink(p.file, 900);
+        const { error } = await supabase.storage.from('player-photos').upload(path, blob, { contentType: 'image/jpeg' });
+        if (error) throw error;
+        players.push({ name: p.name.trim(), mobile: i < 2 ? p.mobile : '', age: +p.age, position: p.position, photo_path: path });
+      }
+      const { data, error } = await supabase.rpc('submit_team', { t: { name: team.trim() }, p: players });
+      if (error) throw error;
+      router.push('/pay?ref=' + encodeURIComponent(data));
     } catch (x) { setErr(x.message || String(x)); }
     setBusy(false);
   }
-  const org = CONTACTS[0];
-  const wa = `https://wa.me/${org.num}?text=${encodeURIComponent(t('msgPaid') + ref.toUpperCase())}`;
-  if (done) return (<div><div className="good">{t('payOk')} <div className="big">{ref.toUpperCase()}</div></div>
-    <p><a className="btn" href={wa} target="_blank" rel="noopener noreferrer">{t('payWA')}</a></p></div>);
   return (<form onSubmit={submit}>
-    <h2>{t('payTitle')}</h2>
-    <div className="card"><p>{t('payInfo')}</p>
-      <div>{t('accNo')}</div><div className="big" dir="ltr">{EASYPAISA.number}</div>
-      <button type="button" className="btn" onClick={copy}>{copied ? t('copied') : t('copy')}</button>
-      <p>{t('accTitle')}: <b>{EASYPAISA.title}</b></p>
-      <p>{t('amount')}: <b>Rs. {EASYPAISA.fee.toLocaleString()}</b></p></div>
-    <div className="card">
-      <label>{t('refLabel')}</label><input value={ref} onChange={e => setRef(e.target.value)} dir="ltr" />
-      <small>{t('saveRef')}</small><br />
-      <label>{t('txnOpt')}</label><input value={txn} onChange={e => setTxn(e.target.value)} dir="ltr" />
-      <label>{t('shot')}</label><input type="file" accept="image/jpeg,image/png" onChange={e => setFile(e.target.files[0])} />
-    </div>
+    <h2>{t('regTitle')}</h2>
+    <div className="card"><label>{t('teamName')}</label><input value={team} onChange={e => setTeam(e.target.value)} /></div>
+    {block(0, t('cap1'), true)}{block(1, t('cap2'), true)}
+    <h3>{t('others13')}</h3>
+    {pl.slice(2).map((_, k) => block(k + 2, `${t('player')} ${k + 1} / 13`, false))}
     {err && <div className="err">{err}</div>}
-    <div className="row" style={{ justifyContent: 'flex-start' }}>
-      <button className="btn" disabled={busy}>{busy ? t('sending') : t('paySubmit')}</button>
-      <a className="btn alt" href={wa} target="_blank" rel="noopener noreferrer">{t('payWA')}</a>
-    </div>
-    <div className="card">{t('payNote')}<div style={{ marginTop: 10 }}><Link href="/" className="btn alt">{t('payLater')}</Link></div></div>
+    <button className="btn" disabled={busy}>{busy ? t('sending') : t('submit')}</button>
   </form>);
 }

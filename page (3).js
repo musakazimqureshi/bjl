@@ -3,46 +3,55 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useLang } from '../../lib/i18n';
 import { supabase } from '../../lib/supabase';
-const pub = p => supabase.storage.from('player-photos').getPublicUrl(p).data.publicUrl;
-const ROLE = { batter: 'Batsman', bowler: 'Bowler', all_rounder: 'All-Rounder', wicket_keeper: 'Wicketkeeper' };
-export default function TeamLogin() {
-  const { lang } = useLang(); const tx = (e, u) => (lang === 'ur' ? u : e);
-  const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
-  const [user, setUser] = useState(null); const [teams, setTeams] = useState(null);
-  async function load(u) {
-    const { data, error } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').eq('captain_email', (u.email || '').toLowerCase());
-    if (error) setMsg(error.message); setTeams(data || []);
+import { shrink } from '../../lib/img';
+import { EASYPAISA, CONTACTS } from '../../lib/config';
+export default function Pay() {
+  const { t } = useLang();
+  const [ref, setRef] = useState(''); const [txn, setTxn] = useState(''); const [file, setFile] = useState(null);
+  const [err, setErr] = useState(''); const [done, setDone] = useState(false); const [busy, setBusy] = useState(false); const [copied, setCopied] = useState(false);
+  useEffect(() => { const r = new URLSearchParams(window.location.search).get('ref'); if (r) setRef(r); }, []);
+  async function copy() {
+    try { await navigator.clipboard.writeText(EASYPAISA.number); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch (e) {}
   }
-  useEffect(() => { supabase.auth.getSession().then(({ data: { session } }) => { if (session) { setUser(session.user); load(session.user); } }); }, []);
-  async function login(e) {
-    e.preventDefault(); setMsg('');
-    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: pw });
-    if (error) return setMsg(tx('Wrong email or password.', 'ای میل یا پاسورڈ غلط ہے۔'));
-    setUser(data.user); load(data.user);
+  async function submit(e) {
+    e.preventDefault(); setErr('');
+    if (!ref.trim() || !file) return setErr(t('payMissing'));
+    if (!['image/jpeg', 'image/png'].includes(file.type) || file.size > 15 * 1024 * 1024) return setErr(t('payFile'));
+    setBusy(true);
+    try {
+      const r = ref.trim().toUpperCase();
+      const path = `${r}/${Date.now()}.jpg`;
+      const blob = await shrink(file, 1400);
+      const { error: e1 } = await supabase.storage.from('payments').upload(path, blob, { contentType: 'image/jpeg' });
+      if (e1) throw e1;
+      const { error: e2 } = await supabase.rpc('submit_payment', { p_ref: r, p_path: path, p_txn: txn.trim() || null });
+      if (e2) throw e2;
+      setDone(true);
+    } catch (x) { setErr(x.message || String(x)); }
+    setBusy(false);
   }
-  async function logout() { await supabase.auth.signOut(); setUser(null); setTeams(null); }
-  const status = tm => {
-    const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
-    if (tm.payment === 'verified') return tx('Payment verified ✓', 'ادائیگی تصدیق شدہ ✓');
-    if (tm.payment === 'rejected') return tx('Payment rejected: ', 'ادائیگی مسترد: ') + (tm.payment_rejection_reason || '');
-    if (tm.payment === 'submitted' || last) return tx('Payment submitted – waiting for admin check', 'ادائیگی جمع ہو گئی – ایڈمن کی تصدیق کا انتظار');
-    return tx('Payment pending', 'ادائیگی پینڈنگ');
-  };
-  return (<>
-    <h2>{tx('Team Login', 'ٹیم لاگ اِن')}</h2>
-    {!user ? (<form className="card" onSubmit={login}>
-      <p>{tx('Your login is created by the organizer. Use the Gmail you gave at registration.', 'آپ کا لاگ اِن منتظم بناتا ہے۔ وہی جی میل استعمال کریں جو رجسٹریشن میں دیا تھا۔')}</p>
-      <input placeholder="Gmail" value={email} onChange={e => setEmail(e.target.value)} dir="ltr" />
-      <input placeholder={tx('Password', 'پاسورڈ')} type="password" value={pw} onChange={e => setPw(e.target.value)} dir="ltr" />
-      {msg && <div className="err">{msg}</div>}<button className="btn">{tx('Login', 'لاگ اِن')}</button></form>) : (<>
-      <button className="btn alt" onClick={logout}>{tx('Logout', 'لاگ آؤٹ')}</button>
-      {teams && teams.length === 0 && <div className="card">{tx('No team is linked to this email yet. Please contact the organizer.', 'اس ای میل سے کوئی ٹیم جڑی ہوئی نہیں۔ براہ کرم منتظم سے رابطہ کریں۔')}</div>}
-      {(teams || []).map(tm => { const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); return (
-        <div className="card" key={tm.id}><h3>{tm.name} <small>{tm.reg_id}</small></h3>
-          <span className={'badge ' + (tm.payment === 'verified' ? 'v' : 'n')}>{tm.payment === 'verified' ? '✓ VERIFIED' : 'NOT VERIFIED'}</span>
-          <p>{status(tm)}</p>
-          {tm.payment !== 'verified' && <Link className="btn" href={'/pay?ref=' + tm.reg_id}>{tx('Go to Payment', 'ادائیگی کے صفحے پر جائیں')}</Link>}
-          <div className="pgrid">{ps.map((p, i) => (<div key={p.id} className="pl"><img className="ph sm" src={pub(p.photo_path)} alt="" /><div>{p.name}</div>
-            <small>{ROLE[p.position]} · {p.age}</small>{i < 2 && <small dir="ltr"> ★ {p.mobile}</small>}</div>))}</div></div>); })}</>)}
-  </>);
+  const org = CONTACTS[0];
+  const wa = `https://wa.me/${org.num}?text=${encodeURIComponent(t('msgPaid') + ref.toUpperCase())}`;
+  if (done) return (<div><div className="good">{t('payOk')} <div className="big">{ref.toUpperCase()}</div></div>
+    <p><a className="btn" href={wa} target="_blank" rel="noopener noreferrer">{t('payWA')}</a></p></div>);
+  return (<form onSubmit={submit}>
+    <h2>{t('payTitle')}</h2>
+    <div className="card"><p>{t('payInfo')}</p>
+      <div>{t('accNo')}</div><div className="big" dir="ltr">{EASYPAISA.number}</div>
+      <button type="button" className="btn" onClick={copy}>{copied ? t('copied') : t('copy')}</button>
+      <p>{t('accTitle')}: <b>{EASYPAISA.title}</b></p>
+      <p>{t('amount')}: <b>Rs. {EASYPAISA.fee.toLocaleString()}</b></p></div>
+    <div className="card">
+      <label>{t('refLabel')}</label><input value={ref} onChange={e => setRef(e.target.value)} dir="ltr" />
+      <small>{t('saveRef')}</small><br />
+      <label>{t('txnOpt')}</label><input value={txn} onChange={e => setTxn(e.target.value)} dir="ltr" />
+      <label>{t('shot')}</label><input type="file" accept="image/jpeg,image/png" onChange={e => setFile(e.target.files[0])} />
+    </div>
+    {err && <div className="err">{err}</div>}
+    <div className="row" style={{ justifyContent: 'flex-start' }}>
+      <button className="btn" disabled={busy}>{busy ? t('sending') : t('paySubmit')}</button>
+      <a className="btn alt" href={wa} target="_blank" rel="noopener noreferrer">{t('payWA')}</a>
+    </div>
+    <div className="card">{t('payNote')}<div style={{ marginTop: 10 }}><Link href="/" className="btn alt">{t('payLater')}</Link></div></div>
+  </form>);
 }

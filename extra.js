@@ -40,13 +40,8 @@ Object.assign(UR, { cap1:'کپتان 1', cap2:'کپتان 2', others13:'باقی
  fee:'داخلہ فیس: ہر ٹیم کے لیے 4,000 روپے۔ ایڈمن خود ادائیگی کی تصدیق کرے تو ہی ٹیم "تصدیق شدہ" دکھے گی۔',
  refLabel:'رجسٹریشن آئی ڈی', txnOpt:'Transaction ID (اختیاری)', mobLead:'موبائل نمبر',
  ok:'رجسٹریشن جمع ہو گئی! آپ کی رجسٹریشن آئی ڈی:' });
-Object.assign(EN, { momentsT:'BJL MOMENTS', orgT:'BJL ORGANIZER & MEMBERS', matchDate:'MATCH DATE', close:'Close' });
-Object.assign(UR, { momentsT:'BJL کے یادگار لمحات', orgT:'BJL آرگنائزر اور ممبرز', matchDate:'میچ کی تاریخ', close:'بند کریں' });
-Object.assign(EN, { teamLogin:'Team Login', emailLead:'Captain 1 Gmail (used for team login)', regClosed:'Registration is currently closed by the organizer.',
- noMom:'Daily match photos will appear here.', noAnn:'Daily announcements will appear here.' });
-Object.assign(UR, { teamLogin:'ٹیم لاگ اِن', emailLead:'کپتان 1 کا جی میل (ٹیم لاگ اِن کے لیے)', regClosed:'رجسٹریشن فی الحال منتظم نے بند کر رکھی ہے۔',
- noMom:'روزانہ کے میچ کی تصاویر یہاں نظر آئیں گی۔', noAnn:'روزانہ کے اعلانات یہاں نظر آئیں گے۔' });
-Object.assign(EN, { share:'Share on WhatsApp', startsIn:'Starts in', tapTeam:'Tap a team name to see its full squad', search:'Search team' });
-Object.assign(UR, { share:'WhatsApp پر شیئر کریں', startsIn:'شروع ہونے میں', tapTeam:'ٹیم کے نام پر کلک کریں، پورا سکواڈ نظر آئے گا', search:'ٹیم تلاش کریں' });
-Object.assign(EN, { captainSignIn:'Captain / Team Sign In' });
-Object.assign(UR, { captainSignIn:'کپتان / ٹیم سائن اِن' });
+Object.assign(EN, { momentsT:'BJL MOMENTS & HIGHLIGHTS', orgT:'BJL ORGANIZER & MEMBERS', matchDate:'MATCH DATE', close:'Close' });
+Object.assign(UR, { momentsT:'BJL کے یادگار لمحات اور ہائی لائٹس', orgT:'BJL آرگنائزر اور ممبرز', matchDate:'میچ کی تاریخ', close:'بند کریں' });
+
+Object.assign(EN, { noMoments:'No highlights uploaded yet.', tapSquad:'Tap a team name to view its full squad.' });
+Object.assign(UR, { noMoments:'ابھی کوئی ہائی لائٹس اپلوڈ نہیں ہوئیں۔', tapSquad:'مکمل اسکواڈ دیکھنے کے لیے ٹیم کے نام پر کلک کریں۔' });
