@@ -1,7 +1,9 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function Splash() {
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const [fade, setFade] = useState(false);
   const [soundOn, setSoundOn] = useState(false);
@@ -92,6 +94,10 @@ export default function Splash() {
   }, [playIntro]);
 
   useEffect(() => {
+    if (pathname !== '/') {
+      setVisible(false);
+      return;
+    }
     // Sound starts muted on each fresh page visit until the visitor taps the sound button.
     soundOnRef.current = false;
     setSoundOn(false);
@@ -114,7 +120,7 @@ export default function Splash() {
       if (audioStopTimer.current) window.clearTimeout(audioStopTimer.current);
       if (audioRef.current) audioRef.current.close().catch(() => {});
     };
-  }, [showWelcome]);
+  }, [pathname, showWelcome]);
 
   const toggleSound = () => {
     const next = !soundOnRef.current;
