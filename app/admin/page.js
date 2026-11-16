@@ -36,7 +36,8 @@ export default function Admin() {
     const { data: q } = await supabase.from('quotes').select('*').order('sort_order', { ascending: true }); setQs(q || []);
   }
   async function loadTeams() {
-    const { data } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').order('created_at', { ascending: false });
+    if (error) { setMsg('ٹیموں کا ریکارڈ لوڈ نہیں ہوا: ' + error.message); return; }
     setTeams(data || []);
   }
   const pub = p => supabase.storage.from('player-photos').getPublicUrl(p).data.publicUrl;
@@ -58,6 +59,15 @@ export default function Admin() {
     if (status === 'rejected') { reason = prompt('ٹیم مسترد کرنے کی وجہ لکھیں'); if (!reason) return; }
     const { error } = await supabase.from('teams').update({ status, rejection_reason: reason }).eq('id', tm.id);
     setMsg(error ? error.message : 'ٹیم کی تصدیق کی حالت محفوظ ہو گئی ✔'); loadTeams();
+  }
+  async function updateCaptainEmail(tm) {
+    const value = prompt('کپتان کی درست Gmail درج کریں:', tm.captain_email || '');
+    if (value === null) return;
+    const email = value.trim().toLowerCase();
+    if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) return setMsg('درست Gmail درج کریں۔');
+    const { error } = await supabase.from('teams').update({ captain_email: email }).eq('id', tm.id);
+    setMsg(error ? error.message : 'کپتان کی Gmail محفوظ ہو گئی۔ اب لاگ اِن اکاؤنٹ بنائیں۔');
+    loadTeams();
   }
   async function createCaptainAccount(tm) {
     const email = (tm.captain_email || '').trim().toLowerCase();
@@ -239,7 +249,9 @@ export default function Admin() {
       {teams.map(tm => { const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
         return (<div className="card" key={tm.id}><b>{tm.name}</b> <small>{tm.reg_id}</small>
           <div>Team: <span className={'badge ' + (tm.status === 'approved' ? 'v' : 'n')}>{tm.status || 'pending'}</span> · Payment: <span className={'badge ' + (tm.payment === 'verified' ? 'v' : 'n')}>{tm.payment || 'pending'}</span></div>
-          <div dir="ltr">{tm.captain_email}</div><div dir="ltr">C1: {ps[0] && ps[0].name} {ps[0] && ps[0].mobile} | C2: {ps[1] && ps[1].name} {ps[1] && ps[1].mobile}</div>
+          <div dir="ltr">Captain Gmail: {tm.captain_email || 'Not added yet'}</div>
+          <button className="btn alt" onClick={() => updateCaptainEmail(tm)}>کپتان کی Gmail درج / تبدیل کریں</button>
+          <div dir="ltr">C1: {ps[0] && ps[0].name} {ps[0] && ps[0].mobile} | C2: {ps[1] && ps[1].name} {ps[1] && ps[1].mobile}</div>
           {last && <div dir="ltr">Txn: {last.transaction_id || '-'} <button className="btn alt" onClick={() => shot(last)}>Screenshot</button></div>}
           {tm.payment_rejection_reason && <small>رد کرنے کی وجہ: {tm.payment_rejection_reason}</small>}
           <details><summary>15 کھلاڑی</summary>{ps.map(pp => (<div key={pp.id} style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '6px 0' }}>
