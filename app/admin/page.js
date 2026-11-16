@@ -92,7 +92,7 @@ export default function Admin() {
   async function login(e) {
     e.preventDefault();
     setMsg('');
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: pw });
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password: pw });
     if (error) return setMsg(error.message);
     setPw('');
     await check();
@@ -167,8 +167,8 @@ export default function Admin() {
   }
   if (!ready) return <p>...</p>;
   if (!logged) return (<form onSubmit={login} className="card"><h2>Admin Login</h2>
-    <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} dir="ltr" autoComplete="username" />
-    <input placeholder="Password" type="password" value={pw} onChange={e => setPw(e.target.value)} dir="ltr" autoComplete="current-password" />
+    <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} dir="ltr" autoComplete="username" autoCapitalize="none" spellCheck={false} />
+    <input placeholder="Password" type="password" value={pw} onChange={e => setPw(e.target.value)} dir="ltr" autoComplete="current-password" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
     <p><a href="/reset-password?role=admin" className="tlink">Forgot Password?</a></p>
     {msg && <div className="err">{msg}</div>}<button className="btn">Login</button></form>);
   if (!isAdmin) return (<div className="card"><div className="err">آپ ایڈمن نہیں ہیں۔</div><button className="btn" onClick={logout}>Logout</button></div>);
