@@ -6,6 +6,7 @@ const ext = f => (f.type === 'image/png' ? 'png' : f.type === 'image/webp' ? 'we
 const okImg = f => f && ['image/jpeg', 'image/png', 'image/webp'].includes(f.type) && f.size <= 15 * 1024 * 1024;
 export default function Admin() {
   const [ready, setReady] = useState(false); const [isAdmin, setIsAdmin] = useState(false); const [logged, setLogged] = useState(false);
+  const [resetMode, setResetMode] = useState(false); const [newPassword, setNewPassword] = useState(''); const [confirmPassword, setConfirmPassword] = useState('');
   const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
   const [tab, setTab] = useState('teams'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
   const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
@@ -58,6 +59,18 @@ export default function Admin() {
     const { error } = await supabase.from('teams').delete().eq('id', tm.id); setMsg(error ? error.message : 'ٹیم حذف ہو گئی'); loadTeams();
   }
   useEffect(() => { check(); }, []);
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setResetMode(true);
+        setLogged(false);
+        setIsAdmin(false);
+        setMsg('نیا پاس ورڈ درج کریں۔');
+        setReady(true);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
   useEffect(() => { if (isAdmin) { load(); loadTeams(); } }, [isAdmin]);
   async function login(e) {
     e.preventDefault();
@@ -66,6 +79,29 @@ export default function Admin() {
     if (error) return setMsg(error.message);
     setPw('');
     await check();
+  }
+  async function sendPasswordReset() {
+    setMsg('');
+    if (!email.trim()) return setMsg('پہلے اپنا ای میل درج کریں۔');
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/admin`
+    });
+    setMsg(error ? error.message : 'پاس ورڈ ری سیٹ لنک آپ کے ای میل پر بھیج دیا گیا ہے۔ Inbox اور Spam فولڈر چیک کریں۔');
+  }
+  async function saveNewPassword(e) {
+    e.preventDefault();
+    setMsg('');
+    if (newPassword.length < 8) return setMsg('نیا پاس ورڈ کم از کم 8 حروف کا ہونا چاہیے۔');
+    if (newPassword !== confirmPassword) return setMsg('دونوں پاس ورڈ ایک جیسے نہیں ہیں۔');
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) return setMsg(error.message);
+    setNewPassword('');
+    setConfirmPassword('');
+    setResetMode(false);
+    setMsg('پاس ورڈ کامیابی سے تبدیل ہو گیا۔ اب نئے پاس ورڈ سے لاگ اِن کریں۔');
+    await supabase.auth.signOut();
+    setLogged(false);
+    setIsAdmin(false);
   }
   async function logout() { await supabase.auth.signOut(); setLogged(false); setIsAdmin(false); }
   const set = (k, v) => setC(x => ({ ...x, [k]: v }));
@@ -136,10 +172,15 @@ export default function Admin() {
     await supabase.storage.from('announcements').remove([a.image_path]); await supabase.from('announcements').delete().eq('id', a.id); load();
   }
   if (!ready) return <p>...</p>;
+  if (resetMode) return (<form onSubmit={saveNewPassword} className="card"><h2>نیا پاس ورڈ بنائیں</h2>
+    <input placeholder="New Password (کم از کم 8 حروف)" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} dir="ltr" autoComplete="new-password" />
+    <input placeholder="Confirm New Password" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} dir="ltr" autoComplete="new-password" />
+    {msg && <div className="err">{msg}</div>}<button className="btn">پاس ورڈ محفوظ کریں</button></form>);
   if (!logged) return (<form onSubmit={login} className="card"><h2>Admin Login</h2>
-    <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} dir="ltr" />
-    <input placeholder="Password" type="password" value={pw} onChange={e => setPw(e.target.value)} dir="ltr" />
-    {msg && <div className="err">{msg}</div>}<button className="btn">Login</button></form>);
+    <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} dir="ltr" autoComplete="username" />
+    <input placeholder="Password" type="password" value={pw} onChange={e => setPw(e.target.value)} dir="ltr" autoComplete="current-password" />
+    {msg && <div className="err">{msg}</div>}<button className="btn">Login</button>
+    <button type="button" className="btn alt" onClick={sendPasswordReset}>Forgot Password?</button></form>);
   if (!isAdmin) return (<div className="card"><div className="err">آپ ایڈمن نہیں ہیں۔</div><button className="btn" onClick={logout}>Logout</button></div>);
   const inp = (k, label, type = 'text') => (<><label>{label}</label><input type={type} list={['winner_team', 'loser_team', 'next_a', 'next_b'].includes(k) ? 'tn' : undefined} value={c[k] || ''} onChange={e => set(k, e.target.value)} /></>);
   const tsel = (k, label) => (<><label>{label}</label><select value={c[k] || ''} onChange={e => set(k, e.target.value)}><option value="">— ٹیم منتخب کریں —</option>{c[k] && !teams.some(x => x.name === c[k]) && <option value={c[k]}>{c[k]}</option>}{teams.map(x => <option key={x.id} value={x.name}>{x.name}</option>)}</select></>);
