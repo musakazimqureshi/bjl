@@ -27,8 +27,8 @@ export default function Splash() {
       const master = ctx.createGain();
       master.gain.setValueAtTime(0.0001, now);
       master.gain.exponentialRampToValueAtTime(0.24, now + 0.8);
-      master.gain.setValueAtTime(0.24, now + 10.6);
-      master.gain.exponentialRampToValueAtTime(0.0001, now + 11.8);
+      master.gain.setValueAtTime(0.24, now + 5.1);
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 5.8);
       master.connect(ctx.destination);
 
       // Original 12-second cinematic sports intro: layered brass-like synth,
@@ -128,7 +128,7 @@ export default function Splash() {
           ctx.close().catch(() => {});
           audioRef.current = null;
         }
-      }, 12400);
+      }, 6200);
     } catch (e) {
       // Audio is optional; the welcome animation still works if the browser blocks it.
     }
