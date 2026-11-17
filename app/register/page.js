@@ -27,7 +27,8 @@ export default function Register() {
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) return setErr(t('emailLead'));
     for (let i = 0; i < 15; i++) {
       const p = pl[i]; const n = ' #' + (i + 1);
-      if (!p.name.trim() || !p.age || !p.position || !p.file) return setErr(t('eMissing') + n);\n      if (!Number.isInteger(Number(p.age)) || Number(p.age) < 5 || Number(p.age) > 18) return setErr('Player ' + (i + 1) + ': عمر 5 سے 18 سال کے درمیان ہونی چاہیے۔');
+      if (!p.name.trim() || !p.age || !p.position || !p.file) return setErr(t('eMissing') + n);
+      if (!Number.isInteger(Number(p.age)) || Number(p.age) < 5 || Number(p.age) > 18) return setErr('Player ' + (i + 1) + ': عمر 5 سے 18 سال کے درمیان ہونی چاہیے۔');
       if (i < 2 && !MOB.test(p.mobile)) return setErr(t('eMob') + n);
       if (!['image/jpeg', 'image/png'].includes(p.file.type) || p.file.size > 15 * 1024 * 1024) return setErr(t('ePhoto') + n);
     }
