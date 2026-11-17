@@ -52,17 +52,23 @@ export default function Home() {
       </div>
     </section>
     <div className="duo">
-      <div className="card mc"><h3>{t('todayWinner')}</h3>
-        {showWin ? (<><div className="team">🏆 {nm(c.winner_team)}</div>
+      <div className="card mc winner-card"><h3>{t('todayWinner')}</h3>
+        {showWin ? (<><div className="winner-visual">
+            {c.winner_photo_path ? <img className="match-photo winner-photo" src={img(c.winner_photo_path)} alt="Today's winning team" loading="lazy" /> : <div className="photo-placeholder">🏆<span>WINNER PHOTO</span></div>}
+          </div>
+          <div className="team winner-name">🏆 {nm(c.winner_team)}</div>
           {c.loser_team && <div className="lose"><span className="dl">{t('defeated')}</span> {nm(c.loser_team)}</div>}
-          {c.winner_photo_path && <img className="match-photo winner-photo" src={img(c.winner_photo_path)} alt="Winning team" loading="lazy" />}
-          {c.winner_result && <div className="res">{c.winner_result}</div>}
+          <div className="winner-caption">{c.winner_result || 'Match result and winner details will appear here.'}</div>
           {c.winner_date && <div className="dt">📅 {c.winner_date}</div>}</>) : <div className="empty">{t('noWinner')}</div>}</div>
-      <div className="card mc"><h3>{t('nextMatch')}</h3>
-        {showNext ? (<><div className="next-sides"><div className="next-side">{c.next_a_photo_path && <img className="captain-photo" src={img(c.next_a_photo_path)} alt="Team A captain" loading="lazy" />}<div className="team">{nm(c.next_a)}</div></div><div className="vsx">{t('vs')}</div><div className="next-side">{c.next_b_photo_path && <img className="captain-photo" src={img(c.next_b_photo_path)} alt="Team B captain" loading="lazy" />}<div className="team">{nm(c.next_b)}</div></div></div>
-          <div className="dt">📅 {c.next_date} {c.next_time && '· ' + fmt(c.next_time)}</div>
+      <div className="card mc next-card"><h3>{t('nextMatch')}</h3>
+        {showNext ? (<><div className="next-sides">
+            <div className="next-side">{c.next_a_photo_path ? <img className="captain-photo" src={img(c.next_a_photo_path)} alt="Team A" loading="lazy" /> : <div className="next-photo-placeholder">TEAM A</div>}<div className="team">{nm(c.next_a)}</div></div>
+            <div className="vsx">{t('vs')}</div>
+            <div className="next-side">{c.next_b_photo_path ? <img className="captain-photo" src={img(c.next_b_photo_path)} alt="Team B" loading="lazy" /> : <div className="next-photo-placeholder">TEAM B</div>}<div className="team">{nm(c.next_b)}</div></div>
+          </div>
+          <div className="next-details"><div className="dt">📅 {c.next_date || 'Date to be announced'} {c.next_time && '· ' + fmt(c.next_time)}</div>
           <div className="dt">📍 {c.next_venue || 'Dab Ground, Battagram'}</div>
-          {cd && <div className="dt">⏳ {t('startsIn')}: {cd}</div>}</>) : <div className="empty">{t('noNext')}</div>}</div>
+          {cd && <div className="dt countdown">⏳ {t('startsIn')}: {cd}</div>}</div></>) : <div className="empty">{t('noNext')}</div>}</div>
     </div>
     <div className="duo">
       <div className="card"><h3>{t('annTitle')}</h3>
