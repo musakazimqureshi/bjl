@@ -5,6 +5,8 @@ import { useLang } from '../lib/i18n';
 import { supabase } from '../lib/supabase';
 import { CONTACTS } from '../lib/config';
 import People from '../components/People';
+import AnimatedNumber from '../components/AnimatedNumber';
+import HeroMotion from '../components/HeroMotion';
 const dateFmt = v => { if (!v) return ''; const [y, m, d] = String(v).slice(0, 10).split('-'); return y && m && d ? `${d}/${m}/${y}` : v; };
 const fmt = tm => { if (!tm) return ''; const [h, m] = tm.split(':'); const hh = +h; return `${((hh + 11) % 12) + 1}:${m} ${hh >= 12 ? 'PM' : 'AM'}`; };
 const img = p => supabase.storage.from('announcements').getPublicUrl(p).data.publicUrl;
@@ -27,7 +29,7 @@ export default function Home() {
     supabase.rpc('public_teams').then(({ data }) => data && setTms(data));
   }, []);
   useEffect(() => { if (qs.length < 2 || hold) return; const id = setInterval(() => setQi(i => (i + 1) % qs.length), 9000); return () => clearInterval(id); }, [qs.length, hold]);
-  useEffect(() => { if (moms.length < 2 || mh) return; const id = setInterval(() => setMi(i => (i + 1) % moms.length), 4500); return () => clearInterval(id); }, [moms.length, mh]);
+  useEffect(() => { if (moms.length < 2 || mh) return; const id = setInterval(() => setMi(i => (i + 1) % moms.length), 5000); return () => clearInterval(id); }, [moms.length, mh]);
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), 60000); return () => clearInterval(id); }, []);
   const nm = n => { const f = tms.find(x => x.name.trim().toLowerCase() === (n || '').trim().toLowerCase()); return f ? <button className="tlink" onClick={() => setTmSel(f)}>{n}</button> : n; };
   const target = c.next_date && c.next_time ? new Date(c.next_date + 'T' + c.next_time).getTime() : 0; const diff = target - now;
@@ -40,7 +42,7 @@ export default function Home() {
   const cm = moms[Math.min(mi, moms.length - 1)]; const la = ann[0];
   const showWin = c.winner_show !== '0' && c.winner_team; const showNext = c.next_show !== '0' && c.next_a && c.next_b;
   return (<>
-    <section className="hero bjl-hero"><div className="hero-kicker"><span className="hero-kicker-line"></span><span>BATTAGRAM · KHYBER PAKHTUNKHWA</span><span className="hero-kicker-line"></span></div>
+    <section className="hero bjl-hero"><HeroMotion /><div className="hero-kicker"><span className="hero-kicker-line"></span><span>BATTAGRAM · KHYBER PAKHTUNKHWA</span><span className="hero-kicker-line"></span></div>
       <div className="hero-mark"><span className="hero-mark-top">THE SPIRIT OF CRICKET</span><div className="shield" style={{ display: 'inline-block', fontSize: '2rem' }}>BJL</div><span className="hero-mark-bottom">SEASON <b>01</b></span></div>
       <h1>{t('title')}</h1>
       <div className="calli">{c.calli_path ? <img src={img(c.calli_path)} alt="" /> :
@@ -84,8 +86,8 @@ export default function Home() {
           <small>{moms.indexOf(cm) + 1}/{moms.length}</small></div>)}</div>
     </div>
     <People inline />
-    <div className="card"><div className="big">{s.total} {t('teamsRegistered')}</div>
-      <div>✓ {t('verifiedT')}: {s.verified}</div><div>{t('notVerifiedT')}: {s.not_verified}</div><small>{t('fee')}</small></div>
+    <div className="card"><div className="big"><AnimatedNumber value={s.total} /> {t('teamsRegistered')}</div>
+      <div>✓ {t('verifiedT')}: <AnimatedNumber value={s.verified} /></div><div>{t('notVerifiedT')}: {s.not_verified}</div><small>{t('fee')}</small></div>
     <section className="card official-group"><div className="group-kicker">BJL SEASON 1 · OFFICIAL COMMUNITY</div><h2>BJL Official WhatsApp Group</h2><p>{c.official_group_text || 'All BJL Season 1 details, match schedules, results, announcements and updates will be shared here.'}</p><a className="btn group-btn" href={c.official_whatsapp_group || 'https://chat.whatsapp.com/D5RUqQB6XVIIwHkYJkz5vZ'} target="_blank" rel="noopener noreferrer">Join Official WhatsApp Group</a><div className="group-number">WhatsApp Contact: +92 316 5738591</div></section>
     <h2>{t('contactTitle')}</h2>
     {CONTACTS.map((x, i) => (<div className="card" key={x.num}><b>{x.name}</b> · {t(x.role)}{i !== 0 && <div dir="ltr">{x.disp}</div>}
