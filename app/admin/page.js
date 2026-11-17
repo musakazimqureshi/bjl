@@ -10,6 +10,7 @@ export default function Admin() {
   const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
   const [tab, setTab] = useState('overview'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
   const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
+  const [captainCreds, setCaptainCreds] = useState({});
   async function check() {
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -73,12 +74,27 @@ export default function Admin() {
   async function createCaptainAccount(tm) {
     const email = (tm.captain_email || '').trim().toLowerCase();
     if (!email) return setMsg('اس ٹیم کا کپتان Gmail ریکارڈ میں موجود نہیں۔');
-    const password = '12345678';
-    setMsg('کپتان کا لاگ اِن اکاؤنٹ بنایا یا اپ ڈیٹ کیا جا رہا ہے...');
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
+    const bytes = new Uint8Array(14);
+    crypto.getRandomValues(bytes);
+    const password = Array.from(bytes, b => alphabet[b % alphabet.length]).join('');
+    setMsg('کپتان کے لیے نیا پاس ورڈ بنایا جا رہا ہے...');
     const { data, error } = await supabase.functions.invoke('captain-login-provisioner', {
       body: { teamId: tm.id, email, password }
     });
-    setMsg(error ? (error.message || 'اکاؤنٹ نہیں بن سکا۔') : (data?.message || 'کپتان کا اکاؤنٹ تیار ہے۔ پاس ورڈ: 12345678'));
+    if (error || !data?.ok) return setMsg(error?.message || data?.error || 'اکاؤنٹ نہیں بن سکا۔');
+    setCaptainCreds(prev => ({ ...prev, [tm.id]: { email, password } }));
+    setMsg('Captain login تیار ہے۔ یہ پاس ورڈ کپتان کو محفوظ طریقے سے دے دیں۔');
+  }
+  async function copyCaptainCredentials(tm) {
+    const cred = captainCreds[tm.id];
+    if (!cred) return;
+    try {
+      await navigator.clipboard.writeText('BJL Team Login\\nGmail: ' + cred.email + '\\nPassword: ' + cred.password);
+      setMsg('Gmail اور Password کاپی ہو گئے ✔');
+    } catch {
+      setMsg('کاپی نہیں ہو سکا، پاس ورڈ کو دستی طور پر کاپی کریں۔');
+    }
   }
   async function delTeam(tm) {
     if (!confirm('پوری ٹیم ہمیشہ کے لیے حذف کریں؟')) return;
@@ -267,7 +283,12 @@ export default function Admin() {
           <div className="row" style={{ justifyContent: 'flex-start' }}>
             <button className="btn" onClick={() => setTeamStatus(tm, 'approved')}>✓ Approve Team</button>
             <button className="btn alt" onClick={() => setTeamStatus(tm, 'rejected')}>Reject Team</button>
-            <button className="btn alt" onClick={() => createCaptainAccount(tm)}>Create Captain Login</button>
+            <button className="btn alt" onClick={() => createCaptainAccount(tm)}>{captainCreds[tm.id] ? 'Generate New Password' : 'Generate Captain Password'}</button>
+            {captainCreds[tm.id] && <div className="good" style={{ width: '100%', textAlign: 'left' }} dir="ltr">
+              <b>Captain Login Details</b><div>Gmail: {captainCreds[tm.id].email}</div>
+              <div>Password: <strong>{captainCreds[tm.id].password}</strong></div>
+              <button className="btn alt" onClick={() => copyCaptainCredentials(tm)}>Copy Gmail + Password</button>
+            </div>}
             <button className="btn" onClick={() => setPay(tm, 'verified')}>✓ Verify Payment</button>
             <button className="btn alt" onClick={() => setPay(tm, 'notverified')}>Mark Payment Pending</button>
             <button className="btn alt" onClick={() => setPay(tm, 'rejected')}>مسترد</button>
