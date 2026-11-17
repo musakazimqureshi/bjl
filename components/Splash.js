@@ -160,16 +160,16 @@ export default function Splash() {
       return;
     }
     // Attempt sound automatically on each welcome screen. Browsers may require a tap.
-    soundOnRef.current = true;
-    setSoundOn(true);
-    showWelcome(true);
+    soundOnRef.current = false;
+    setSoundOn(false);
+    showWelcome(false);
 
     let hiddenAt = 0;
     const onVisibility = () => {
       if (document.visibilityState === 'hidden') {
         hiddenAt = Date.now();
       } else if (document.visibilityState === 'visible' && hiddenAt && Date.now() - hiddenAt > 800) {
-        showWelcome(true);
+        showWelcome(false);
         hiddenAt = 0;
       }
     };
@@ -222,10 +222,10 @@ export default function Splash() {
     </div>
   );
   return (
-    <div className={'splash' + (fade ? ' fade' : '')} role="dialog" aria-label="Welcome to BGL Season 1">
+    <div className={'splash' + (fade ? ' fade' : '')} role="dialog" aria-label="Welcome to BJL Season 1">
       <div className="sp-in">
         <div className="sp-kicker">BATTAGRAM JUNIOR LEAGUE</div>
-        <div className="sp-t">WELCOME TO<br /><span>BGL SEASON 1</span></div>
+        <div className="sp-t">WELCOME TO<br /><span>BJL SEASON 1</span></div>
         <div className="sp-line" />
         <div className="sp-s">THE GAME BEGINS HERE</div>
       </div>
