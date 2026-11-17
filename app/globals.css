@@ -467,3 +467,28 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--bjl-gold);outline-o
  .hdr .lang{margin-left:auto;margin-right:8px;min-height:44px}
 }
 @media(prefers-reduced-motion:reduce){.hdr nav{transition:none}}
+
+/* Broadcast-style hero detail and restrained match/team treatments */
+.bjl-hero{--hero-parallax-x:0px;--hero-parallax-y:0px;isolation:isolate;overflow:hidden}
+.bjl-hero .hero-mark,.bjl-hero h1,.bjl-hero .hero-season{transform:translate3d(var(--hero-parallax-x),var(--hero-parallax-y),0);transition:transform .18s ease-out}
+.bjl-hero-ball{position:absolute;right:clamp(16px,7vw,82px);top:clamp(30px,8vw,82px);width:clamp(42px,6vw,72px);height:auto;opacity:.8;filter:drop-shadow(0 12px 15px #0009);pointer-events:none;animation:bjlBallFloat 5s ease-in-out infinite;z-index:0}
+@keyframes bjlBallFloat{0%,100%{transform:translate3d(0,0,0) rotate(-8deg)}50%{transform:translate3d(0,-7px,0) rotate(5deg)}}
+.bjl-hero .row .btn:first-child{position:relative;overflow:hidden}
+.bjl-hero .row .btn:first-child:after{content:"";position:absolute;inset:-40% auto -40% -45%;width:28%;transform:translateX(-180%) skewX(-18deg);background:linear-gradient(90deg,transparent,#ffffff55,transparent);pointer-events:none}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){.bjl-hero .row .btn:first-child:hover:after{transition:transform .55s ease;transform:translateX(650%) skewX(-18deg)}}
+.winner-card.in-view{position:relative;overflow:hidden}
+.winner-card.in-view:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,transparent 35%,#f5df9a20 48%,#fff8 50%,#f5df9a20 52%,transparent 65%);transform:translateX(-120%);animation:bjlWinnerSweep 1.15s .12s ease-out 1 both}
+@keyframes bjlWinnerSweep{to{transform:translateX(120%)}}
+.winner-card .winner-photo{filter:saturate(1.08) contrast(1.04);box-shadow:0 0 0 1px #d4af3770,0 8px 24px #d4af3720}
+.ms .sqimg{animation:bjlHighlightEnter .48s ease-out both}
+@keyframes bjlHighlightEnter{from{opacity:.45;transform:scale(1.035)}to{opacity:1;transform:scale(1)}}
+.two>.card{position:relative;overflow:hidden;border:1px solid #d4af3726;background:linear-gradient(145deg,#1b171c,#111217 72%)}
+.two>.card .players .pl{border:1px solid #d4af3728;border-radius:12px;padding:8px;background:#090a0e}
+.two>.card .players img,.pgrid .pl img{aspect-ratio:1/1;object-fit:cover;border-radius:9px}
+.two>.card .badge.v{position:relative;overflow:hidden}
+.two>.card .badge.v:after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,#fff8 50%,transparent 70%);transform:translateX(-120%);animation:bjlBadgeSweep 1s .35s ease-out 1 both}
+@keyframes bjlBadgeSweep{to{transform:translateX(120%)}}
+.pp{border:1px solid #d4af3740;box-shadow:0 8px 26px #0006}
+.pp img{box-shadow:0 0 0 2px #d4af37,0 0 18px #d4af3728}
+@media(max-width:639px){.bjl-hero-ball{right:14px;top:18px;width:42px;opacity:.55}.bjl-hero .hero-mark,.bjl-hero h1,.bjl-hero .hero-season{transition:none}}
+@media(prefers-reduced-motion:reduce){.bjl-hero-ball{animation:none}.bjl-hero .hero-mark,.bjl-hero h1,.bjl-hero .hero-season{transform:none!important}.winner-card.in-view:after,.two>.card .badge.v:after,.ms .sqimg{animation:none!important}}
