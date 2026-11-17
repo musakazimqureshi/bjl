@@ -1,9 +1,8 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLang } from '../lib/i18n';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
 export default function Header() {
   const { t, lang, setLang } = useLang();
   const pathname = usePathname();
