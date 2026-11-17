@@ -127,3 +127,33 @@ main{padding-bottom:84px}
 @keyframes ballSix{0%{transform:translate(0,0) scale(1);opacity:1}18%{transform:translate(28px,-22px) scale(1.2);opacity:1}100%{transform:translate(260px,-190px) scale(.35);opacity:.05}}
 @keyframes sixFlash{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
 @media(prefers-reduced-motion:reduce){.six-bat,.six-ball,.six-flash{animation:none}.six-ball{opacity:1}.six-flash{opacity:0}}
+
+/* BJL match centre: clear photo-first cards and restrained motion */
+.winner-card,.next-card{text-align:center}
+.winner-visual{width:100%;margin:2px auto 8px}
+.winner-photo{width:100%;max-height:220px;aspect-ratio:16/9;object-fit:cover;border-radius:12px}
+.winner-name{margin:6px 0}
+.winner-caption{margin:8px 0 2px;padding:10px 12px;min-height:46px;border:1px solid #d4af3755;border-radius:9px;background:linear-gradient(135deg,#171216,#292027);color:#f4e9c8;white-space:pre-wrap;overflow-wrap:anywhere}
+.photo-placeholder,.next-photo-placeholder{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;min-height:150px;border:1px dashed #d4af3799;border-radius:12px;background:radial-gradient(circle,#3b171b,#111);color:var(--gold);font-weight:900;letter-spacing:.12em}
+.photo-placeholder{min-height:170px;font-size:2rem}
+.photo-placeholder span{font-size:.72rem}
+.next-photo-placeholder{width:100%;max-width:150px;aspect-ratio:1/1;min-height:0;margin:0 auto;font-size:.78rem}
+.next-sides{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:clamp(3px,1.5vw,12px);margin:10px 0 14px}
+.next-side{display:flex;flex-direction:column;align-items:center;gap:7px}
+.next-side .captain-photo{display:block;width:100%;max-width:150px;aspect-ratio:1/1;object-fit:cover}
+.next-side .team{font-size:clamp(.78rem,3.2vw,1.2rem);line-height:1.3;overflow-wrap:anywhere}
+.next-sides .vsx{align-self:center;padding:7px 9px;border:1px solid #d4af3788;border-radius:999px;background:#390d12;color:#fff;font-size:clamp(.78rem,3vw,1rem);font-weight:1000;letter-spacing:.08em;box-shadow:0 0 14px #e0242b44}
+.next-details{border-top:1px solid #d4af3744;padding-top:8px;margin-top:auto;text-align:left}
+.countdown{color:var(--gold);font-weight:800}
+@media(max-width:520px){.duo{gap:8px}.duo .card{padding:9px;min-height:0}.next-sides{gap:3px}.next-side .captain-photo,.next-photo-placeholder{max-width:100%}.next-sides .vsx{padding:5px 6px}.winner-photo{min-height:115px}}
+@media(prefers-reduced-motion:no-preference){
+ .winner-photo,.captain-photo,.photo-placeholder,.next-photo-placeholder{transition:transform .35s ease,box-shadow .35s ease,filter .35s ease}
+ .winner-card:hover .winner-photo,.next-card:hover .captain-photo{transform:scale(1.025);box-shadow:0 0 22px #d4af3766}
+ .next-sides .vsx{animation:versusGlow 2.8s ease-in-out infinite}
+ .winner-caption{transition:border-color .25s ease,background .25s ease}
+ .winner-card:hover .winner-caption{border-color:#d4af37aa;background:linear-gradient(135deg,#21151b,#34212a)}
+ .official-group .group-btn{animation:groupPulse 3.2s ease-in-out infinite}
+}
+@keyframes versusGlow{0%,100%{box-shadow:0 0 8px #e0242b22}50%{box-shadow:0 0 18px #e0242b88}}
+@keyframes groupPulse{0%,100%{box-shadow:0 0 0 #25d36600}50%{box-shadow:0 0 16px #25d36666}}
+@media(prefers-reduced-motion:reduce){.next-sides .vsx,.official-group .group-btn{animation:none!important}}
