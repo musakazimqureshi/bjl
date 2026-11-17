@@ -5,12 +5,14 @@ import { usePathname } from 'next/navigation';
 export default function Splash() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
+  const [sixVisible, setSixVisible] = useState(false);
   const [fade, setFade] = useState(false);
   const [soundOn, setSoundOn] = useState(false);
   const hideTimer = useRef(null);
   const fadeTimer = useRef(null);
   const audioRef = useRef(null);
   const audioStopTimer = useRef(null);
+  const sixTimer = useRef(null);
   const soundOnRef = useRef(false);
 
   const playIntro = useCallback(() => {
@@ -137,16 +139,24 @@ export default function Splash() {
   const showWelcome = useCallback((playSound = true) => {
     if (hideTimer.current) window.clearTimeout(hideTimer.current);
     if (fadeTimer.current) window.clearTimeout(fadeTimer.current);
+    if (sixTimer.current) window.clearTimeout(sixTimer.current);
+    setSixVisible(false);
     setFade(false);
     setVisible(true);
     if (playSound && soundOnRef.current) playIntro();
     fadeTimer.current = window.setTimeout(() => setFade(true), 11200);
-    hideTimer.current = window.setTimeout(() => setVisible(false), 12000);
+    hideTimer.current = window.setTimeout(() => {
+      setVisible(false);
+      setSixVisible(true);
+      sixTimer.current = window.setTimeout(() => setSixVisible(false), 2000);
+    }, 12000);
   }, [playIntro]);
 
   useEffect(() => {
     if (pathname !== '/') {
       setVisible(false);
+      setSixVisible(false);
+      if (sixTimer.current) window.clearTimeout(sixTimer.current);
       return;
     }
     // Attempt sound automatically on each welcome screen. Browsers may require a tap.
@@ -168,6 +178,7 @@ export default function Splash() {
       document.removeEventListener('visibilitychange', onVisibility);
       if (hideTimer.current) window.clearTimeout(hideTimer.current);
       if (fadeTimer.current) window.clearTimeout(fadeTimer.current);
+      if (sixTimer.current) window.clearTimeout(sixTimer.current);
       if (audioStopTimer.current) window.clearTimeout(audioStopTimer.current);
       if (audioRef.current) audioRef.current.close().catch(() => {});
     };
@@ -189,7 +200,27 @@ export default function Splash() {
     }
   };
 
-  if (!visible) return null;
+  if (!visible && !sixVisible) return null;
+  if (sixVisible) return (
+    <div className="six-intro" role="status" aria-label="BJL six hitting animation">
+      <div className="six-stage">
+        <div className="six-kicker">BATTAGRAM JUNIOR LEAGUE</div>
+        <svg className="six-svg" viewBox="0 0 520 300" role="img" aria-label="Illustrated helmeted batter hitting a six">
+          <defs><linearGradient id="sixBat" x1="0" x2="1"><stop stopColor="#f7e6a2"/><stop offset="1" stopColor="#b88936"/></linearGradient><radialGradient id="sixGlow"><stop stopColor="#e0242b" stopOpacity=".55"/><stop offset="1" stopColor="#e0242b" stopOpacity="0"/></radialGradient></defs>
+          <ellipse cx="250" cy="265" rx="210" ry="24" fill="#000" opacity=".42"/><ellipse cx="270" cy="220" rx="230" ry="100" fill="url(#sixGlow)"/>
+          <path d="M85 265H440" stroke="#d4af37" strokeOpacity=".55" strokeWidth="2"/><path d="M115 265v-34m12 34v-34m-12 12h12" stroke="#eee" strokeWidth="3" fill="none"/>
+          <g stroke="#f4f0e8" strokeWidth="13" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            <path d="M245 142L225 205L190 254"/><path d="M225 205L278 250"/><path d="M242 151L286 184L330 157"/><path d="M286 184L246 211"/>
+          </g>
+          <path d="M215 126Q240 96 270 122L281 166Q249 183 218 157Z" fill="#b01212" stroke="#d4af37" strokeWidth="3"/><path d="M215 126Q210 88 247 78Q286 79 288 121L270 132L259 110L228 116Z" fill="#17171b" stroke="#d4af37" strokeWidth="4"/><path d="M266 126L295 138L286 151L264 145" fill="none" stroke="#d4af37" strokeWidth="5"/>
+          <g className="six-bat"><path d="M245 168L356 47" stroke="url(#sixBat)" strokeWidth="15" strokeLinecap="round"/><path d="M245 168L356 47" stroke="#fff2c8" strokeWidth="3" strokeLinecap="round"/></g>
+          <circle className="six-ball" cx="310" cy="145" r="9" fill="#e0242b" stroke="#fff" strokeWidth="2"/><path className="six-flash" d="M300 132l-28-20m42 12l12-31m-1 50l37-4" stroke="#fff" strokeWidth="5" strokeLinecap="round"/>
+        </svg>
+        <div className="six-title">THAT'S A SIX!</div>
+        <div className="six-skip">BJL SEASON 1 · LET'S PLAY</div>
+      </div>
+    </div>
+  );
   return (
     <div className={'splash' + (fade ? ' fade' : '')} role="dialog" aria-label="Welcome to BGL Season 1">
       <div className="sp-in">
