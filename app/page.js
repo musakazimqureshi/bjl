@@ -98,7 +98,7 @@ export default function Home() {
         <div className="qn">قول نمبر {qi + 1}</div>
         <p className="qb">{qs[qi].body}</p>
         <div className="qr">کتاب: {qs[qi].book}</div><div className="qr">حوالہ: {qs[qi].ref}</div></div>
-      <div className="row"><button className="btn alt quote-arrow" onClick={() => stepQ(-1)} aria-label="پچھلا قول">⬅</button>
+      <div className="row"><button className="btn alt quote-arrow quote-arrow-prev" onClick={() => stepQ(-1)} aria-label="پچھلا قول">➡</button>
         <span>{qi + 1} / {qs.length}</span><button className="btn alt quote-arrow" onClick={() => stepQ(1)} aria-label="اگلا قول">➡</button></div></section>}
     {allAnn && <div className="modal" onClick={() => setAllAnn(false)}><div className="mbox" onClick={e => e.stopPropagation()}>
       <button className="btn alt" onClick={() => setAllAnn(false)}>✕ {t('close')}</button>
