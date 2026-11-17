@@ -186,3 +186,39 @@ main{padding-bottom:84px}
 @media (prefers-reduced-motion: reduce) {
   .hero h1,.hero .shield,.hero .row .btn:first-child,.group-kicker,.hero .calli,.sp-line,.sp-in,.sp-organizer { animation: none !important; }
 }
+
+/* BJL premium motion system */
+.hdr{position:sticky;top:0;z-index:80;background:rgba(5,5,8,.84);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);box-shadow:0 8px 24px #0008}
+.hdr nav a{position:relative;padding:7px 2px;color:#e9e6e3;transition:color .2s}
+.hdr nav a:after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,var(--red2),var(--gold));transform:scaleX(0);transform-origin:left;transition:transform .25s}
+.hdr nav a:hover,.hdr nav a[aria-current="page"]{color:var(--gold)}
+.hdr nav a:hover:after,.hdr nav a[aria-current="page"]:after{transform:scaleX(1)}
+.hero{isolation:isolate}
+.hero:before,.hero:after{content:"";position:absolute;z-index:-1;pointer-events:none;border-radius:50%;filter:blur(2px)}
+.hero:before{width:34vw;height:34vw;min-width:180px;min-height:180px;max-width:420px;max-height:420px;left:-12%;top:-30%;background:radial-gradient(circle,#e0242b22,transparent 68%);animation:heroOrb 9s ease-in-out infinite}
+.hero:after{width:28vw;height:28vw;min-width:150px;min-height:150px;max-width:340px;max-height:340px;right:-10%;bottom:-34%;background:radial-gradient(circle,#d4af3720,transparent 68%);animation:heroOrb 11s ease-in-out infinite reverse}
+.hero h1{animation:heroHeadline .72s cubic-bezier(.2,.8,.2,1) both,titleGlow 3.8s ease-in-out .8s infinite}
+.hero .row .btn,.btn{transition:transform .22s ease,box-shadow .22s ease,filter .22s ease}
+.hero .row .btn:hover,.btn:hover{transform:translateY(-3px) scale(1.035);box-shadow:0 8px 22px #b0121277,0 0 12px #d4af3733}
+.btn:active{transform:scale(.98)}
+.card,.pp,.official-group{transition:transform .28s cubic-bezier(.2,.8,.2,1),border-color .28s,box-shadow .28s}
+.card:hover,.pp:hover{transform:translateY(-6px);border-color:#d4af37aa;box-shadow:0 14px 32px #000b,0 0 18px #b0121233}
+.winner-card{border-color:#d4af3788;background:linear-gradient(145deg,#282126,#1d1b20 60%,#271719)}
+.winner-card h3{color:var(--gold)}
+.winner-card:before{content:"";display:block;height:2px;margin:-14px -14px 12px;background:linear-gradient(90deg,transparent,var(--gold),var(--red2),var(--gold),transparent);background-size:200% 100%;animation:goldSweep 4s linear infinite}
+.badge.v{position:relative;overflow:hidden}
+.badge.v:after{content:"";position:absolute;inset:-40% auto -40% -60%;width:35%;transform:rotate(22deg);background:linear-gradient(90deg,transparent,#fff9,transparent);animation:badgeShine 4s ease-in-out infinite}
+.fwa{animation:floatWA 4s ease-in-out infinite;transition:transform .2s,box-shadow .2s}
+.fwa:hover{transform:translateY(-4px) scale(1.04);box-shadow:0 8px 24px #25d36655}
+.pp img{transition:transform .4s cubic-bezier(.2,.8,.2,1),filter .4s}
+.pp:hover img{transform:scale(1.035);filter:saturate(1.12)}
+.motion-item{opacity:0;transform:translateY(20px) scale(.975);transition:opacity .62s ease,transform .62s cubic-bezier(.2,.8,.2,1)}
+.motion-item.in-view{opacity:1;transform:translateY(0) scale(1)}
+.motion-card.in-view{transition-delay:var(--reveal-delay,0ms)}
+@keyframes heroHeadline{from{opacity:0;transform:translateY(18px) scale(.94);filter:blur(5px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+@keyframes heroOrb{0%,100%{transform:translate3d(0,0,0) scale(1);opacity:.65}50%{transform:translate3d(14px,-12px,0) scale(1.12);opacity:1}}
+@keyframes goldSweep{0%{background-position:100% 0}100%{background-position:-100% 0}}
+@keyframes badgeShine{0%,65%{left:-60%}100%{left:140%}}
+@keyframes floatWA{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@media(max-width:700px){.hdr{gap:8px;padding:8px 10px}.hdr nav{gap:9px}.hdr nav a{font-size:.86rem}.motion-item{transform:translateY(12px) scale(.985);transition-duration:.48s}.card:hover,.pp:hover{transform:translateY(-3px)}}
+@media(prefers-reduced-motion:reduce){.hero:before,.hero:after,.hero h1,.fwa,.winner-card:before,.badge.v:after{animation:none!important}.motion-item{opacity:1!important;transform:none!important;transition:none!important}.card,.pp,.btn,.pp img{transition:none!important}}
