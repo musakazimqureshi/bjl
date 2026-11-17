@@ -180,11 +180,11 @@ export default function Admin() {
     <h2>BJL Admin</h2>
     <datalist id="tn">{teams.map(x => <option key={x.id} value={x.name} />)}</datalist>
     <div className="tabs">
-      {[['overview', 'Overview'], ['teams', 'ٹیمیں'], ['match', 'میچ سینٹر'], ['ann', 'اعلانات'], ['people', 'ٹیم تصاویر'], ['moms', 'BJL Moments'], ['quotes', 'اقوال'], ['set', 'سیٹنگ']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
+      {[['overview', 'Overview'], ['teams', 'Teams'], ['match', 'Matches & Results'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['quotes', 'Quotes'], ['set', 'Settings']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
       <button className="btn" onClick={logout}>Logout</button></div>
     {msg && <div className="good">{msg}</div>}
     {tab === 'overview' && (<>
-      <div className="card"><h3>Dashboard Overview</h3><p>آپ کے ٹورنامنٹ کا مکمل خلاصہ</p>
+      <div className="card"><h3>Dashboard Overview</h3><p>Season 1 tournament summary</p>
         <div className="two">
           <div className="card"><b>کل ٹیمیں</b><div className="big">{teams.length}</div></div>
           <div className="card"><b>ٹیم منظور شدہ</b><div className="big">{teams.filter(x => x.status === 'approved').length}</div></div>
@@ -201,12 +201,12 @@ export default function Admin() {
         <button className="btn alt" onClick={() => setTab('set')}>ویب سائٹ سیٹنگز</button>
       </div></div>
     </>)}
-    {tab === 'match' && (<><div className="card"><h3>آج کا فاتح</h3>
-      {tsel('winner_team', 'جیتنے والی ٹیم')}{tsel('loser_team', 'مخالف (ہارنے والی) ٹیم')}{inp('winner_result', 'نتیجہ / مختصر اعلان (اختیاری)')}{inp('winner_date', 'میچ کی تاریخ', 'date')}{show('winner_show', 'ہوم پیج پر دکھائیں')}
-      <button className="btn" onClick={() => save(['winner_team', 'loser_team', 'winner_result', 'winner_date', 'winner_show'])}>محفوظ کریں</button></div>
-      <div className="card"><h3>اگلا میچ</h3>
-        {tsel('next_a', 'ٹیم A')}{tsel('next_b', 'ٹیم B')}{inp('next_date', 'تاریخ', 'date')}{inp('next_time', 'وقت', 'time')}{inp('next_venue', 'مقام (خالی ہو تو: Dab Ground, Battagram)')}{show('next_show', 'ہوم پیج پر دکھائیں')}
-        <button className="btn" onClick={() => save(['next_a', 'next_b', 'next_date', 'next_time', 'next_venue', 'next_show'])}>محفوظ کریں</button></div></>)}
+    {tab === 'match' && (<><div className="card"><h3>Today's Winner</h3>
+      {tsel('winner_team', 'Winning Team')}{tsel('loser_team', 'Opponent Team')}{inp('winner_result', 'Match Result / Details')}{inp('winner_date', 'Match Date', 'date')}{show('winner_show', 'Show on Homepage')}
+      <label>Winner / Team Photo</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('winner_photo', e.target.files[0])} />{c.winner_photo_path && <img className="match-photo" src={pa(c.winner_photo_path)} alt="Winning team" />}<button className="btn" onClick={() => save(['winner_team', 'loser_team', 'winner_result', 'winner_date', 'winner_show'])}>Save Winner</button></div>
+      <div className="card"><h3>Next Match</h3>
+        {tsel('next_a', 'Team A')}{tsel('next_b', 'Team B')}{inp('next_date', 'Match Date', 'date')}{inp('next_time', 'Match Time', 'time')}{inp('next_venue', 'Venue (default: Dab Ground, Battagram)')}<div className="two"><div><label>Team A Captain Photo</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('next_a_photo', e.target.files[0])} />{c.next_a_photo_path && <img className="match-photo" src={pa(c.next_a_photo_path)} alt="Team A captain" />}</div><div><label>Team B Captain Photo</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('next_b_photo', e.target.files[0])} />{c.next_b_photo_path && <img className="match-photo" src={pa(c.next_b_photo_path)} alt="Team B captain" />}</div></div>{show('next_show', 'Show on Homepage')}
+        <button className="btn" onClick={() => save(['next_a', 'next_b', 'next_date', 'next_time', 'next_venue', 'next_show'])}>Save Next Match</button></div></>)}
     {tab === 'ann' && (<><form className="card" onSubmit={addAnn}><h3>نیا اعلان</h3>
       <label>عنوان</label><input value={f.title} onChange={e => setF({ ...f, title: e.target.value })} />
       <label>تفصیل</label><input value={f.description} onChange={e => setF({ ...f, description: e.target.value })} />
@@ -241,10 +241,12 @@ export default function Admin() {
       {qs.map((x, i) => (<div className="card" key={x.id} dir="rtl"><small>{i + 1}</small> {x.published ? '✅' : '⛔'}<p>{x.body}</p><small>{x.book} · {x.ref}</small>
         <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt" onClick={() => moveQuote(i, -1)}>▲</button><button className="btn alt" onClick={() => moveQuote(i, 1)}>▼</button>
           <button className="btn alt" onClick={() => editQuote(x)}>ایڈٹ</button><button className="btn alt" onClick={() => togQuote(x)}>{x.published ? 'چھپائیں' : 'دکھائیں'}</button><button className="btn alt" onClick={() => delQuote(x)}>حذف</button></div></div>))}</>)}
-    {tab === 'set' && (<div className="card"><h3>Ask Falak بٹن</h3>
-      {inp('falak_whatsapp', 'WhatsApp نمبر (بین الاقوامی، مثلاً 923411620498)')}{inp('falak_btn', 'بٹن کا متن')}{inp('falak_msg', 'ڈیفالٹ پیغام (WhatsApp میں پہلے سے لکھا آئے گا)')}
+    {tab === 'set' && (<div className="card"><h3>WhatsApp & Website Settings</h3>
+      {inp('falak_whatsapp', 'WhatsApp Contact Number (international format, e.g. 923165738591)')}{inp('falak_btn', 'Floating WhatsApp Button Text')}{inp('falak_msg', 'Default WhatsApp Message')}
+      <label>Official WhatsApp Group Invite Link</label><input value={c.official_whatsapp_group || 'https://chat.whatsapp.com/D5RUqQB6XVIIwHkYJkz5vZ'} onChange={e => set('official_whatsapp_group', e.target.value)} dir="ltr" />
+      <label>Group Information Message</label><input value={c.official_group_text || 'All BJL Season 1 updates, schedules, results and announcements are available in the official WhatsApp group.'} onChange={e => set('official_group_text', e.target.value)} />
       <label><input type="checkbox" style={{ width: 'auto' }} checked={c.registration_open !== 'false'} onChange={e => set('registration_open', e.target.checked ? 'true' : 'false')} /> نئی ٹیموں کی رجسٹریشن کھلی ہے</label>
-      <button className="btn" onClick={() => save(['falak_whatsapp', 'falak_btn', 'falak_msg', 'registration_open'])}>محفوظ کریں</button></div>)}
+      <button className="btn" onClick={() => save(['falak_whatsapp', 'falak_btn', 'falak_msg', 'official_whatsapp_group', 'official_group_text', 'registration_open'])}>Save Settings</button></div>)}
     {tab === 'teams' && (<><div className="card">کل ٹیمیں: {teams.length} · تصدیق شدہ: {teams.filter(x => x.payment === 'verified').length}</div>
       {teams.map(tm => { const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
         return (<div className="card" key={tm.id}><b>{tm.name}</b> <small>{tm.reg_id}</small>
