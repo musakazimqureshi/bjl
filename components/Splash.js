@@ -144,7 +144,7 @@ export default function Splash() {
     setFade(false);
     setVisible(true);
     if (playSound && soundOnRef.current) playIntro();
-    fadeTimer.current = window.setTimeout(() => setFade(true), 11200);
+    fadeTimer.current = window.setTimeout(() => setFade(true), 4300);
     hideTimer.current = window.setTimeout(() => {
       setVisible(false);
       setSixVisible(false);
