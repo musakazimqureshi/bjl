@@ -24,7 +24,7 @@ export default function Admin() {
     } catch (error) {
       setLogged(false);
       setIsAdmin(false);
-      setMsg(error?.message || 'لاگ اِن چیک نہیں ہو سکا۔');
+      setMsg(error?.message || 'Could not verify login.');
     } finally {
       setReady(true);
     }
@@ -37,7 +37,7 @@ export default function Admin() {
   }
   async function loadTeams() {
     const { data, error } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').order('created_at', { ascending: false });
-    if (error) { setMsg('ٹیموں کا ریکارڈ لوڈ نہیں ہوا: ' + error.message); return; }
+    if (error) { setMsg('Could not load teams: ' + error.message); return; }
     setTeams(data || []);
   }
   const pub = p => supabase.storage.from('player-photos').getPublicUrl(p).data.publicUrl;
@@ -56,9 +56,9 @@ export default function Admin() {
   }
   async function setTeamStatus(tm, status) {
     let reason = null;
-    if (status === 'rejected') { reason = prompt('ٹیم مسترد کرنے کی وجہ لکھیں'); if (!reason) return; }
+    if (status === 'rejected') { reason = prompt('Reject Team کرنے کی وجہ لکھیں'); if (!reason) return; }
     const { error } = await supabase.from('teams').update({ status, rejection_reason: reason }).eq('id', tm.id);
-    setMsg(error ? error.message : 'ٹیم کی تصدیق کی حالت محفوظ ہو گئی ✔'); loadTeams();
+    setMsg(error ? error.message : 'Team status saved ✔'); loadTeams();
   }
   async function updateCaptainEmail(tm) {
     const value = prompt('کپتان کی درست Gmail درج کریں:', tm.captain_email || '');
@@ -66,7 +66,7 @@ export default function Admin() {
     const email = value.trim().toLowerCase();
     if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) return setMsg('درست Gmail درج کریں۔');
     const { error } = await supabase.from('teams').update({ captain_email: email }).eq('id', tm.id);
-    setMsg(error ? error.message : 'کپتان کی Gmail محفوظ ہو گئی۔ اب لاگ اِن اکاؤنٹ بنائیں۔');
+    setMsg(error ? error.message : 'Captain email saved. You can now create the login account.');
     loadTeams();
   }
   async function createCaptainAccount(tm) {
@@ -171,7 +171,7 @@ export default function Admin() {
     <input placeholder="Password" type="password" value={pw} onChange={e => setPw(e.target.value)} dir="ltr" autoComplete="current-password" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
     <p><a href="/reset-password?role=admin" className="tlink">Forgot Password?</a></p>
     {msg && <div className="err">{msg}</div>}<button className="btn">Login</button></form>);
-  if (!isAdmin) return (<div className="card"><div className="err">آپ ایڈمن نہیں ہیں۔</div><button className="btn" onClick={logout}>Logout</button></div>);
+  if (!isAdmin) return (<div className="card"><div className="err">You are not an administrator.</div><button className="btn" onClick={logout}>Logout</button></div>);
   const inp = (k, label, type = 'text') => (<><label>{label}</label><input type={type} list={['winner_team', 'loser_team', 'next_a', 'next_b'].includes(k) ? 'tn' : undefined} value={c[k] || ''} onChange={e => set(k, e.target.value)} /></>);
   const tsel = (k, label) => (<><label>{label}</label><select value={c[k] || ''} onChange={e => set(k, e.target.value)}><option value="">— ٹیم منتخب کریں —</option>{c[k] && !teams.some(x => x.name === c[k]) && <option value={c[k]}>{c[k]}</option>}{teams.map(x => <option key={x.id} value={x.name}>{x.name}</option>)}</select></>);
   const show = (k, l) => (<label><input type="checkbox" checked={c[k] !== '0'} onChange={e => set(k, e.target.checked ? '1' : '0')} style={{ width: 'auto' }} /> {l}</label>);
@@ -187,18 +187,18 @@ export default function Admin() {
       <div className="card"><h3>Dashboard Overview</h3><p>Season 1 tournament summary</p>
         <div className="two">
           <div className="card"><b>کل ٹیمیں</b><div className="big">{teams.length}</div></div>
-          <div className="card"><b>ٹیم منظور شدہ</b><div className="big">{teams.filter(x => x.status === 'approved').length}</div></div>
+          <div className="card"><b>Approve Team شدہ</b><div className="big">{teams.filter(x => x.status === 'approved').length}</div></div>
           <div className="card"><b>ادائیگی تصدیق شدہ</b><div className="big">{teams.filter(x => x.payment === 'verified').length}</div></div>
-          <div className="card"><b>ادائیگی زیرِ تصدیق</b><div className="big">{teams.filter(x => x.payment === 'submitted').length}</div></div>
+          <div className="card"><b>Mark Payment Pending</b><div className="big">{teams.filter(x => x.payment === 'submitted').length}</div></div>
           <div className="card"><b>کل کھلاڑی</b><div className="big">{teams.reduce((n, x) => n + (x.players || []).length, 0)}</div></div>
           <div className="card"><b>اعلانات</b><div className="big">{ann.length}</div></div>
         </div>
       </div>
-      <div className="card"><h3>فوری رسائی</h3><div className="row" style={{justifyContent:'flex-start'}}>
-        <button className="btn" onClick={() => setTab('teams')}>ٹیمیں اور ادائیگیاں</button>
-        <button className="btn alt" onClick={() => setTab('match')}>میچ اور نتائج</button>
-        <button className="btn alt" onClick={() => setTab('ann')}>اعلانات اور تصاویر</button>
-        <button className="btn alt" onClick={() => setTab('set')}>ویب سائٹ سیٹنگز</button>
+      <div className="card"><h3>Quick Actions</h3><div className="row" style={{justifyContent:'flex-start'}}>
+        <button className="btn" onClick={() => setTab('teams')}>Teams & Payments</button>
+        <button className="btn alt" onClick={() => setTab('match')}>Matches & Results</button>
+        <button className="btn alt" onClick={() => setTab('ann')}>Announcements & Photos</button>
+        <button className="btn alt" onClick={() => setTab('set')}>Website Settings</button>
       </div></div>
     </>)}
     {tab === 'match' && (<><div className="card"><h3>Today's Winner</h3>
@@ -207,64 +207,64 @@ export default function Admin() {
       <div className="card"><h3>Next Match</h3>
         {tsel('next_a', 'Team A')}{tsel('next_b', 'Team B')}{inp('next_date', 'Match Date', 'date')}{inp('next_time', 'Match Time', 'time')}{inp('next_venue', 'Venue (default: Dab Ground, Battagram)')}<div className="two"><div><label>Team A Captain Photo</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('next_a_photo', e.target.files[0])} />{c.next_a_photo_path && <img className="match-photo" src={pa(c.next_a_photo_path)} alt="Team A captain" />}</div><div><label>Team B Captain Photo</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('next_b_photo', e.target.files[0])} />{c.next_b_photo_path && <img className="match-photo" src={pa(c.next_b_photo_path)} alt="Team B captain" />}</div></div>{show('next_show', 'Show on Homepage')}
         <button className="btn" onClick={() => save(['next_a', 'next_b', 'next_date', 'next_time', 'next_venue', 'next_show'])}>Save Next Match</button></div></>)}
-    {tab === 'ann' && (<><form className="card" onSubmit={addAnn}><h3>نیا اعلان</h3>
-      <label>عنوان</label><input value={f.title} onChange={e => setF({ ...f, title: e.target.value })} />
-      <label>تفصیل</label><input value={f.description} onChange={e => setF({ ...f, description: e.target.value })} />
-      <label>تاریخ</label><input type="date" value={f.date} onChange={e => setF({ ...f, date: e.target.value })} />
-      <label>وقت</label><input type="time" value={f.time} onChange={e => setF({ ...f, time: e.target.value })} />
-      <label>تصویر</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setF({ ...f, file: e.target.files[0] })} />
-      <button className="btn">شائع کریں</button></form>
+    {tab === 'ann' && (<><form className="card" onSubmit={addAnn}><h3>New Announcement</h3>
+      <label>Title</label><input value={f.title} onChange={e => setF({ ...f, title: e.target.value })} />
+      <label>Description</label><input value={f.description} onChange={e => setF({ ...f, description: e.target.value })} />
+      <label>Date</label><input type="date" value={f.date} onChange={e => setF({ ...f, date: e.target.value })} />
+      <label>Time</label><input type="time" value={f.time} onChange={e => setF({ ...f, time: e.target.value })} />
+      <label>Image</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setF({ ...f, file: e.target.files[0] })} />
+      <button className="btn">Publish</button></form>
       {ann.map((a, i) => (<div className="card" key={a.id}><b>{a.title}</b> <small>{a.announce_date}</small> {a.published ? '✅' : '⛔'}
         <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt" onClick={() => move(i, -1)}>▲</button><button className="btn alt" onClick={() => move(i, 1)}>▼</button><button className="btn alt" onClick={() => editAnn(a)}>ایڈٹ</button><button className="btn alt" onClick={() => toggle(a)}>{a.published ? 'چھپائیں' : 'دکھائیں'}</button>
-          <button className="btn" onClick={() => del(a)}>حذف</button></div></div>))}</>)}
+          <button className="btn" onClick={() => del(a)}>Delete</button></div></div>))}</>)}
     {tab === 'people' && (<>{[[1, 'AMAN MALIK – MEMBER'], [2, 'WALEED AFRIDI – MEMBER'], [3, 'MUHAMMAD HASNAIN – MEMBER'], [4, 'FALAK – ORGANIZER']].map(([n, l]) => (<div className="card" key={n}><h3>{l}</h3>
       {c['person' + n + '_path'] && <img src={pa(c['person' + n + '_path'])} alt="" width="90" style={{ borderRadius: 8 }} />}
-      <p><label>نئی تصویر چنیں</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('person' + n, e.target.files[0])} /></p></div>))}
-      <div className="card"><h3>عربی خطاطی کی تصویر (اختیاری)</h3>
+      <p><label>Choose New Photo</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('person' + n, e.target.files[0])} /></p></div>))}
+      <div className="card"><h3>Calligraphy Image (Optional)</h3>
         {c.calli_path && <img src={pa(c.calli_path)} alt="" width="200" style={{ borderRadius: 8 }} />}
         <p><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('calli', e.target.files[0])} /></p>
         {c.calli_path && <button className="btn alt" onClick={() => clearKey('calli')}>تصویر ہٹائیں (سادہ خطاطی واپس)</button>}</div></>)}
     {tab === 'moms' && (<><form className="card" onSubmit={addMoments}><h3>نئی تصاویر (5-6 ایک ساتھ)</h3>
-      <label>تاریخ</label><input type="date" value={mf.date} onChange={e => setMf({ ...mf, date: e.target.value })} />
-      <label>کیپشن (اختیاری)</label><input value={mf.caption} onChange={e => setMf({ ...mf, caption: e.target.value })} />
-      <label>تصاویر چنیں</label><input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={e => setMf({ ...mf, files: e.target.files })} />
-      <button className="btn">شائع کریں</button></form>
+      <label>Date</label><input type="date" value={mf.date} onChange={e => setMf({ ...mf, date: e.target.value })} />
+      <label>Caption (Optional)</label><input value={mf.caption} onChange={e => setMf({ ...mf, caption: e.target.value })} />
+      <label>Choose Photos</label><input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={e => setMf({ ...mf, files: e.target.files })} />
+      <button className="btn">Publish</button></form>
       {moms.map(m => (<div className="card" key={m.id} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
         <img src={pa(m.image_path)} alt="" width="70" height="70" style={{ borderRadius: 8, objectFit: 'cover' }} />
         <div style={{ flex: 1 }}><small>{m.moment_date}</small><div>{m.caption} {m.published ? '✅' : '⛔'}</div>
-          <button className="btn alt" onClick={() => capMoment(m)}>کیپشن</button> <button className="btn alt" onClick={() => togMoment(m)}>{m.published ? 'چھپائیں' : 'دکھائیں'}</button> <button className="btn alt" onClick={() => delMoment(m)}>حذف</button></div></div>))}</>)}
-    {tab === 'quotes' && (<><form className="card" onSubmit={addQuote}><h3>نیا قول</h3>
-      <label>اردو ترجمہ</label><textarea rows="4" style={{ width: '100%', padding: 10, borderRadius: 8 }} value={qf.body} onChange={e => setQf({ ...qf, body: e.target.value })} />
-      <label>کتاب</label><input value={qf.book} onChange={e => setQf({ ...qf, book: e.target.value })} />
-      <label>حوالہ (نمبر)</label><input value={qf.ref} onChange={e => setQf({ ...qf, ref: e.target.value })} />
-      <button className="btn">شامل کریں</button></form>
+          <button className="btn alt" onClick={() => capMoment(m)}>کیپشن</button> <button className="btn alt" onClick={() => togMoment(m)}>{m.published ? 'چھپائیں' : 'دکھائیں'}</button> <button className="btn alt" onClick={() => delMoment(m)}>Delete</button></div></div>))}</>)}
+    {tab === 'quotes' && (<><form className="card" onSubmit={addQuote}><h3>New Quote</h3>
+      <label>Quote Text</label><textarea rows="4" style={{ width: '100%', padding: 10, borderRadius: 8 }} value={qf.body} onChange={e => setQf({ ...qf, body: e.target.value })} />
+      <label>Book</label><input value={qf.book} onChange={e => setQf({ ...qf, book: e.target.value })} />
+      <label>Reference</label><input value={qf.ref} onChange={e => setQf({ ...qf, ref: e.target.value })} />
+      <button className="btn">Add Quote</button></form>
       {qs.map((x, i) => (<div className="card" key={x.id} dir="rtl"><small>{i + 1}</small> {x.published ? '✅' : '⛔'}<p>{x.body}</p><small>{x.book} · {x.ref}</small>
         <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt" onClick={() => moveQuote(i, -1)}>▲</button><button className="btn alt" onClick={() => moveQuote(i, 1)}>▼</button>
-          <button className="btn alt" onClick={() => editQuote(x)}>ایڈٹ</button><button className="btn alt" onClick={() => togQuote(x)}>{x.published ? 'چھپائیں' : 'دکھائیں'}</button><button className="btn alt" onClick={() => delQuote(x)}>حذف</button></div></div>))}</>)}
+          <button className="btn alt" onClick={() => editQuote(x)}>ایڈٹ</button><button className="btn alt" onClick={() => togQuote(x)}>{x.published ? 'چھپائیں' : 'دکھائیں'}</button><button className="btn alt" onClick={() => delQuote(x)}>Delete</button></div></div>))}</>)}
     {tab === 'set' && (<div className="card"><h3>WhatsApp & Website Settings</h3>
       {inp('falak_whatsapp', 'WhatsApp Contact Number (international format, e.g. 923165738591)')}{inp('falak_btn', 'Floating WhatsApp Button Text')}{inp('falak_msg', 'Default WhatsApp Message')}
       <label>Official WhatsApp Group Invite Link</label><input value={c.official_whatsapp_group || 'https://chat.whatsapp.com/D5RUqQB6XVIIwHkYJkz5vZ'} onChange={e => set('official_whatsapp_group', e.target.value)} dir="ltr" />
       <label>Group Information Message</label><input value={c.official_group_text || 'All BJL Season 1 updates, schedules, results and announcements are available in the official WhatsApp group.'} onChange={e => set('official_group_text', e.target.value)} />
       <label><input type="checkbox" style={{ width: 'auto' }} checked={c.registration_open !== 'false'} onChange={e => set('registration_open', e.target.checked ? 'true' : 'false')} /> نئی ٹیموں کی رجسٹریشن کھلی ہے</label>
       <button className="btn" onClick={() => save(['falak_whatsapp', 'falak_btn', 'falak_msg', 'official_whatsapp_group', 'official_group_text', 'registration_open'])}>Save Settings</button></div>)}
-    {tab === 'teams' && (<><div className="card">کل ٹیمیں: {teams.length} · تصدیق شدہ: {teams.filter(x => x.payment === 'verified').length}</div>
+    {tab === 'teams' && (<><div className="card">Total Teams: {teams.length} · Verified: {teams.filter(x => x.payment === 'verified').length}</div>
       {teams.map(tm => { const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
         return (<div className="card" key={tm.id}><b>{tm.name}</b> <small>{tm.reg_id}</small>
           <div>Team: <span className={'badge ' + (tm.status === 'approved' ? 'v' : 'n')}>{tm.status || 'pending'}</span> · Payment: <span className={'badge ' + (tm.payment === 'verified' ? 'v' : 'n')}>{tm.payment || 'pending'}</span></div>
           <div dir="ltr">Captain Gmail: {tm.captain_email || 'Not added yet'}</div>
-          <button className="btn alt" onClick={() => updateCaptainEmail(tm)}>کپتان کی Gmail درج / تبدیل کریں</button>
+          <button className="btn alt" onClick={() => updateCaptainEmail(tm)}>Add / Edit Captain Email</button>
           <div dir="ltr">C1: {ps[0] && ps[0].name} {ps[0] && ps[0].mobile} | C2: {ps[1] && ps[1].name} {ps[1] && ps[1].mobile}</div>
           {last && <div dir="ltr">Txn: {last.transaction_id || '-'} <button className="btn alt" onClick={() => shot(last)}>Screenshot</button></div>}
           {tm.payment_rejection_reason && <small>رد کرنے کی وجہ: {tm.payment_rejection_reason}</small>}
           <details><summary>15 کھلاڑی</summary>{ps.map(pp => (<div key={pp.id} style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '6px 0' }}>
             <img src={pub(pp.photo_path)} alt="" width="48" height="48" style={{ borderRadius: 8, objectFit: 'cover' }} />{pp.name} · {pp.age} · {pp.position}</div>))}</details>
           <div className="row" style={{ justifyContent: 'flex-start' }}>
-            <button className="btn" onClick={() => setTeamStatus(tm, 'approved')}>✓ ٹیم منظور</button>
-            <button className="btn alt" onClick={() => setTeamStatus(tm, 'rejected')}>ٹیم مسترد</button>
-            <button className="btn alt" onClick={() => createCaptainAccount(tm)}>کپتان کا لاگ اِن اکاؤنٹ بنائیں</button>
-            <button className="btn" onClick={() => setPay(tm, 'verified')}>✓ ادائیگی منظور</button>
-            <button className="btn alt" onClick={() => setPay(tm, 'notverified')}>ادائیگی زیرِ تصدیق</button>
+            <button className="btn" onClick={() => setTeamStatus(tm, 'approved')}>✓ Approve Team</button>
+            <button className="btn alt" onClick={() => setTeamStatus(tm, 'rejected')}>Reject Team</button>
+            <button className="btn alt" onClick={() => createCaptainAccount(tm)}>Create Captain Login</button>
+            <button className="btn" onClick={() => setPay(tm, 'verified')}>✓ Verify Payment</button>
+            <button className="btn alt" onClick={() => setPay(tm, 'notverified')}>Mark Payment Pending</button>
             <button className="btn alt" onClick={() => setPay(tm, 'rejected')}>مسترد</button>
-            <button className="btn alt" onClick={() => delTeam(tm)}>حذف</button></div></div>); })}</>)}
+            <button className="btn alt" onClick={() => delTeam(tm)}>Delete</button></div></div>); })}</>)}
   </div>);
 }
