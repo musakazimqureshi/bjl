@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { adminSupabase as supabase } from '../../lib/adminSupabase';
 import { shrink } from '../../lib/img';
 const ext = f => (f.type === 'image/png' ? 'png' : f.type === 'image/webp' ? 'webp' : 'jpg');
 const okImg = f => f && ['image/jpeg', 'image/png', 'image/webp'].includes(f.type) && f.size <= 15 * 1024 * 1024;
@@ -92,12 +92,21 @@ export default function Admin() {
   async function login(e) {
     e.preventDefault();
     setMsg('');
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password: pw });
+    const normalizedEmail = email.trim().toLowerCase();
+    if (normalizedEmail !== 'musakazim373@gmail.com') return setMsg('This Gmail is not authorized for BJL Admin.');
+    const { data: signed, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password: pw });
     if (error) return setMsg(error.message);
+    const { data: adminRow, error: adminError } = await supabase.from('admins').select('id').eq('id', signed.user.id).maybeSingle();
+    if (adminError || !adminRow) { await supabase.auth.signOut(); return setMsg('This account is not the authorized BJL administrator.'); }
+    // Revoke all older sessions on other browsers/devices, then create this one fresh session.
+    const { error: revokeError } = await supabase.auth.signOut({ scope: 'global' });
+    if (revokeError) return setMsg('Could not secure previous sessions. Please try again.');
+    const { error: freshError } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password: pw });
+    if (freshError) return setMsg(freshError.message);
     setPw('');
     await check();
   }
-  async function logout() { await supabase.auth.signOut(); setLogged(false); setIsAdmin(false); }
+  async function logout() { await supabase.auth.signOut({ scope: 'global' }); setLogged(false); setIsAdmin(false); }
   const set = (k, v) => setC(x => ({ ...x, [k]: v }));
   async function save(keys) {
     setMsg('');
