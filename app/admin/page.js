@@ -75,7 +75,7 @@ export default function Admin() {
     if (!email) return setMsg('اس ٹیم کا کپتان Gmail ریکارڈ میں موجود نہیں۔');
     const password = '12345678';
     setMsg('کپتان کا لاگ اِن اکاؤنٹ بنایا یا اپ ڈیٹ کیا جا رہا ہے...');
-    const { data, error } = await supabase.functions.invoke('create-captain-account', {
+    const { data, error } = await supabase.functions.invoke('captain-login-provisioner', {
       body: { teamId: tm.id, email, password }
     });
     setMsg(error ? (error.message || 'اکاؤنٹ نہیں بن سکا۔') : (data?.message || 'کپتان کا اکاؤنٹ تیار ہے۔ پاس ورڈ: 12345678'));
