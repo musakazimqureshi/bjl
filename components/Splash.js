@@ -147,9 +147,9 @@ export default function Splash() {
     fadeTimer.current = window.setTimeout(() => setFade(true), 11200);
     hideTimer.current = window.setTimeout(() => {
       setVisible(false);
-      setSixVisible(true);
+      setSixVisible(false);
       sixTimer.current = window.setTimeout(() => setSixVisible(false), 2000);
-    }, 12000);
+    }, 5000);
   }, [playIntro]);
 
   useEffect(() => {
