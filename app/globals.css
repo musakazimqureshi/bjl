@@ -222,3 +222,109 @@ main{padding-bottom:84px}
 @keyframes floatWA{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 @media(max-width:700px){.hdr{gap:8px;padding:8px 10px}.hdr nav{gap:9px}.hdr nav a{font-size:.86rem}.motion-item{transform:translateY(12px) scale(.985);transition-duration:.48s}.card:hover,.pp:hover{transform:translateY(-3px)}}
 @media(prefers-reduced-motion:reduce){.hero:before,.hero:after,.hero h1,.fwa,.winner-card:before,.badge.v:after{animation:none!important}.motion-item{opacity:1!important;transform:none!important;transition:none!important}.card,.pp,.btn,.pp img{transition:none!important}}
+
+
+/* BJL 2026 premium finish: restrained depth, responsive polish and accessible motion */
+:root{
+  --gold-soft:#ead28a;
+  --surface-2:#18181e;
+  --line-soft:rgba(212,175,55,.22);
+  --ease-premium:cubic-bezier(.22,.75,.25,1);
+}
+html{scroll-behavior:smooth;scroll-padding-top:88px}
+body{
+  background:
+    radial-gradient(ellipse at 50% -18%,rgba(176,18,18,.16),transparent 48%),
+    linear-gradient(180deg,#101014 0%,#17171c 48%,#101014 100%);
+  text-rendering:optimizeLegibility;
+}
+::selection{background:rgba(212,175,55,.32);color:#fff}
+main{width:min(100% - 24px,1120px);padding:18px 0 100px}
+.hdr{
+  min-height:66px;padding:10px max(16px,calc((100vw - 1120px)/2));
+  border-bottom:1px solid rgba(212,175,55,.28);
+  transition:background .25s ease,border-color .25s ease,box-shadow .25s ease,min-height .25s ease;
+}
+.hdr.is-scrolled{background:rgba(5,5,8,.94);border-bottom-color:rgba(212,175,55,.42);box-shadow:0 12px 32px #0009}
+.hdr .logo{flex:none;gap:9px;letter-spacing:.06em}
+.hdr .logo b{color:var(--gold);font-size:.9rem}
+.hdr nav{align-items:center;justify-content:center;gap:clamp(10px,1.5vw,20px)}
+.hdr nav a{font-size:.92rem;font-weight:650;white-space:nowrap}
+.hdr nav a:focus-visible,.btn:focus-visible,.lang:focus-visible,.fwa:focus-visible,button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{
+  outline:2px solid var(--gold-soft);outline-offset:3px;
+}
+.lang{flex:none;border:1px solid rgba(212,175,55,.4);background:linear-gradient(135deg,#a20e16,#5b090e);font-weight:750;min-height:42px}
+.hero{
+  padding:clamp(34px,6vw,68px) clamp(16px,4vw,40px);
+  border-radius:22px;
+  background:
+    radial-gradient(ellipse at 50% 0%,rgba(176,18,18,.42),transparent 54%),
+    radial-gradient(ellipse at 10% 90%,rgba(212,175,55,.08),transparent 38%),
+    linear-gradient(145deg,#211116 0%,#101014 58%,#171217 100%);
+  box-shadow:0 24px 70px rgba(0,0,0,.38),inset 0 1px rgba(255,255,255,.06),0 0 0 1px rgba(212,175,55,.08);
+}
+.hero h1{max-width:900px;margin:14px auto 12px;font-size:clamp(2rem,6.4vw,4.35rem);line-height:1.04;letter-spacing:-.035em;text-wrap:balance}
+.hero>p{color:#d8d2d2}
+.hero .calli{max-width:720px;border-color:rgba(212,175,55,.55);background:linear-gradient(125deg,rgba(0,0,0,.82),rgba(70,9,15,.76),rgba(0,0,0,.9))}
+.card,.pp,.official-group{
+  border-color:rgba(212,175,55,.16);
+  background:linear-gradient(145deg,rgba(37,34,40,.96),rgba(25,24,30,.98));
+  box-shadow:0 12px 28px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.035);
+}
+.card h2,.card h3{letter-spacing:-.015em}
+.duo{gap:14px;margin:16px 0}
+.duo .card{padding:clamp(12px,2vw,18px);border-radius:16px}
+.btn,.lang{
+  position:relative;isolation:isolate;overflow:hidden;
+  box-shadow:0 5px 16px rgba(0,0,0,.18);
+}
+.btn:after{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.16) 48%,transparent 70%);
+  transform:translateX(-130%);transition:transform .55s var(--ease-premium);
+}
+.btn:hover:after{transform:translateX(130%)}
+.btn.alt{border-color:rgba(224,36,43,.75);background:rgba(12,12,16,.55)}
+.winner-card{position:relative;overflow:hidden}
+.winner-card:before{margin:-18px -18px 14px}
+.official-group{border-color:rgba(37,211,102,.28)}
+.official-group .group-btn{box-shadow:0 8px 22px rgba(37,211,102,.14)}
+.fwa{bottom:max(16px,env(safe-area-inset-bottom));right:max(16px,env(safe-area-inset-right));border:1px solid rgba(255,255,255,.22);box-shadow:0 10px 30px rgba(0,0,0,.38),0 0 0 5px rgba(37,211,102,.08)}
+.modal{backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.mbox{box-shadow:0 24px 80px #000b,inset 0 1px rgba(255,255,255,.06)}
+input,select{border-color:#48434a;transition:border-color .2s ease,box-shadow .2s ease,background .2s ease}
+input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,175,55,.12);background:#151318;outline:none}
+.credit{border-top:1px solid rgba(212,175,55,.12);margin:0 16px}
+.bjl-scroll-progress{position:fixed;z-index:110;top:0;left:0;width:100%;height:3px;pointer-events:none;background:rgba(255,255,255,.035)}
+.bjl-scroll-progress span{display:block;width:100%;height:100%;transform:scaleX(0);transform-origin:left center;background:linear-gradient(90deg,#8f0c14,#e0242b,#d4af37);box-shadow:0 0 12px rgba(212,175,55,.45);will-change:transform}
+[dir=rtl] .bjl-scroll-progress span{transform-origin:right center}
+@media(prefers-reduced-motion:no-preference){
+  .hero:after{background:radial-gradient(circle,rgba(212,175,55,.1),transparent 68%)}
+  .hero .row .btn:first-child{box-shadow:0 8px 24px rgba(176,18,18,.24),0 0 0 1px rgba(212,175,55,.15)}
+  .card,.pp,.official-group{transition:transform .32s var(--ease-premium),border-color .32s ease,box-shadow .32s ease,background .32s ease}
+  .card:hover,.pp:hover{transform:translateY(-5px);border-color:rgba(212,175,55,.42);box-shadow:0 20px 42px rgba(0,0,0,.34),0 0 24px rgba(176,18,18,.13)}
+  .btn:active,.lang:active{transform:translateY(1px) scale(.985)}
+  .hdr nav a{transition:color .2s ease}
+}
+@media(max-width:760px){
+  main{width:min(100% - 20px,1120px);padding-top:12px}
+  .hdr{position:sticky;gap:8px;padding:8px 10px;min-height:58px}
+  .hdr nav{order:3;flex:1 0 100%;justify-content:flex-start;gap:16px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;scrollbar-width:none;padding:2px 2px 5px}
+  .hdr nav::-webkit-scrollbar{display:none}
+  .hdr nav a{font-size:.84rem;padding:5px 0}
+  .hero{border-radius:16px}
+  .duo{gap:9px}
+  .fwa{padding:10px 13px;font-size:.9rem}
+}
+@media(max-width:420px){
+  .logo .shield{padding:4px 8px}
+  .hero h1{font-size:clamp(1.8rem,9vw,2.5rem)}
+  .duo .card{border-radius:13px}
+  .btn{padding:10px 13px;font-size:.94rem}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .bjl-scroll-progress{display:none}
+  .btn:after{display:none}
+  .card,.pp,.official-group,.hdr,.lang,input,select{transition:none!important}
+}
