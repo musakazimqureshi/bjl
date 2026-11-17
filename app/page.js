@@ -40,12 +40,12 @@ export default function Home() {
   const cm = moms[Math.min(mi, moms.length - 1)]; const la = ann[0];
   const showWin = c.winner_show !== '0' && c.winner_team; const showNext = c.next_show !== '0' && c.next_a && c.next_b;
   return (<>
-    <section className="hero">
-      <div className="shield" style={{ display: 'inline-block', fontSize: '2rem' }}>BJL</div>
+    <section className="hero bjl-hero"><div className="hero-kicker"><span className="hero-kicker-line"></span><span>BATTAGRAM · KHYBER PAKHTUNKHWA</span><span className="hero-kicker-line"></span></div>
+      <div className="hero-mark"><span className="hero-mark-top">THE SPIRIT OF CRICKET</span><div className="shield" style={{ display: 'inline-block', fontSize: '2rem' }}>BJL</div><span className="hero-mark-bottom">SEASON <b>01</b></span></div>
       <h1>{t('title')}</h1>
       <div className="calli">{c.calli_path ? <img src={img(c.calli_path)} alt="" /> :
         <div className="ar" lang="ar" dir="rtl">لَا فَتَىٰ إِلَّا عَلِيٌّ وَلَا سَيْفَ إِلَّا ذُو الْفَقَارِ</div>}</div>
-      <p>{t('season')}</p><p>{t('loc')}</p>
+      <p className="hero-season">{t('season')}</p><p className="hero-location"><span>✦</span> {t('loc')} <span>✦</span></p><div className="hero-footnote"><span>YOUTH · UNITY · SPORTSMANSHIP</span><i></i><span>OFFICIAL TOURNAMENT PLATFORM</span></div>
       <div className="row">
         <Link href="/register" className="btn">{t('regBtn')}</Link>
         <Link href="/teams" className="btn alt">{t('viewBtn')}</Link>
