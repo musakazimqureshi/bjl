@@ -28,7 +28,8 @@ export default function TeamLogin() {
   }, []);
   async function login(e) {
     e.preventDefault(); setMsg('');
-    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: pw });
+    const normalizedEmail = email.trim().toLowerCase();
+    const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password: pw });
     if (error) return setMsg(tx('Wrong email or password.', 'ای میل یا پاسورڈ غلط ہے۔'));
     setUser(data.user); load(data.user);
   }
