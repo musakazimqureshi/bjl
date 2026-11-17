@@ -73,16 +73,12 @@ export default function Admin() {
   async function createCaptainAccount(tm) {
     const email = (tm.captain_email || '').trim().toLowerCase();
     if (!email) return setMsg('اس ٹیم کا کپتان Gmail ریکارڈ میں موجود نہیں۔');
-    const password = prompt('کپتان کے لیے ابتدائی پاس ورڈ بنائیں (کم از کم 8 حروف یا نمبرز):');
-    if (!password) return;
-    if (password.length < 8) return setMsg('ابتدائی پاس ورڈ کم از کم 8 حروف یا نمبرز کا ہونا چاہیے۔');
-    const confirmPassword = prompt('ابتدائی پاس ورڈ دوبارہ درج کریں:');
-    if (password !== confirmPassword) return setMsg('دونوں پاس ورڈ ایک جیسے نہیں ہیں۔');
-    setMsg('کپتان کا اکاؤنٹ بنایا جا رہا ہے...');
+    const password = '12345678';
+    setMsg('کپتان کا لاگ اِن اکاؤنٹ بنایا یا اپ ڈیٹ کیا جا رہا ہے...');
     const { data, error } = await supabase.functions.invoke('create-captain-account', {
       body: { teamId: tm.id, email, password }
     });
-    setMsg(error ? (error.message || 'اکاؤنٹ نہیں بن سکا۔') : (data?.message || 'کپتان کا اکاؤنٹ بن گیا۔'));
+    setMsg(error ? (error.message || 'اکاؤنٹ نہیں بن سکا۔') : (data?.message || 'کپتان کا اکاؤنٹ تیار ہے۔ پاس ورڈ: 12345678'));
   }
   async function delTeam(tm) {
     if (!confirm('پوری ٹیم ہمیشہ کے لیے حذف کریں؟')) return;
