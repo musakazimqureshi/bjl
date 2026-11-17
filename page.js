@@ -1,191 +1,122 @@
 'use client';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
-import { shrink } from '../../lib/img';
-const ext = f => (f.type === 'image/png' ? 'png' : f.type === 'image/webp' ? 'webp' : 'jpg');
-const okImg = f => f && ['image/jpeg', 'image/png', 'image/webp'].includes(f.type) && f.size <= 15 * 1024 * 1024;
-export default function Admin() {
-  const [ready, setReady] = useState(false); const [isAdmin, setIsAdmin] = useState(false); const [logged, setLogged] = useState(false);
-  const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
-  const [tab, setTab] = useState('teams'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
-  const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
-  async function check() {
-    const { data: { session } } = await supabase.auth.getSession();
-    setLogged(!!session);
-    if (session) { const { data } = await supabase.from('admins').select('id').eq('id', session.user.id); setIsAdmin(!!(data && data.length)); }
-    setReady(true);
-  }
-  async function load() {
-    const { data } = await supabase.rpc('public_content'); setC(data || {});
-    const { data: a } = await supabase.from('announcements').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: false }); setAnn(a || []);
-    const { data: m } = await supabase.from('moments').select('*').order('moment_date', { ascending: false }).order('created_at', { ascending: false }); setMoms(m || []);
-    const { data: q } = await supabase.from('quotes').select('*').order('sort_order', { ascending: true }); setQs(q || []);
-  }
-  async function loadTeams() {
-    const { data } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').order('created_at', { ascending: false });
-    setTeams(data || []);
-  }
-  const pub = p => supabase.storage.from('player-photos').getPublicUrl(p).data.publicUrl;
-  async function shot(pay) {
-    const { data, error } = await supabase.storage.from('payments').createSignedUrl(pay.screenshot_path, 600);
-    if (error) return setMsg(error.message); window.open(data.signedUrl, '_blank');
-  }
-  async function setPay(tm, status) {
-    let reason = null;
-    if (status === 'rejected') { reason = prompt('مسترد کرنے کی وجہ لکھیں'); if (!reason) return; }
-    const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
-    const val = status === 'verified' ? 'verified' : status === 'rejected' ? 'rejected' : (last ? 'submitted' : 'pending');
-    const { error } = await supabase.from('teams').update({ payment: val, payment_rejection_reason: reason }).eq('id', tm.id);
-    if (!error && last) await supabase.from('payments').update({ status: val === 'verified' ? 'verified' : val === 'rejected' ? 'rejected' : 'submitted', rejection_reason: reason }).eq('id', last.id);
-    setMsg(error ? error.message : 'ہو گیا ✔'); loadTeams();
-  }
-  async function delTeam(tm) {
-    if (!confirm('پوری ٹیم ہمیشہ کے لیے حذف کریں؟')) return;
-    const { error } = await supabase.from('teams').delete().eq('id', tm.id); setMsg(error ? error.message : 'ٹیم حذف ہو گئی'); loadTeams();
-  }
-  useEffect(() => { check(); }, []);
-  useEffect(() => { if (isAdmin) { load(); loadTeams(); } }, [isAdmin]);
-  async function login(e) { e.preventDefault(); setMsg(''); const { error } = await supabase.auth.signInWithPassword({ email, password: pw }); if (error) return setMsg(error.message); check(); }
-  async function logout() { await supabase.auth.signOut(); setLogged(false); setIsAdmin(false); }
-  const set = (k, v) => setC(x => ({ ...x, [k]: v }));
-  async function save(keys) {
-    setMsg('');
-    const { error } = await supabase.from('settings').upsert(keys.map(k => ({ key: k, value: c[k] || '' })));
-    setMsg(error ? error.message : 'محفوظ ہو گیا ✔');
-  }
-  async function uploadKey(key, file) {
-    setMsg(''); if (!okImg(file)) return setMsg('تصویر JPG/PNG/WEBP ہو۔');
-    const path = `site/${key}-${Date.now()}.jpg`; const blob = await shrink(file, 1100);
-    const { error } = await supabase.storage.from('announcements').upload(path, blob, { contentType: 'image/jpeg' }); if (error) return setMsg(error.message);
-    const { error: e2 } = await supabase.from('settings').upsert({ key: key + '_path', value: path });
-    setMsg(e2 ? e2.message : 'تصویر لگ گئی ✔'); load();
-  }
-  async function clearKey(key) { await supabase.from('settings').upsert({ key: key + '_path', value: '' }); setMsg('ہٹا دی گئی'); load(); }
-  async function move(i, d) {
-    const arr = ann.slice(); const j = i + d; if (j < 0 || j >= arr.length) return;
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-    await Promise.all(arr.map((x, k) => supabase.from('announcements').update({ sort_order: k }).eq('id', x.id))); load();
-  }
-  async function editAnn(x) {
-    const t = prompt('عنوان', x.title); if (t === null) return; const d = prompt('تفصیل', x.description || ''); if (d === null) return;
-    await supabase.from('announcements').update({ title: t, description: d }).eq('id', x.id); load();
-  }
-  async function addMoments(e) {
-    e.preventDefault(); setMsg('');
-    if (!mf.files.length || !mf.date) return setMsg('تاریخ اور تصاویر ضروری ہیں۔');
-    setMsg('اپلوڈ ہو رہا ہے، انتظار کریں...');
-    for (const [i, file] of Array.from(mf.files).entries()) {
-      if (!okImg(file)) return setMsg('ہر تصویر JPG/PNG/WEBP ہو۔');
-      const path = `moments/${Date.now()}-${i}.jpg`; const blob = await shrink(file, 1400);
-      const { error } = await supabase.storage.from('announcements').upload(path, blob, { contentType: 'image/jpeg' }); if (error) return setMsg(error.message);
-      const { error: e2 } = await supabase.from('moments').insert({ image_path: path, caption: mf.caption, moment_date: mf.date }); if (e2) return setMsg(e2.message);
-    }
-    setMf({ caption: '', date: '', files: [] }); e.target.reset(); setMsg('تصاویر شائع ہو گئیں ✔'); load();
-  }
-  async function addQuote(e) {
-    e.preventDefault(); if (!qf.body.trim() || !qf.ref.trim()) return setMsg('قول اور حوالہ دونوں ضروری ہیں۔');
-    const { error } = await supabase.from('quotes').insert({ body: qf.body.trim(), book: qf.book, ref: qf.ref.trim(), sort_order: qs.length + 1 });
-    setMsg(error ? error.message : 'قول شامل ہو گیا ✔'); setQf({ ...qf, body: '', ref: '' }); load();
-  }
-  async function editQuote(x) {
-    const b = prompt('قول (اردو)', x.body); if (b === null) return; const k = prompt('کتاب', x.book); if (k === null) return; const r = prompt('حوالہ', x.ref); if (r === null) return;
-    await supabase.from('quotes').update({ body: b, book: k, ref: r }).eq('id', x.id); load();
-  }
-  async function togQuote(x) { await supabase.from('quotes').update({ published: !x.published }).eq('id', x.id); load(); }
-  async function delQuote(x) { if (!confirm('قول حذف کریں؟')) return; await supabase.from('quotes').delete().eq('id', x.id); load(); }
-  async function moveQuote(i, d) {
-    const arr = qs.slice(); const j = i + d; if (j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]];
-    await Promise.all(arr.map((x, k) => supabase.from('quotes').update({ sort_order: k + 1 }).eq('id', x.id))); load();
-  }
-  async function delMoment(m) { if (!confirm('تصویر حذف کریں؟')) return; await supabase.storage.from('announcements').remove([m.image_path]); await supabase.from('moments').delete().eq('id', m.id); load(); }
-  async function togMoment(m) { await supabase.from('moments').update({ published: !m.published }).eq('id', m.id); load(); }
-  async function capMoment(m) { const v = prompt('کیپشن', m.caption || ''); if (v === null) return; await supabase.from('moments').update({ caption: v }).eq('id', m.id); load(); }
-  async function addAnn(e) {
-    e.preventDefault(); setMsg('');
-    if (!f.title.trim() || !f.date || !okImg(f.file)) return setMsg('عنوان، تاریخ اور تصویر (JPG/PNG، 3MB تک) ضروری ہیں۔');
-    const path = `ann/${Date.now()}.jpg`; const blob = await shrink(f.file, 1400);
-    const { error } = await supabase.storage.from('announcements').upload(path, blob, { contentType: 'image/jpeg' }); if (error) return setMsg(error.message);
-    const { error: e2 } = await supabase.from('announcements').insert({ title: f.title.trim(), description: f.description, image_path: path, announce_date: f.date, announce_time: f.time || null, published: true, sort_order: Math.min(0, ...ann.map(x => x.sort_order || 0)) - 1 });
-    if (e2) return setMsg(e2.message);
-    setF({ title: '', description: '', date: '', time: '', file: null }); e.target.reset(); setMsg('اعلان شائع ہو گیا ✔'); load();
-  }
-  async function toggle(a) { await supabase.from('announcements').update({ published: !a.published }).eq('id', a.id); load(); }
-  async function del(a) {
-    if (!confirm('یہ اعلان ہمیشہ کے لیے حذف کریں؟')) return;
-    await supabase.storage.from('announcements').remove([a.image_path]); await supabase.from('announcements').delete().eq('id', a.id); load();
-  }
-  if (!ready) return <p>...</p>;
-  if (!logged) return (<form onSubmit={login} className="card"><h2>Admin Login</h2>
-    <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} dir="ltr" />
-    <input placeholder="Password" type="password" value={pw} onChange={e => setPw(e.target.value)} dir="ltr" />
-    {msg && <div className="err">{msg}</div>}<button className="btn">Login</button></form>);
-  if (!isAdmin) return (<div className="card"><div className="err">آپ ایڈمن نہیں ہیں۔</div><button className="btn" onClick={logout}>Logout</button></div>);
-  const inp = (k, label, type = 'text') => (<><label>{label}</label><input type={type} value={c[k] || ''} onChange={e => set(k, e.target.value)} /></>);
-  const show = (k, l) => (<label><input type="checkbox" checked={c[k] !== '0'} onChange={e => set(k, e.target.checked ? '1' : '0')} style={{ width: 'auto' }} /> {l}</label>);
-  const pa = p => supabase.storage.from('announcements').getPublicUrl(p).data.publicUrl;
-  return (<div>
-    <h2>BJL Admin</h2>
-    <div className="tabs">
-      {[['teams', 'ٹیمیں'], ['match', 'میچ سینٹر'], ['ann', 'اعلانات'], ['people', 'ٹیم تصاویر'], ['moms', 'BJL Moments'], ['quotes', 'اقوال'], ['set', 'سیٹنگ']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
-      <button className="btn" onClick={logout}>Logout</button></div>
-    {msg && <div className="good">{msg}</div>}
-    {tab === 'match' && (<><div className="card"><h3>آج کا فاتح</h3>
-      {inp('winner_team', 'جیتنے والی ٹیم')}{inp('loser_team', 'ہارنے والی ٹیم')}{inp('winner_date', 'میچ کی تاریخ', 'date')}{show('winner_show', 'ہوم پیج پر دکھائیں')}
-      <button className="btn" onClick={() => save(['winner_team', 'loser_team', 'winner_date', 'winner_show'])}>محفوظ کریں</button></div>
-      <div className="card"><h3>اگلا میچ</h3>
-        <label>ٹیم A منتخب کریں</label><select value={c.next_a || ''} onChange={e => { const tm = teams.find(x => x.name === e.target.value); set('next_a', tm ? tm.name : ''); set('next_a_id', tm ? tm.id : ''); }}><option value=''>ٹیم منتخب کریں</option>{teams.map(tm => <option key={tm.id} value={tm.name}>{tm.name}</option>)}</select>
-        <label>ٹیم B منتخب کریں</label><select value={c.next_b || ''} onChange={e => { const tm = teams.find(x => x.name === e.target.value); set('next_b', tm ? tm.name : ''); set('next_b_id', tm ? tm.id : ''); }}><option value=''>ٹیم منتخب کریں</option>{teams.map(tm => <option key={tm.id} value={tm.name}>{tm.name}</option>)}</select>
-        {inp('next_date', 'تاریخ', 'date')}{inp('next_time', 'وقت', 'time')}<p><b>گراؤنڈ:</b> Dab Ground, Battagram (مقررہ)</p>{show('next_show', 'ہوم پیج پر دکھائیں')}
-        <button className="btn" onClick={() => save(['next_a', 'next_b', 'next_a_id', 'next_b_id', 'next_date', 'next_time', 'next_show'])}>محفوظ کریں</button></div></>)}
-    {tab === 'ann' && (<><form className="card" onSubmit={addAnn}><h3>نیا اعلان</h3>
-      <label>عنوان</label><input value={f.title} onChange={e => setF({ ...f, title: e.target.value })} />
-      <label>تفصیل</label><input value={f.description} onChange={e => setF({ ...f, description: e.target.value })} />
-      <label>تاریخ</label><input type="date" value={f.date} onChange={e => setF({ ...f, date: e.target.value })} />
-      <label>وقت</label><input type="time" value={f.time} onChange={e => setF({ ...f, time: e.target.value })} />
-      <label>تصویر</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setF({ ...f, file: e.target.files[0] })} />
-      <button className="btn">شائع کریں</button></form>
-      {ann.map((a, i) => (<div className="card" key={a.id}><b>{a.title}</b> <small>{a.announce_date}</small> {a.published ? '✅' : '⛔'}
-        <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt" onClick={() => move(i, -1)}>▲</button><button className="btn alt" onClick={() => move(i, 1)}>▼</button><button className="btn alt" onClick={() => editAnn(a)}>ایڈٹ</button><button className="btn alt" onClick={() => toggle(a)}>{a.published ? 'چھپائیں' : 'دکھائیں'}</button>
-          <button className="btn" onClick={() => del(a)}>حذف</button></div></div>))}</>)}
-    {tab === 'people' && (<>{[[1, 'AMAN MALIK – MEMBER'], [2, 'WALEED AFRIDI – MEMBER'], [3, 'MUHAMMAD HASNAIN – MEMBER'], [4, 'FALAK – ORGANIZER']].map(([n, l]) => (<div className="card" key={n}><h3>{l}</h3>
-      {c['person' + n + '_path'] && <img src={pa(c['person' + n + '_path'])} alt="" width="90" style={{ borderRadius: 8 }} />}
-      <p><label>نئی تصویر چنیں</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('person' + n, e.target.files[0])} /></p></div>))}
-      <div className="card"><h3>عربی خطاطی کی تصویر (اختیاری)</h3>
-        {c.calli_path && <img src={pa(c.calli_path)} alt="" width="200" style={{ borderRadius: 8 }} />}
-        <p><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('calli', e.target.files[0])} /></p>
-        {c.calli_path && <button className="btn alt" onClick={() => clearKey('calli')}>تصویر ہٹائیں (سادہ خطاطی واپس)</button>}</div></>)}
-    {tab === 'moms' && (<><form className="card" onSubmit={addMoments}><h3>نئی تصاویر (5-6 ایک ساتھ)</h3>
-      <label>تاریخ</label><input type="date" value={mf.date} onChange={e => setMf({ ...mf, date: e.target.value })} />
-      <label>کیپشن (اختیاری)</label><input value={mf.caption} onChange={e => setMf({ ...mf, caption: e.target.value })} />
-      <label>تصاویر چنیں</label><input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={e => setMf({ ...mf, files: e.target.files })} />
-      <button className="btn">شائع کریں</button></form>
-      {moms.map(m => (<div className="card" key={m.id} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-        <img src={pa(m.image_path)} alt="" width="70" height="70" style={{ borderRadius: 8, objectFit: 'cover' }} />
-        <div style={{ flex: 1 }}><small>{m.moment_date}</small><div>{m.caption} {m.published ? '✅' : '⛔'}</div>
-          <button className="btn alt" onClick={() => capMoment(m)}>کیپشن</button> <button className="btn alt" onClick={() => togMoment(m)}>{m.published ? 'چھپائیں' : 'دکھائیں'}</button> <button className="btn alt" onClick={() => delMoment(m)}>حذف</button></div></div>))}</>)}
-    {tab === 'quotes' && (<><form className="card" onSubmit={addQuote}><h3>نیا قول</h3>
-      <label>اردو ترجمہ</label><textarea rows="4" style={{ width: '100%', padding: 10, borderRadius: 8 }} value={qf.body} onChange={e => setQf({ ...qf, body: e.target.value })} />
-      <label>کتاب</label><input value={qf.book} onChange={e => setQf({ ...qf, book: e.target.value })} />
-      <label>حوالہ (نمبر)</label><input value={qf.ref} onChange={e => setQf({ ...qf, ref: e.target.value })} />
-      <button className="btn">شامل کریں</button></form>
-      {qs.map((x, i) => (<div className="card" key={x.id} dir="rtl"><small>{i + 1}</small> {x.published ? '✅' : '⛔'}<p>{x.body}</p><small>{x.book} · {x.ref}</small>
-        <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt" onClick={() => moveQuote(i, -1)}>▲</button><button className="btn alt" onClick={() => moveQuote(i, 1)}>▼</button>
-          <button className="btn alt" onClick={() => editQuote(x)}>ایڈٹ</button><button className="btn alt" onClick={() => togQuote(x)}>{x.published ? 'چھپائیں' : 'دکھائیں'}</button><button className="btn alt" onClick={() => delQuote(x)}>حذف</button></div></div>))}</>)}
-    {tab === 'set' && (<div className="card"><h3>Ask Falak بٹن</h3>
-      {inp('falak_whatsapp', 'WhatsApp نمبر (بین الاقوامی، مثلاً 923411620498)')}{inp('falak_btn', 'بٹن کا متن')}{inp('falak_msg', 'ڈیفالٹ پیغام (WhatsApp میں پہلے سے لکھا آئے گا)')}
-      <button className="btn" onClick={() => save(['falak_whatsapp', 'falak_btn', 'falak_msg'])}>محفوظ کریں</button></div>)}
-    {tab === 'teams' && (<><div className="card">کل ٹیمیں: {teams.length} · تصدیق شدہ: {teams.filter(x => x.payment === 'verified').length}</div>
-      {teams.map(tm => { const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
-        return (<div className="card" key={tm.id}><b>{tm.name}</b> <small>{tm.reg_id}</small> {tm.payment === 'verified' ? '✅ VERIFIED' : '❌ NOT VERIFIED'}
-          <div dir="ltr">C1: {ps[0] && ps[0].name} {ps[0] && ps[0].mobile} | C2: {ps[1] && ps[1].name} {ps[1] && ps[1].mobile}</div>
-          {last && <div dir="ltr">Txn: {last.transaction_id || '-'} <button className="btn alt" onClick={() => shot(last)}>Screenshot</button></div>}
-          {tm.payment_rejection_reason && <small>رد کرنے کی وجہ: {tm.payment_rejection_reason}</small>}
-          <details><summary>15 کھلاڑی</summary>{ps.map(pp => (<div key={pp.id} style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '6px 0' }}>
-            <img src={pub(pp.photo_path)} alt="" width="48" height="48" style={{ borderRadius: 8, objectFit: 'cover' }} />{pp.name} · {pp.age} · {pp.position}</div>))}</details>
-          <div className="row" style={{ justifyContent: 'flex-start' }}>
-            <button className="btn" onClick={() => setPay(tm, 'verified')}>✓ تصدیق</button>
-            <button className="btn alt" onClick={() => setPay(tm, 'notverified')}>غیر تصدیق شدہ</button>
-            <button className="btn alt" onClick={() => setPay(tm, 'rejected')}>مسترد</button>
-            <button className="btn alt" onClick={() => delTeam(tm)}>حذف</button></div></div>); })}</>)}
-  </div>);
+import { useLang } from '../lib/i18n';
+import { supabase } from '../lib/supabase';
+import { CONTACTS } from '../lib/config';
+import People from '../components/People';
+const fmt = tm => { if (!tm) return ''; const [h, m] = tm.split(':'); const hh = +h; return `${((hh + 11) % 12) + 1}:${m} ${hh >= 12 ? 'PM' : 'AM'}`; };
+const img = p => supabase.storage.from('announcements').getPublicUrl(p).data.publicUrl;
+const pubP = p => supabase.storage.from('player-photos').getPublicUrl(p).data.publicUrl;
+const LBL = { batter: 'Batter', bowler: 'Bowler', all_rounder: 'All-Rounder', wicket_keeper: 'Wicket-Keeper' };
+export default function Home() {
+  const { t } = useLang();
+  const [s, setS] = useState({ total: 0, verified: 0, not_verified: 0 });
+  const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [moms, setMoms] = useState([]);
+  const [lb, setLb] = useState(null); const [gi, setGi] = useState(null); const [allAnn, setAllAnn] = useState(false);
+  const [qs, setQs] = useState([]); const [qi, setQi] = useState(0); const [hold, setHold] = useState(false);
+  const [mi, setMi] = useState(0); const [mh, setMh] = useState(false); const [zm, setZm] = useState(null);
+  const [tms, setTms] = useState([]); const [tmSel, setTmSel] = useState(null); const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    supabase.rpc('public_stats').then(({ data }) => data && setS(data));
+    supabase.rpc('public_content').then(({ data }) => data && setC(data));
+    supabase.rpc('public_announcements').then(({ data }) => data && setAnn(data));
+    supabase.rpc('public_moments').then(({ data }) => data && setMoms(data));
+    supabase.rpc('public_quotes').then(({ data }) => data && setQs(data));
+    supabase.rpc('public_teams').then(({ data }) => data && setTms(data));
+  }, []);
+  useEffect(() => { if (qs.length < 2 || hold) return; const id = setInterval(() => setQi(i => (i + 1) % qs.length), 9000); return () => clearInterval(id); }, [qs.length, hold]);
+  useEffect(() => { if (moms.length < 2 || mh) return; const id = setInterval(() => setMi(i => (i + 1) % moms.length), 5000); return () => clearInterval(id); }, [moms.length, mh]);
+  useEffect(() => { const id = setInterval(() => setNow(Date.now()), 60000); return () => clearInterval(id); }, []);
+  const nm = n => { const f = tms.find(x => x.name.trim().toLowerCase() === (n || '').trim().toLowerCase()); return f ? <button className="tlink" onClick={() => setTmSel(f)}>{n}</button> : n; };
+  const target = c.next_date && c.next_time ? new Date(c.next_date + 'T' + c.next_time).getTime() : 0; const diff = target - now;
+  const cd = target && diff > 0 ? `${Math.floor(diff / 864e5)}d ${Math.floor((diff % 864e5) / 36e5)}h ${Math.floor((diff % 36e5) / 6e4)}m` : '';
+  const pauseQ = () => { setHold(true); clearTimeout(window.__qh); window.__qh = setTimeout(() => setHold(false), 15000); };
+  const pauseM = () => { setMh(true); clearTimeout(window.__mh); window.__mh = setTimeout(() => setMh(false), 15000); };
+  const stepQ = d => { pauseQ(); setQi(i => (i + d + qs.length) % qs.length); };
+  const stepM = d => { pauseM(); setMi(i => (i + d + moms.length) % moms.length); };
+  const step = d => setGi(i => (i + d + moms.length) % moms.length);
+  const cm = moms[Math.min(mi, moms.length - 1)]; const la = ann[0];
+  const showWin = c.winner_show !== '0' && (c.winner_team || c.winner_img_path || c.winner_text); const showNext = c.next_show !== '0' && ((c.next_a && c.next_b) || c.next_img_path || c.next_text);
+  return (<>
+    <section className="hero">
+      <div className="shield" style={{ display: 'inline-block', fontSize: '2rem' }}>BJL</div>
+      <h1>{t('title')}</h1>
+      <div className="calli">{c.calli_path ? <img src={img(c.calli_path)} alt="" /> :
+        <div className="ar" lang="ar" dir="rtl">لَا فَتَىٰ إِلَّا عَلِيٌّ وَلَا سَيْفَ إِلَّا ذُو الْفَقَارِ</div>}</div>
+      <p>{t('season')}</p><p>{t('loc')}</p>
+      <div className="row">
+        <Link href="/register" className="btn">{t('regBtn')}</Link>
+        <Link href="/teams" className="btn alt">{t('viewBtn')}</Link>
+        <Link href="/team" className="btn alt">🔑 {t('captainSignIn')}</Link>
+      </div>
+    </section>
+    <div className="duo">
+      <div className="card mc"><h3>{t('todayWinner')}</h3>
+        {showWin ? (<>
+          {c.winner_img_path && <img className="cimg" src={img(c.winner_img_path)} alt="" loading="lazy" onClick={() => setZm({ img: c.winner_img_path, title: t('todayWinner'), text: [c.winner_team && '🏆 ' + c.winner_team, c.loser_team && t('defeated') + ': ' + c.loser_team, c.winner_result, c.winner_text, c.winner_date && '📅 ' + c.winner_date].filter(Boolean).join('\n') })} />}
+          {c.winner_team && <div className="team">🏆 {nm(c.winner_team)}</div>}
+          {c.loser_team && <div className="lose"><span className="dl">{t('defeated')}</span> {nm(c.loser_team)}</div>}
+          {c.winner_result && <div className="res">{c.winner_result}</div>}
+          {c.winner_text && <div className="ctext">{c.winner_text}</div>}
+          {c.winner_date && <div className="dt">📅 {c.winner_date}</div>}</>) : <div className="empty">{t('noWinner')}</div>}</div>
+      <div className="card mc"><h3>{t('nextMatch')}</h3>
+        {showNext ? (<>
+          {c.next_img_path && <img className="cimg" src={img(c.next_img_path)} alt="" loading="lazy" onClick={() => setZm({ img: c.next_img_path, title: t('nextMatch'), text: [c.next_a && c.next_b && c.next_a + ' ' + t('vs') + ' ' + c.next_b, c.next_text, c.next_date && '📅 ' + c.next_date + (c.next_time ? ' · ' + fmt(c.next_time) : ''), '📍 ' + (c.next_venue || 'Dab Ground, Battagram')].filter(Boolean).join('\n') })} />}
+          {c.next_a && c.next_b && <><div className="team">{nm(c.next_a)}</div><div className="vsx">{t('vs')}</div><div className="team">{nm(c.next_b)}</div></>}
+          {c.next_text && <div className="ctext">{c.next_text}</div>}
+          {c.next_date && <div className="dt">📅 {c.next_date} {c.next_time && '· ' + fmt(c.next_time)}</div>}
+          <div className="dt">📍 {c.next_venue || 'Dab Ground, Battagram'}</div>
+          {cd && <div className="dt">⏳ {t('startsIn')}: {cd}</div>}</>) : <div className="empty">{t('noNext')}</div>}</div>
+    </div>
+    <div className="duo">
+      <div className="card"><h3>{t('annTitle')}</h3>
+        {!la ? <div className="empty">{t('noAnnCard')}</div> : (<>
+          <img className="sqimg" src={img(la.image_path)} alt={la.title} loading="lazy" onClick={() => setLb(la)} />
+          <div className="annt">{la.title}</div><small>{la.announce_date}</small>
+          {ann.length > 1 && <button className="tlink" style={{ marginTop: 6, textAlign: 'start' }} onClick={() => setAllAnn(true)}>{t('allAnn')} ({ann.length})</button>}</>)}</div>
+      <div className="card"><h3>{t('momentsT')}</h3>
+        {!cm ? <div className="empty">{t('noMom')}</div> : (<div className="ms" onMouseEnter={pauseM} onTouchStart={pauseM}>
+          <img className="sqimg" key={cm.id} src={img(cm.image_path)} alt="" onClick={() => setGi(moms.indexOf(cm))} />
+          <button className="msb l" onClick={() => stepM(-1)} aria-label="prev">◀</button><button className="msb r" onClick={() => stepM(1)} aria-label="next">▶</button>
+          <small>{moms.indexOf(cm) + 1}/{moms.length}</small></div>)}</div>
+    </div>
+    <People inline />
+    <div className="card"><div className="big">{s.total} {t('teamsRegistered')}</div>
+      <div>✓ {t('verifiedT')}: {s.verified}</div><div>{t('notVerifiedT')}: {s.not_verified}</div><small>{t('fee')}</small></div>
+    <h2>{t('contactTitle')}</h2>
+    {CONTACTS.map((x, i) => (<div className="card" key={x.num}><b>{x.name}</b> · {t(x.role)}{i !== 0 && <div dir="ltr">{x.disp}</div>}
+      <div style={{ marginTop: 8 }}><a className="btn" href={`https://wa.me/${i === 0 && c.falak_whatsapp ? c.falak_whatsapp : x.num}?text=${encodeURIComponent((i === 0 && c.falak_msg) || t(x.msg))}`} target="_blank" rel="noopener noreferrer">{i === 0 ? (c.falak_btn || t('askFalak')) : t('wa')}</a></div></div>))}
+    {qs.length > 0 && qs[qi] && <section className="quotes" onMouseEnter={pauseQ} onTouchStart={pauseQ}>
+      <h2>اقوالِ امام علیؑ و تعلیماتِ اہلِ بیتؑ</h2>
+      <div className="qt" key={qs[qi].id} dir="rtl" lang="ur">
+        <div className="qn">قول نمبر {qi + 1}</div>
+        <p className="qb">{qs[qi].body}</p>
+        <div className="qr">کتاب: {qs[qi].book}</div><div className="qr">حوالہ: {qs[qi].ref}</div></div>
+      <div className="row"><button className="btn alt" onClick={() => stepQ(-1)} aria-label="prev">▶</button>
+        <span>{qi + 1} / {qs.length}</span><button className="btn alt" onClick={() => stepQ(1)} aria-label="next">◀</button></div></section>}
+    {allAnn && <div className="modal" onClick={() => setAllAnn(false)}><div className="mbox" onClick={e => e.stopPropagation()}>
+      <button className="btn alt" onClick={() => setAllAnn(false)}>✕ {t('close')}</button>
+      {ann.map(a => (<div className="alist" key={a.id} onClick={() => { setAllAnn(false); setLb(a); }}><img src={img(a.image_path)} alt="" /><div><b>{a.title}</b><div><small>{a.announce_date}</small></div></div></div>))}</div></div>}
+    {lb && <div className="modal" onClick={() => setLb(null)}><div className="mbox" onClick={e => e.stopPropagation()}>
+      <button className="btn alt" onClick={() => setLb(null)}>✕ {t('close')}</button>
+      <img src={img(lb.image_path)} alt={lb.title} style={{ width: '100%', borderRadius: 10, marginTop: 8 }} /><h3>{lb.title}</h3>
+      <p style={{ whiteSpace: 'pre-wrap' }}>{lb.description}</p><small>{lb.announce_date}</small>
+      <div style={{ marginTop: 10 }}><a className="btn" href={`https://wa.me/?text=${encodeURIComponent(lb.title + ' – ' + (typeof window !== 'undefined' ? window.location.href : ''))}`} target="_blank" rel="noopener noreferrer">{t('share')}</a></div></div></div>}
+    {gi !== null && moms[gi] && <div className="modal" onClick={() => setGi(null)}><div className="mbox" onClick={e => e.stopPropagation()}>
+      <div className="row" style={{ justifyContent: 'space-between' }}><button className="btn alt" onClick={() => step(-1)}>◀</button>
+        <button className="btn alt" onClick={() => setGi(null)}>✕</button><button className="btn alt" onClick={() => step(1)}>▶</button></div>
+      <img src={img(moms[gi].image_path)} alt="" style={{ width: '100%', borderRadius: 10 }} />
+      <p>{moms[gi].caption}</p><small>{moms[gi].moment_date}</small></div></div>}
+    {zm && <div className="modal" onClick={() => setZm(null)}><div className="mbox" onClick={e => e.stopPropagation()}>
+      <button className="btn alt" onClick={() => setZm(null)}>✕ {t('close')}</button>
+      <img src={img(zm.img)} alt={zm.title} style={{ width: '100%', borderRadius: 10, marginTop: 8 }} /><h3>{zm.title}</h3>
+      <p style={{ whiteSpace: 'pre-wrap' }}>{zm.text}</p></div></div>}
+    {tmSel && <div className="modal" onClick={() => setTmSel(null)}><div className="mbox" onClick={e => e.stopPropagation()}>
+      <button className="btn alt" onClick={() => setTmSel(null)}>✕ {t('close')}</button>
+      <h3>{tmSel.name} <small>{tmSel.reg_id}</small></h3>
+      <span className={'badge ' + (tmSel.verified ? 'v' : 'n')}>{tmSel.verified ? '✓ ' + t('verifiedBadge') : t('notVerifiedBadge')}</span>
+      <div className="pgrid">{(tmSel.players || []).map((p, i) => (<div key={i} className="pl"><img className="ph sm" src={pubP(p.photo)} alt="" /><div>{p.name}</div>
+        <small>{t(LBL[p.position])} · {p.age}</small>{i < 2 && <small> ★ {t(i === 0 ? 'cap1' : 'cap2')}</small>}</div>))}</div></div></div>}
+  </>);
 }
