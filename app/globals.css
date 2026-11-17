@@ -471,8 +471,12 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--bjl-gold);outline-o
 /* Broadcast-style hero detail and restrained match/team treatments */
 .bjl-hero{--hero-parallax-x:0px;--hero-parallax-y:0px;isolation:isolate;overflow:hidden}
 .bjl-hero .hero-mark,.bjl-hero h1,.bjl-hero .hero-season{transform:translate3d(var(--hero-parallax-x),var(--hero-parallax-y),0);transition:transform .18s ease-out}
-.bjl-hero-ball{position:absolute;right:clamp(16px,7vw,82px);top:clamp(30px,8vw,82px);width:clamp(42px,6vw,72px);height:auto;opacity:.8;filter:drop-shadow(0 12px 15px #0009);pointer-events:none;animation:bjlBallFloat 5s ease-in-out infinite;z-index:0}
-@keyframes bjlBallFloat{0%,100%{transform:translate3d(0,0,0) rotate(-8deg)}50%{transform:translate3d(0,-7px,0) rotate(5deg)}}
+.bjl-hero-ball{position:absolute;right:clamp(16px,7vw,82px);top:clamp(30px,8vw,82px);width:clamp(42px,6vw,72px);height:auto;opacity:.9;filter:drop-shadow(0 12px 15px #0009);pointer-events:none;z-index:0;transform-origin:center;animation:bjlBallFlight 4.8s cubic-bezier(.35,.02,.55,.98) infinite}
+@keyframes bjlBallFlight{0%{transform:translate3d(0,0,0) rotate(0deg) scale(1);opacity:.95}18%{transform:translate3d(-18vw,8vh,0) rotate(720deg) scale(.82);opacity:1}34%{transform:translate3d(-38vw,-1vh,0) rotate(1440deg) scale(.58);opacity:.9}48%{transform:translate3d(-52vw,10vh,0) rotate(2160deg) scale(.34);opacity:.45}50%{transform:translate3d(0,0,0) rotate(2160deg) scale(1);opacity:0}68%{transform:translate3d(-20vw,5vh,0) rotate(2880deg) scale(.8);opacity:1}84%{transform:translate3d(-42vw,-2vh,0) rotate(3600deg) scale(.55);opacity:.9}98%,100%{transform:translate3d(-58vw,8vh,0) rotate(4320deg) scale(.28);opacity:.35}}
+.quotes .quote-arrow{color:#ff343b;border:2px solid #e0242b;background:#21090d;font-size:1.45rem;font-weight:900;min-width:64px;min-height:58px;line-height:1;box-shadow:0 0 14px #e0242b33}
+.quotes .quote-arrow:hover{color:#fff;background:#b01212;box-shadow:0 0 20px #e0242b88}
+@media(max-width:520px){.bjl-hero-ball{animation-duration:4.2s}}
+@media(prefers-reduced-motion:reduce){.bjl-hero-ball{animation:none;opacity:.8}}
 .bjl-hero .row .btn:first-child{position:relative;overflow:hidden}
 .bjl-hero .row .btn:first-child:after{content:"";position:absolute;inset:-40% auto -40% -45%;width:28%;transform:translateX(-180%) skewX(-18deg);background:linear-gradient(90deg,transparent,#ffffff55,transparent);pointer-events:none}
 @media(hover:hover) and (prefers-reduced-motion:no-preference){.bjl-hero .row .btn:first-child:hover:after{transition:transform .55s ease;transform:translateX(650%) skewX(-18deg)}}
