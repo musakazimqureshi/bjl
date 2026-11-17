@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { adminSupabase as supabase } from '../../lib/adminSupabase';
 import { shrink } from '../../lib/img';
 const ext = f => (f.type === 'image/png' ? 'png' : f.type === 'image/webp' ? 'webp' : 'jpg');
-const okImg = f => f && ['image/jpeg', 'image/png', 'image/webp'].includes(f.type) && f.size <= 15 * 1024 * 1024;
+const dateFmt = v => { if (!v) return ''; const m = String(v).match(/^(\\d{4})-(\\d{2})-(\\d{2})/); return m ? `${m[3]}/${m[2]}/${m[1]}` : v; };\nconst okImg = f => f && ['image/jpeg', 'image/png', 'image/webp'].includes(f.type) && f.size <= 15 * 1024 * 1024;
 export default function Admin() {
   const [ready, setReady] = useState(false); const [isAdmin, setIsAdmin] = useState(false); const [logged, setLogged] = useState(false);
   const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
@@ -223,7 +223,7 @@ export default function Admin() {
       <label>Time</label><input type="time" value={f.time} onChange={e => setF({ ...f, time: e.target.value })} />
       <label>Image</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setF({ ...f, file: e.target.files[0] })} />
       <button className="btn">Publish</button></form>
-      {ann.map((a, i) => (<div className="card" key={a.id}><b>{a.title}</b> <small>{a.announce_date}</small> {a.published ? '✅' : '⛔'}
+      {ann.map((a, i) => (<div className="card" key={a.id}><b>{a.title}</b> <small>{dateFmt(a.announce_date)}</small> {a.published ? '✅' : '⛔'}
         <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt" onClick={() => move(i, -1)}>▲</button><button className="btn alt" onClick={() => move(i, 1)}>▼</button><button className="btn alt" onClick={() => editAnn(a)}>ایڈٹ</button><button className="btn alt" onClick={() => toggle(a)}>{a.published ? 'چھپائیں' : 'دکھائیں'}</button>
           <button className="btn" onClick={() => del(a)}>Delete</button></div></div>))}</>)}
     {tab === 'people' && (<>{[[1, 'AMAN MALIK – MEMBER'], [2, 'WALEED AFRIDI – MEMBER'], [3, 'MUHAMMAD HASNAIN – MEMBER'], [4, 'FALAK – ORGANIZER']].map(([n, l]) => (<div className="card" key={n}><h3>{l}</h3>
@@ -240,7 +240,7 @@ export default function Admin() {
       <button className="btn">Publish</button></form>
       {moms.map(m => (<div className="card" key={m.id} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
         <img src={pa(m.image_path)} alt="" width="70" height="70" style={{ borderRadius: 8, objectFit: 'cover' }} />
-        <div style={{ flex: 1 }}><small>{m.moment_date}</small><div>{m.caption} {m.published ? '✅' : '⛔'}</div>
+        <div style={{ flex: 1 }}><small>{dateFmt(m.moment_date)}</small><div>{m.caption} {m.published ? '✅' : '⛔'}</div>
           <button className="btn alt" onClick={() => capMoment(m)}>کیپشن</button> <button className="btn alt" onClick={() => togMoment(m)}>{m.published ? 'چھپائیں' : 'دکھائیں'}</button> <button className="btn alt" onClick={() => delMoment(m)}>Delete</button></div></div>))}</>)}
     {tab === 'quotes' && (<><form className="card" onSubmit={addQuote}><h3>New Quote</h3>
       <label>Quote Text</label><textarea rows="4" style={{ width: '100%', padding: 10, borderRadius: 8 }} value={qf.body} onChange={e => setQf({ ...qf, body: e.target.value })} />
