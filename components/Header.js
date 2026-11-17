@@ -3,9 +3,31 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useLang } from '../lib/i18n';
 import { usePathname } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 export default function Header() {
   const { t, lang, setLang } = useLang();
   const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = e => {
+      if (e.key === 'Escape') setMenuOpen(false);
+      if (e.key === 'Tab' && menuRef.current) {
+        const nodes = menuRef.current.querySelectorAll('a[href],button:not([disabled])');
+        if (!nodes.length) return;
+        const first = nodes[0], last = nodes[nodes.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    menuRef.current?.querySelector('a')?.focus();
+    return () => { document.body.style.overflow = previous; document.removeEventListener('keydown', onKeyDown); };
+  }, [menuOpen]);
+  useEffect(() => { setMenuOpen(false); }, [pathname]);
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const update = () => setScrolled(window.scrollY > 12);
