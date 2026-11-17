@@ -492,3 +492,20 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--bjl-gold);outline-o
 .pp img{box-shadow:0 0 0 2px #d4af37,0 0 18px #d4af3728}
 @media(max-width:639px){.bjl-hero-ball{right:14px;top:18px;width:42px;opacity:.55}.bjl-hero .hero-mark,.bjl-hero h1,.bjl-hero .hero-season{transition:none}}
 @media(prefers-reduced-motion:reduce){.bjl-hero-ball{animation:none}.bjl-hero .hero-mark,.bjl-hero h1,.bjl-hero .hero-season{transform:none!important}.winner-card.in-view:after,.two>.card .badge.v:after,.ms .sqimg{animation:none!important}}
+
+/* Every homepage visit: welcome, followed by a two-second SIX moment */
+.splash.sp-six-mode{background:radial-gradient(ellipse at 50% 42%,#70121d 0%,#26090f 42%,#07070a 78%);overflow:hidden}
+.sp-six-stage{position:relative;display:flex;min-height:100%;width:100%;align-items:center;justify-content:center;flex-direction:column;isolation:isolate;overflow:hidden;animation:spSixIn .24s ease-out both}
+.sp-six-stage:before{content:"";position:absolute;inset:-35%;z-index:-1;background:repeating-conic-gradient(from 0deg at 50% 48%,#e4c36a12 0deg 5deg,transparent 5deg 15deg);animation:spSixRays 5s linear infinite}
+.sp-six-word{font-family:Impact,'Arial Black',sans-serif;font-size:clamp(6rem,25vw,15rem);font-weight:1000;line-height:.8;letter-spacing:-.07em;color:#f6d879;text-shadow:0 5px 0 #8d5a16,0 12px 0 #571018,0 22px 45px #000d;transform:scale(.55) rotate(-8deg);animation:spSixHit .55s cubic-bezier(.15,.85,.2,1.25) .05s both}
+.sp-six-word span{color:#fff;text-shadow:0 0 24px #f5d987}
+.sp-six-sub{margin-top:22px;color:#f7eac5;font-size:clamp(.65rem,2vw,.95rem);font-weight:900;letter-spacing:.24em;text-align:center;animation:spSixText .35s .32s both}
+.sp-six-ball{position:absolute;top:13%;left:50%;font-size:clamp(2.3rem,6vw,4rem);color:#d31c2e;text-shadow:0 0 20px #ff4b56;animation:spSixFlight .72s cubic-bezier(.2,.75,.25,1) both}
+.sp-six-stumps{position:absolute;bottom:13%;display:flex;gap:9px;transform:perspective(100px) rotateX(-8deg)}
+.sp-six-stumps i{display:block;width:8px;height:clamp(35px,7vh,58px);border-radius:5px;background:linear-gradient(90deg,#a87924,#ffe6a0,#a87924);box-shadow:0 0 18px #e4c36a88}
+@keyframes spSixIn{from{opacity:0}to{opacity:1}}
+@keyframes spSixHit{0%{opacity:0;transform:scale(.25) rotate(-18deg)}65%{opacity:1;transform:scale(1.12) rotate(3deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes spSixFlight{0%{opacity:0;transform:translate(-50%,65vh) scale(.25)}25%{opacity:1}100%{opacity:1;transform:translate(160px,-5vh) scale(.8) rotate(720deg)}}
+@keyframes spSixText{from{opacity:0;letter-spacing:.05em;transform:translateY(10px)}to{opacity:1;letter-spacing:.24em;transform:translateY(0)}}
+@keyframes spSixRays{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.sp-six-stage:before,.sp-six-word,.sp-six-ball,.sp-six-sub{animation:none!important}.sp-six-word{transform:none;opacity:1}}
