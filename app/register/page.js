@@ -17,7 +17,7 @@ export default function Register() {
   const block = (i, title, mobile) => { const p = pl[i]; return (<div className="card" key={i}><b>{title}</b>
     <input placeholder={t('pname')} value={p.name} onChange={e => up(i, 'name', e.target.value)} />
     {mobile && <input placeholder={t('mobLead')} inputMode="numeric" dir="ltr" value={p.mobile} onChange={e => up(i, 'mobile', e.target.value)} />}
-    <input placeholder={t('age')} type="number" min="5" max="60" value={p.age} onChange={e => up(i, 'age', e.target.value)} />
+    <input placeholder={t('age')} type="number" min="5" max="18" value={p.age} onChange={e => up(i, 'age', e.target.value)} />
     <select value={p.position} onChange={e => up(i, 'position', e.target.value)}><option value="">{t('pos')}</option>
       {POS.map(([v, l]) => <option key={v} value={v}>{t(l)}</option>)}</select>
     <label>{t('photo')}</label><input type="file" accept="image/jpeg,image/png" onChange={e => up(i, 'file', e.target.files[0])} /></div>); };
@@ -27,7 +27,7 @@ export default function Register() {
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) return setErr(t('emailLead'));
     for (let i = 0; i < 15; i++) {
       const p = pl[i]; const n = ' #' + (i + 1);
-      if (!p.name.trim() || !p.age || !p.position || !p.file) return setErr(t('eMissing') + n);
+      if (!p.name.trim() || !p.age || !p.position || !p.file) return setErr(t('eMissing') + n);\n      if (!Number.isInteger(Number(p.age)) || Number(p.age) < 5 || Number(p.age) > 18) return setErr('Player ' + (i + 1) + ': عمر 5 سے 18 سال کے درمیان ہونی چاہیے۔');
       if (i < 2 && !MOB.test(p.mobile)) return setErr(t('eMob') + n);
       if (!['image/jpeg', 'image/png'].includes(p.file.type) || p.file.size > 15 * 1024 * 1024) return setErr(t('ePhoto') + n);
     }
