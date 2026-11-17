@@ -55,10 +55,11 @@ export default function Home() {
       <div className="card mc"><h3>{t('todayWinner')}</h3>
         {showWin ? (<><div className="team">🏆 {nm(c.winner_team)}</div>
           {c.loser_team && <div className="lose"><span className="dl">{t('defeated')}</span> {nm(c.loser_team)}</div>}
+          {c.winner_photo_path && <img className="match-photo winner-photo" src={img(c.winner_photo_path)} alt="Winning team" loading="lazy" />}
           {c.winner_result && <div className="res">{c.winner_result}</div>}
           {c.winner_date && <div className="dt">📅 {c.winner_date}</div>}</>) : <div className="empty">{t('noWinner')}</div>}</div>
       <div className="card mc"><h3>{t('nextMatch')}</h3>
-        {showNext ? (<><div className="team">{nm(c.next_a)}</div><div className="vsx">{t('vs')}</div><div className="team">{nm(c.next_b)}</div>
+        {showNext ? (<><div className="next-sides"><div className="next-side">{c.next_a_photo_path && <img className="captain-photo" src={img(c.next_a_photo_path)} alt="Team A captain" loading="lazy" />}<div className="team">{nm(c.next_a)}</div></div><div className="vsx">{t('vs')}</div><div className="next-side">{c.next_b_photo_path && <img className="captain-photo" src={img(c.next_b_photo_path)} alt="Team B captain" loading="lazy" />}<div className="team">{nm(c.next_b)}</div></div></div>
           <div className="dt">📅 {c.next_date} {c.next_time && '· ' + fmt(c.next_time)}</div>
           <div className="dt">📍 {c.next_venue || 'Dab Ground, Battagram'}</div>
           {cd && <div className="dt">⏳ {t('startsIn')}: {cd}</div>}</>) : <div className="empty">{t('noNext')}</div>}</div>
@@ -78,9 +79,10 @@ export default function Home() {
     <People inline />
     <div className="card"><div className="big">{s.total} {t('teamsRegistered')}</div>
       <div>✓ {t('verifiedT')}: {s.verified}</div><div>{t('notVerifiedT')}: {s.not_verified}</div><small>{t('fee')}</small></div>
+    <section className="card official-group"><div className="group-kicker">BJL SEASON 1 · OFFICIAL COMMUNITY</div><h2>BJL Official WhatsApp Group</h2><p>{c.official_group_text || 'All BJL Season 1 details, match schedules, results, announcements and updates will be shared here.'}</p><a className="btn group-btn" href={c.official_whatsapp_group || 'https://chat.whatsapp.com/D5RUqQB6XVIIwHkYJkz5vZ'} target="_blank" rel="noopener noreferrer">Join Official WhatsApp Group</a><div className="group-number">WhatsApp Contact: +92 316 5738591</div></section>
     <h2>{t('contactTitle')}</h2>
     {CONTACTS.map((x, i) => (<div className="card" key={x.num}><b>{x.name}</b> · {t(x.role)}{i !== 0 && <div dir="ltr">{x.disp}</div>}
-      <div style={{ marginTop: 8 }}><a className="btn" href={`https://wa.me/${i === 0 && c.falak_whatsapp ? c.falak_whatsapp : x.num}?text=${encodeURIComponent((i === 0 && c.falak_msg) || t(x.msg))}`} target="_blank" rel="noopener noreferrer">{i === 0 ? (c.falak_btn || t('askFalak')) : t('wa')}</a></div></div>))}
+      <div style={{ marginTop: 8 }}><a className="btn" href={`https://wa.me/${i === 0 && (c.falak_whatsapp && c.falak_whatsapp !== '923411620498') ? c.falak_whatsapp : x.num}?text=${encodeURIComponent((i === 0 && c.falak_msg) || t(x.msg))}`} target="_blank" rel="noopener noreferrer">{i === 0 ? (c.falak_btn || t('askFalak')) : t('wa')}</a></div></div>))}
     {qs.length > 0 && qs[qi] && <section className="quotes" onMouseEnter={pauseQ} onTouchStart={pauseQ}>
       <h2>اقوالِ امام علیؑ و تعلیماتِ اہلِ بیتؑ</h2>
       <div className="qt" key={qs[qi].id} dir="rtl" lang="ur">
