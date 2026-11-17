@@ -7,6 +7,7 @@ export default function Splash() {
   const [visible, setVisible] = useState(false);
   const [fade, setFade] = useState(false);
   const [soundOn, setSoundOn] = useState(false);
+  const [showSix, setShowSix] = useState(false);
   const hideTimer = useRef(null);
   const fadeTimer = useRef(null);
   const audioRef = useRef(null);
@@ -138,13 +139,17 @@ export default function Splash() {
     if (hideTimer.current) window.clearTimeout(hideTimer.current);
     if (fadeTimer.current) window.clearTimeout(fadeTimer.current);
     setFade(false);
+    setShowSix(false);
     setVisible(true);
     if (playSound && soundOnRef.current) playIntro();
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     fadeTimer.current = window.setTimeout(() => setFade(true), reduced ? 1500 : 5400);
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     hideTimer.current = window.setTimeout(() => {
-      setVisible(false);
-    }, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 2000 : 6000);
+      setFade(false);
+      setShowSix(true);
+      hideTimer.current = window.setTimeout(() => setVisible(false), reducedMotion ? 700 : 2000);
+    }, reducedMotion ? 2000 : 6000);
   }, [playIntro]);
 
   useEffect(() => {
@@ -152,8 +157,7 @@ export default function Splash() {
       setVisible(false);
       return;
     }
-    try { if (sessionStorage.getItem('bjl-welcome-seen') === '1') return; sessionStorage.setItem('bjl-welcome-seen', '1'); } catch (e) {}
-    // Sound remains optional and user-controlled.
+        // Sound remains optional and user-controlled.
     soundOnRef.current = false;
     setSoundOn(false);
     showWelcome(false);
@@ -192,8 +196,8 @@ export default function Splash() {
 
   if (!visible) return null;
   return (
-    <div className={'splash' + (fade ? ' fade' : '')} role="dialog" aria-label="Welcome to BJL Season 1" onClick={() => { if (hideTimer.current) window.clearTimeout(hideTimer.current); if (fadeTimer.current) window.clearTimeout(fadeTimer.current); setFade(true); window.setTimeout(() => setVisible(false), 600); }}>
-      <div className="sp-in">
+    <div className={'splash' + (fade ? ' fade' : '') + (showSix ? ' sp-six-mode' : '')} role="dialog" aria-label={showSix ? 'Six! BJL cricket animation' : 'Welcome to BJL Season 1'} onClick={() => { if (hideTimer.current) window.clearTimeout(hideTimer.current); if (fadeTimer.current) window.clearTimeout(fadeTimer.current); setFade(true); window.setTimeout(() => setVisible(false), 250); }}>
+      {showSix ? <div className="sp-six-stage" aria-live="polite"><div className="sp-six-ball">●</div><div className="sp-six-word">SIX<span>!</span></div><div className="sp-six-sub">OUT OF THE PARK · BJL SEASON 1</div><div className="sp-six-stumps"><i/><i/><i/></div></div> : <><div className="sp-in">
         <div className="sp-kicker">BATTAGRAM JUNIOR LEAGUE</div>
         <div className="sp-t">WELCOME TO<br /><span>BJL SEASON 1</span></div>
         <div className="sp-line" />
@@ -203,7 +207,7 @@ export default function Splash() {
       <button className="sp-sound" onClick={e => { e.stopPropagation(); toggleSound(); }} type="button" aria-label={soundOn ? 'Turn welcome sound off' : 'Turn welcome sound on'}>
         {soundOn ? '🔊 SOUND ON · TAP TO MUTE' : '🔇 SOUND OFF · TAP TO ENABLE'}
       </button>
-      <div className="sp-organizer"><small>ORGANIZED BY</small><strong>FALAK QURESHI</strong></div>
+      <div className="sp-organizer"><small>ORGANIZED BY</small><strong>FALAK QURESHI</strong></div></>}
     </div>
   );
 }
