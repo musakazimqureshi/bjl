@@ -44,13 +44,6 @@ export default function Register() {
       }
       const { data, error } = await supabase.rpc('submit_team', { t: { name: team.trim(), email: email.trim().toLowerCase() }, p: players });
       if (error) throw error;
-      const { data: loginData, error: loginError } = await supabase.functions.invoke('captain-login-provisioner', {
-        body: { regId: data, email: email.trim().toLowerCase(), password: '12345678' }
-      });
-      if (loginError || !loginData?.ok) {
-        setErr('ٹیم کی رجسٹریشن محفوظ ہو گئی ہے، لیکن لاگ اِن اکاؤنٹ بنانے میں مسئلہ آیا۔ منتظم سے رابطہ کریں۔');
-        return;
-      }
       router.push('/pay?ref=' + encodeURIComponent(data));
     } catch (x) { setErr(x.message || String(x)); }
     setBusy(false);
