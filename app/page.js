@@ -5,7 +5,7 @@ import { useLang } from '../lib/i18n';
 import { supabase } from '../lib/supabase';
 import { CONTACTS } from '../lib/config';
 import People from '../components/People';
-const fmt = tm => { if (!tm) return ''; const [h, m] = tm.split(':'); const hh = +h; return `${((hh + 11) % 12) + 1}:${m} ${hh >= 12 ? 'PM' : 'AM'}`; };
+const dateFmt = v => { if (!v) return ''; const m = String(v).match(/^(\\d{4})-(\\d{2})-(\\d{2})/); return m ? `${m[3]}/${m[2]}/${m[1]}` : v; };\nconst fmt = tm => { if (!tm) return ''; const [h, m] = tm.split(':'); const hh = +h; return `${((hh + 11) % 12) + 1}:${m} ${hh >= 12 ? 'PM' : 'AM'}`; };
 const img = p => supabase.storage.from('announcements').getPublicUrl(p).data.publicUrl;
 const pubP = p => supabase.storage.from('player-photos').getPublicUrl(p).data.publicUrl;
 const LBL = { batter: 'Batter', bowler: 'Bowler', all_rounder: 'All-Rounder', wicket_keeper: 'Wicket-Keeper' };
@@ -59,7 +59,7 @@ export default function Home() {
           <div className="team winner-name">🏆 {nm(c.winner_team)}</div>
           {c.loser_team && <div className="lose"><span className="dl">{t('defeated')}</span> {nm(c.loser_team)}</div>}
           <div className="winner-caption">{c.winner_result || 'Match result and winner details will appear here.'}</div>
-          {c.winner_date && <div className="dt">📅 {c.winner_date}</div>}</>) : <div className="empty">{t('noWinner')}</div>}</div>
+          {c.winner_date && <div className="dt">📅 {dateFmt(c.winner_date)}</div>}</>) : <div className="empty">{t('noWinner')}</div>}</div>
       <div className="card mc next-card"><h3>{t('nextMatch')}</h3>
         {showNext ? (<><div className="next-sides">
             <div className="next-side">{c.next_a_photo_path ? <img className="captain-photo" src={img(c.next_a_photo_path)} alt="Team A" loading="lazy" /> : <div className="next-photo-placeholder">TEAM A</div>}<div className="team">{nm(c.next_a)}</div></div>
@@ -74,7 +74,7 @@ export default function Home() {
       <div className="card"><h3>{t('annTitle')}</h3>
         {!la ? <div className="empty">{t('noAnnCard')}</div> : (<>
           <img className="sqimg" src={img(la.image_path)} alt={la.title} loading="lazy" onClick={() => setLb(la)} />
-          <div className="annt">{la.title}</div><small>{la.announce_date}</small>
+          <div className="annt">{la.title}</div><small>{dateFmt(la.announce_date)}</small>
           {ann.length > 1 && <button className="tlink" style={{ marginTop: 6, textAlign: 'start' }} onClick={() => setAllAnn(true)}>{t('allAnn')} ({ann.length})</button>}</>)}</div>
       <div className="card"><h3>{t('momentsT')}</h3>
         {!cm ? <div className="empty">{t('noMom')}</div> : (<div className="ms" onMouseEnter={pauseM} onTouchStart={pauseM}>
@@ -99,7 +99,7 @@ export default function Home() {
         <span>{qi + 1} / {qs.length}</span><button className="btn alt" onClick={() => stepQ(1)} aria-label="next">◀</button></div></section>}
     {allAnn && <div className="modal" onClick={() => setAllAnn(false)}><div className="mbox" onClick={e => e.stopPropagation()}>
       <button className="btn alt" onClick={() => setAllAnn(false)}>✕ {t('close')}</button>
-      {ann.map(a => (<div className="alist" key={a.id} onClick={() => { setAllAnn(false); setLb(a); }}><img src={img(a.image_path)} alt="" /><div><b>{a.title}</b><div><small>{a.announce_date}</small></div></div></div>))}</div></div>}
+      {ann.map(a => (<div className="alist" key={a.id} onClick={() => { setAllAnn(false); setLb(a); }}><img src={img(a.image_path)} alt="" /><div><b>{a.title}</b><div><small>{dateFmt(a.announce_date)}</small></div></div></div>))}</div></div>}
     {lb && <div className="modal" onClick={() => setLb(null)}><div className="mbox" onClick={e => e.stopPropagation()}>
       <button className="btn alt" onClick={() => setLb(null)}>✕ {t('close')}</button>
       <img src={img(lb.image_path)} alt={lb.title} style={{ width: '100%', borderRadius: 10, marginTop: 8 }} /><h3>{lb.title}</h3>
@@ -109,7 +109,7 @@ export default function Home() {
       <div className="row" style={{ justifyContent: 'space-between' }}><button className="btn alt" onClick={() => step(-1)}>◀</button>
         <button className="btn alt" onClick={() => setGi(null)}>✕</button><button className="btn alt" onClick={() => step(1)}>▶</button></div>
       <img src={img(moms[gi].image_path)} alt="" style={{ width: '100%', borderRadius: 10 }} />
-      <p>{moms[gi].caption}</p><small>{moms[gi].moment_date}</small></div></div>}
+      <p>{moms[gi].caption}</p><small>{dateFmt(moms[gi].moment_date)}</small></div></div>}
     {tmSel && <div className="modal" onClick={() => setTmSel(null)}><div className="mbox" onClick={e => e.stopPropagation()}>
       <button className="btn alt" onClick={() => setTmSel(null)}>✕ {t('close')}</button>
       <h3>{tmSel.name} <small>{tmSel.reg_id}</small></h3>
