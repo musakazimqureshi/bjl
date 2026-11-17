@@ -69,7 +69,7 @@ export default function Home() {
             <div className="vsx">{t('vs')}</div>
             <div className="next-side">{c.next_b_photo_path ? <img className="captain-photo" src={img(c.next_b_photo_path)} alt="Team B" loading="lazy" /> : <div className="next-photo-placeholder">TEAM B</div>}<div className="team">{nm(c.next_b)}</div></div>
           </div>
-          <div className="next-details"><div className="dt">📅 {c.next_date || 'Date to be announced'} {c.next_time && '· ' + fmt(c.next_time)}</div>
+          <div className="next-details"><div className="dt">📅 {(c.next_date && dateFmt(c.next_date)) || 'Date to be announced'} {c.next_time && '· ' + fmt(c.next_time)}</div>
           <div className="dt">📍 {c.next_venue || 'Dab Ground, Battagram'}</div>
           {cd && <div className="dt countdown">⏳ {t('startsIn')}: {cd}</div>}</div></>) : <div className="empty">{t('noNext')}</div>}</div>
     </div>
@@ -98,8 +98,8 @@ export default function Home() {
         <div className="qn">قول نمبر {qi + 1}</div>
         <p className="qb">{qs[qi].body}</p>
         <div className="qr">کتاب: {qs[qi].book}</div><div className="qr">حوالہ: {qs[qi].ref}</div></div>
-      <div className="row"><button className="btn alt" onClick={() => stepQ(-1)} aria-label="prev">▶</button>
-        <span>{qi + 1} / {qs.length}</span><button className="btn alt" onClick={() => stepQ(1)} aria-label="next">◀</button></div></section>}
+      <div className="row"><button className="btn alt quote-arrow" onClick={() => stepQ(-1)} aria-label="پچھلا قول">⬅</button>
+        <span>{qi + 1} / {qs.length}</span><button className="btn alt quote-arrow" onClick={() => stepQ(1)} aria-label="اگلا قول">➡</button></div></section>}
     {allAnn && <div className="modal" onClick={() => setAllAnn(false)}><div className="mbox" onClick={e => e.stopPropagation()}>
       <button className="btn alt" onClick={() => setAllAnn(false)}>✕ {t('close')}</button>
       {ann.map(a => (<div className="alist" key={a.id} onClick={() => { setAllAnn(false); setLb(a); }}><img src={img(a.image_path)} alt="" /><div><b>{a.title}</b><div><small>{dateFmt(a.announce_date)}</small></div></div></div>))}</div></div>}
