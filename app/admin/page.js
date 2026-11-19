@@ -292,7 +292,7 @@ export default function Admin() {
     <header className="admin-topbar"><div><span className="admin-eyebrow">MANAGEMENT CONSOLE</span><h1>BJL Admin Dashboard</h1><p>Manage your tournament, teams, matches and player reviews in one place.</p></div><div className="admin-top-actions"><button className="admin-profile-chip" onClick={() => { setTab('profile'); setMsg(''); }} aria-label="Open your admin profile"><span className="admin-profile-chip-photo">{profile.photo_path ? <img src={pa(profile.photo_path)} alt="" /> : 'MK'}</span><span><b>{profile.name || 'Musa Kazim'}</b><small>Administrator</small></span></button><span className="admin-live"><i /> SYSTEM ONLINE</span><button className="btn admin-logout" onClick={logout}>Logout ↗</button></div></header>
     <datalist id="tn">{teams.map(x => <option key={x.id} value={x.name} />)}</datalist>
     <nav className="tabs admin-tabs" aria-label="Admin sections">
-      {[['overview', 'Overview'], ['teams', 'Teams'], ['match', 'Match Center'], ['objections', 'Player Objections'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['quotes', 'Quotes'], ['set', 'Settings'], ['profile', 'My Profile']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
+      {[['overview', 'Overview'], ['teams', 'Teams'], ['match', 'Match Center'], ['objections', 'Objections' + (openObjections > 0 ? ' • ' + openObjections : '')], ['ann', 'Announcements'], ['people', 'People'], ['moms', 'Moments'], ['quotes', 'Quotes'], ['set', 'Settings'], ['profile', 'My Profile']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
       </nav>
     {msg && <div className="good admin-message">{msg}</div>}
     <section className="admin-stats" aria-label="Live tournament statistics">
@@ -402,6 +402,12 @@ export default function Admin() {
       {inp('falak_whatsapp', 'WhatsApp Number (international format, e.g. 923001234567)')}{inp('falak_btn', 'Button Text')}{inp('falak_msg', 'Default WhatsApp Message')}
       <label><input type="checkbox" style={{ width: 'auto' }} checked={c.registration_open !== 'false'} onChange={e => set('registration_open', e.target.checked ? 'true' : 'false')} /> Team registration is open</label>
       <button className="btn" onClick={() => save(['falak_whatsapp', 'falak_btn', 'falak_msg', 'registration_open'])}>Save Changes</button></div>
+      <div className="card"><h3>Homepage Rules & Prizes</h3>
+        <p>Leave either field empty to show “Will be announced soon” on the public homepage.</p>
+        <label>Tournament Rules</label><textarea rows="5" value={c.tournament_rules || ''} onChange={e => set('tournament_rules', e.target.value)} placeholder="Add confirmed tournament rules only..." />
+        <label>Prizes</label><textarea rows="4" value={c.tournament_prizes || ''} onChange={e => set('tournament_prizes', e.target.value)} placeholder="Add confirmed prize details only..." />
+        <button className="btn" onClick={() => save(['tournament_rules','tournament_prizes'])}>Save Rules & Prizes</button>
+      </div>
       <div className="card admin-moment-settings"><h3>Homepage Moments · Image Fit & Zoom</h3>
         <p>Control how player and team photos appear in the Moments carousel on the public homepage.</p>
         <label>Image Fit</label><select value={c.moments_fit || 'cover'} onChange={e => set('moments_fit', e.target.value)}><option value="cover">Fill frame (Cover)</option><option value="contain">Show full photo (Contain)</option></select>
