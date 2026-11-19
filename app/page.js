@@ -82,6 +82,13 @@ export default function Home() {
     <h2>{t('contactTitle')}</h2>
     {CONTACTS.map((x, i) => (<div className="card" key={x.num}><b>{x.name}</b> · {t(x.role)}{i !== 0 && <div dir="ltr">{x.disp}</div>}
       <div style={{ marginTop: 8 }}><a className="btn" href={`https://wa.me/${i === 0 && c.falak_whatsapp ? c.falak_whatsapp : x.num}?text=${encodeURIComponent((i === 0 && c.falak_msg) || t(x.msg))}`} target="_blank" rel="noopener noreferrer">{i === 0 ? (c.falak_btn || t('askFalak')) : t('wa')}</a></div></div>))}
+    <section className="card" style={{ marginTop: 16, border: '1px solid rgba(225, 29, 72, .48)', background: 'linear-gradient(135deg, rgba(105, 12, 35, .22), rgba(12, 18, 32, .96))', textAlign: 'center', padding: '22px 16px' }} aria-label="Official BJL WhatsApp Group">
+      <div style={{ fontSize: '1.15rem', fontWeight: 900, letterSpacing: '.04em', color: '#f2d48b' }}>OFFICIAL BJL WHATSAPP GROUP</div>
+      <p style={{ margin: '8px 0 14px', color: 'var(--muted, #c6c6d0)' }}>Join the official Battagram Junior League community for tournament updates and announcements.</p>
+      <a className="btn" href="https://chat.whatsapp.com/D5RUqQB6XVIIwHkYJkz5vZ" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', justifyContent: 'center', alignItems: 'center', gap: 8, background: 'linear-gradient(135deg, #16a34a, #087b43)', color: '#fff', fontWeight: 800, padding: '12px 20px', borderRadius: 999 }}>
+        JOIN OFFICIAL WHATSAPP GROUP
+      </a>
+    </section>
     {qs.length > 0 && qs[qi] && <section className="quotes" onMouseEnter={pauseQ} onTouchStart={pauseQ}>
       <h2>اقوالِ امام علیؑ و تعلیماتِ اہلِ بیتؑ</h2>
       <div className="qt" key={qs[qi].id} dir="rtl" lang="ur">
