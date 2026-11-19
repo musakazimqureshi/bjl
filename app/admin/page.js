@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { adminSupabase as supabase } from '../../lib/adminSupabase';
 import { shrink } from '../../lib/img';
+import { formatDate, formatDateTime } from '../../lib/date';
 const ADMIN_EMAIL = 'musakazim373@gmail.com';
 const ext = f => (f.type === 'image/png' ? 'png' : f.type === 'image/webp' ? 'webp' : 'jpg');
 const okImg = f => f && ['image/jpeg', 'image/png', 'image/webp'].includes(f.type) && f.size <= 15 * 1024 * 1024;
@@ -40,10 +41,18 @@ export default function Admin() {
     }
   }
   async function load() {
-    const { data } = await supabase.rpc('public_content'); setC(data || {});
-    const { data: a } = await supabase.from('announcements').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: false }); setAnn(a || []);
-    const { data: m } = await supabase.from('moments').select('*').order('moment_date', { ascending: false }).order('created_at', { ascending: false }); setMoms(m || []);
-    const { data: q } = await supabase.from('quotes').select('*').order('sort_order', { ascending: true }); setQs(q || []);
+    const [contentResult, announcementsResult, momentsResult, quotesResult] = await Promise.all([
+      supabase.rpc('public_content'),
+      supabase.from('announcements').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: false }),
+      supabase.from('moments').select('*').order('moment_date', { ascending: false }).order('created_at', { ascending: false }),
+      supabase.from('quotes').select('*').order('sort_order', { ascending: true })
+    ]);
+    setC(contentResult.data || {});
+    setAnn(announcementsResult.data || []);
+    setMoms(momentsResult.data || []);
+    setQs(quotesResult.data || []);
+    const firstError = contentResult.error || announcementsResult.error || momentsResult.error || quotesResult.error;
+    if (firstError) setMsg(firstError.message || 'Some dashboard data could not be loaded.');
   }
   async function loadProfile() {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -329,7 +338,7 @@ export default function Admin() {
       </div>
       <div className="admin-analytics-grid admin-lower-grid">
         <article className="admin-panel"><div className="admin-panel-head"><div><h3>Recently registered teams</h3><p>Latest five records from the database</p></div><button className="btn alt admin-mini-link" onClick={() => setTab('teams')}>View all teams ↗</button></div>
-          {recentTeams.length ? <div className="admin-recent-list">{recentTeams.map(team => <div className="admin-recent-row" key={team.id}><span className="admin-team-avatar">{(team.name || 'T').slice(0,1).toUpperCase()}</span><div className="admin-recent-main"><b>{team.name}</b><small>{team.reg_id || 'Registration'} · {team.created_at ? new Date(team.created_at).toLocaleDateString() : 'Date unavailable'}</small></div><span className={'admin-status-pill ' + (team.payment === 'verified' ? 'is-verified' : team.payment === 'rejected' ? 'is-rejected' : 'is-pending')}>{team.payment === 'verified' ? 'Verified' : team.payment === 'rejected' ? 'Rejected' : 'Pending'}</span></div>)}</div> : <p className="admin-empty-state">No team registrations yet.</p>}
+          {recentTeams.length ? <div className="admin-recent-list">{recentTeams.map(team => <div className="admin-recent-row" key={team.id}><span className="admin-team-avatar">{(team.name || 'T').slice(0,1).toUpperCase()}</span><div className="admin-recent-main"><b>{team.name}</b><small>{team.reg_id || 'Registration'} · {team.created_at ? formatDate(team.created_at) : 'Date unavailable'}</small></div><span className={'admin-status-pill ' + (team.payment === 'verified' ? 'is-verified' : team.payment === 'rejected' ? 'is-rejected' : 'is-pending')}>{team.payment === 'verified' ? 'Verified' : team.payment === 'rejected' ? 'Rejected' : 'Pending'}</span></div>)}</div> : <p className="admin-empty-state">No team registrations yet.</p>}
         </article>
         <article className="admin-panel"><div className="admin-panel-head"><div><h3>Admin attention</h3><p>Items that may need your review</p></div><span className="admin-panel-icon">✦</span></div>
           <div className="admin-attention-item"><span className="admin-attention-icon amber">◷</span><div><b>{pendingCount} payment reviews</b><small>Teams awaiting payment verification</small></div><button onClick={() => setTab('teams')}>Open</button></div>
@@ -350,7 +359,7 @@ export default function Admin() {
       {objections.map(o => <article className="card admin-objection-card" key={o.id}>
         <div className="admin-objection-head"><div><span className="admin-eyebrow">{o.reason}</span><h3>{o.players?.name || 'Player'} · {o.teams?.name || 'Team'}</h3></div><span className={'admin-objection-status '+o.status}>{o.status.toUpperCase()}</span></div>
         <p>{o.details || 'No description provided.'}</p>
-        <small>Raised by <b>{o.raised_by || 'Not provided'}</b> · {new Date(o.created_at).toLocaleString()}</small>
+        <small>Raised by <b>{o.raised_by || 'Not provided'}</b> · {formatDateTime(o.created_at)}</small>
         <div className="row admin-objection-actions"><button className="btn" onClick={() => setObjectionStatus(o,'resolved')} disabled={o.status==='resolved'}>Mark Resolved</button><button className="btn alt" onClick={() => setObjectionStatus(o,'dismissed')} disabled={o.status==='dismissed'}>Dismiss</button><button className="btn alt" onClick={() => setObjectionStatus(o,'open')} disabled={o.status==='open'}>Reopen</button></div>
       </article>)}
     </div>)}
@@ -361,7 +370,7 @@ export default function Admin() {
       <label>Time</label><input type="time" value={f.time} onChange={e => setF({ ...f, time: e.target.value })} />
       <label>Image</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setF({ ...f, file: e.target.files[0] })} />
       <button className="btn">Publish</button></form>
-      {ann.map((a, i) => (<div className="card" key={a.id}><b>{a.title}</b> <small>{a.announce_date}</small> {a.published ? '✅' : '⛔'}
+      {ann.map((a, i) => (<div className="card" key={a.id}><b>{a.title}</b> <small>{formatDate(a.announce_date)}</small> {a.published ? '✅' : '⛔'}
         <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt admin-reorder" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move announcement up" title="Move up"><span aria-hidden="true">↑</span><small>UP</small></button><button className="btn alt admin-reorder" onClick={() => move(i, 1)} disabled={i === ann.length - 1} aria-label="Move announcement down" title="Move down"><span aria-hidden="true">↓</span><small>DOWN</small></button><button className="btn alt" onClick={() => editAnn(a)}>Edit</button><button className="btn alt" onClick={() => toggle(a)}>{a.published ? 'Hide' : 'Show'}</button>
           <button className="btn" onClick={() => del(a)}>Delete Team</button></div></div>))}</>)}
     {tab === 'people' && (<>{[[1, 'AMAN MALIK – MEMBER'], [2, 'WALEED AFRIDI – MEMBER'], [3, 'MUHAMMAD HASNAIN – MEMBER'], [4, 'FALAK – ORGANIZER']].map(([n, l]) => (<div className="card" key={n}><h3>{l}</h3>
@@ -378,7 +387,7 @@ export default function Admin() {
       <button className="btn">Publish</button></form>
       {moms.map(m => (<div className="card" key={m.id} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
         <img src={pa(m.image_path)} alt="" width="70" height="70" style={{ borderRadius: 8, objectFit: 'cover' }} />
-        <div style={{ flex: 1 }}><small>{m.moment_date}</small><div>{m.caption} {m.published ? '✅' : '⛔'}</div>
+        <div style={{ flex: 1 }}><small>{formatDate(m.moment_date)}</small><div>{m.caption} {m.published ? '✅' : '⛔'}</div>
           <button className="btn alt" onClick={() => capMoment(m)}>Edit Caption</button> <button className="btn alt" onClick={() => togMoment(m)}>{m.published ? 'Hide' : 'Publish'}</button> <button className="btn alt" onClick={() => delMoment(m)}>Delete Team</button></div></div>))}</>)}
     {tab === 'quotes' && (<><form className="card" onSubmit={addQuote}><h3>Add Quote</h3>
       <label>Quote Text</label><textarea rows="4" style={{ width: '100%', padding: 10, borderRadius: 8 }} value={qf.body} onChange={e => setQf({ ...qf, body: e.target.value })} />
@@ -420,7 +429,7 @@ export default function Admin() {
                 <label>Description / Evidence</label><textarea required rows="2" value={objectionDraft.details} onChange={e => setObjectionDraft(v => ({ ...v, details: e.target.value }))} placeholder="Write the objection details..." />
                 <div className="row"><button className="btn">Submit Objection</button><button type="button" className="btn alt" onClick={() => setObjectionPlayer(null)}>Cancel</button></div>
               </form>}
-              {objections.filter(o => o.player_id === pp.id).map(o => <div className="admin-objection-mini" key={o.id}><b>{o.reason}</b> · {o.status.toUpperCase()}<br/><small>Raised by {o.raised_by || 'Not provided'} · {new Date(o.created_at).toLocaleString()}</small><div>{o.details}</div></div>)}
+              {objections.filter(o => o.player_id === pp.id).map(o => <div className="admin-objection-mini" key={o.id}><b>{o.reason}</b> · {o.status.toUpperCase()}<br/><small>Raised by {o.raised_by || 'Not provided'} · {formatDateTime(o.created_at)}</small><div>{o.details}</div></div>)}
             </div></div>))}</details>
           <div className="row" style={{ justifyContent: 'flex-start' }}>
             <button className="btn" onClick={() => setPay(tm, 'verified')}>✓ Verify Payment</button>
