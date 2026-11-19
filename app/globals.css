@@ -741,3 +741,99 @@ body:has(.hdr):before{
  .admin-shell:after,.admin-brand-mark,.admin-stat,.admin-shell .card,.admin-panel,.admin-bar-track span{animation:none!important;transition:none!important}
  .admin-shell .card:hover,.admin-panel:hover,.admin-stat:hover{transform:none!important}
 }
+
+
+/* BJL PUBLIC V2 — brighter championship identity, retained content and behavior */
+/* Shared foundations: public pages only. Admin keeps its own isolated shell. */
+:root{--red:#a80f2d;--red2:#e32645;--bg:#f4f5f8;--card:#fff;--txt:#202431;--gold:#c69a36;--bjl-ink:#171c28;--bjl-muted:#697386;--bjl-line:#e4e7ed;--bjl-soft:#fff7f2}
+body:has(.hdr){background:linear-gradient(180deg,#f8f9fb 0%,#f0f2f6 48%,#faf7f4 100%);color:var(--bjl-ink)}
+body:has(.hdr) main{max-width:1180px;padding:22px 20px 100px}
+.hdr{position:sticky;top:0;z-index:45;padding:12px clamp(14px,3vw,34px);background:rgba(20,25,37,.94);border-bottom:2px solid #d4a84e;box-shadow:0 12px 32px #10182724;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.hdr nav{align-items:center;gap:clamp(8px,1.6vw,20px)}
+.hdr nav a{font-size:.91rem;font-weight:750;color:#f1f3f7;opacity:.88;transition:color .2s,opacity .2s,transform .2s}
+.hdr nav a:hover{color:#f4cc78;opacity:1;transform:translateY(-2px)}
+.logo{color:#fff;font-weight:900;letter-spacing:.08em}
+.shield{background:linear-gradient(145deg,#ed4058,#9e1232 72%);border:1px solid #f6d58d;border-radius:10px 10px 17px 17px;box-shadow:0 7px 20px #e3264538,inset 0 1px 0 #ffffff66}
+.lang,.btn{background:linear-gradient(120deg,#b40f34,#e32645);color:#fff;border:1px solid #f06b80;border-radius:12px;padding:11px 19px;font-weight:800;box-shadow:0 7px 18px #ae153226,inset 0 1px 0 #ffffff45;transition:transform .22s,box-shadow .22s,filter .22s}
+.lang:hover,.btn:hover{transform:translateY(-2px);filter:brightness(1.05);box-shadow:0 12px 25px #ae15323d,inset 0 1px 0 #ffffff55}
+.btn.alt{background:#fff;color:#293246;border:1px solid #d8dce5;box-shadow:0 4px 12px #1c26330c}
+.btn.alt:hover{background:#fff7f5;border-color:#e32645;color:#a80f2d}
+.hero{position:relative;isolation:isolate;overflow:hidden;margin:12px 0 22px;padding:clamp(34px,5vw,68px) 22px;background:radial-gradient(ellipse at 82% 5%,#e3264540,transparent 34%),radial-gradient(ellipse at 10% 100%,#d4a84e27,transparent 32%),linear-gradient(130deg,#171d2b 0%,#252c3b 56%,#3a1824 100%);border:1px solid #d2a64c88;border-radius:26px;color:#fff;box-shadow:0 22px 55px #1b223326,inset 0 1px 0 #ffffff1a}
+.hero:before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(110deg,transparent 30%,#ffffff0b 50%,transparent 70%);transform:translateX(-100%);animation:bjlHeroShine 9s ease-in-out infinite}
+.hero:after{content:"";position:absolute;right:-110px;top:-145px;width:340px;height:340px;border:1px solid #f1c86a30;border-radius:50%;box-shadow:0 0 0 28px #f1c86a0a,0 0 0 58px #f1c86a08;pointer-events:none}
+.hero h1{color:#fff;font-size:clamp(2rem,5.6vw,3.65rem);letter-spacing:-.035em;text-shadow:0 6px 24px #0007}
+.hero p{color:#e2e5ec;margin:8px 0}
+.hero .shield{font-size:2rem!important}
+.stadium-ball{filter:drop-shadow(0 12px 22px #0005)}
+.calli{position:relative;overflow:hidden;max-width:720px;border:1px solid #e0bd6c;border-radius:18px;background:linear-gradient(135deg,#242a39,#541827 62%,#222838);box-shadow:0 12px 30px #05070d55,inset 0 1px 0 #ffffff18}
+.calli:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 15%,#ffffff0b 50%,transparent 82%);background-size:220% 100%;animation:bjlCalligraphyShine 8s ease-in-out infinite}
+.calli .ar{color:#fff;text-shadow:0 0 16px #d8b35b99}
+.duo{gap:16px;margin:16px 0 20px}
+.card{position:relative;background:linear-gradient(150deg,#fff 0%,#fff 65%,#fffaf7 100%);color:#252b39;border:1px solid #e2e5eb;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 10px 28px #1c26330d,0 2px 6px #1c263308;transition:transform .26s,border-color .26s,box-shadow .26s}
+.card:hover{transform:translateY(-4px);border-color:#e7b5bd;box-shadow:0 18px 38px #1c263317,0 5px 14px #b0121210}
+.card h3,.mc h3,.duo h3{color:#a80f2d;font-size:1.05rem;font-weight:900;letter-spacing:.01em}
+.big{color:#a80f2d;font-size:clamp(1.55rem,3vw,2rem)}
+.warn{background:#fff4e8;color:#8d4a0d;border:1px solid #f1d3a8}
+body:has(.hdr) input,body:has(.hdr) select,body:has(.hdr) textarea{background:#fff;color:#252b39;border:1px solid #d9dee7;box-shadow:0 2px 5px #1c263308}
+body:has(.hdr) input:focus,body:has(.hdr) select:focus,body:has(.hdr) textarea:focus{outline:0;border-color:#d92b49;box-shadow:0 0 0 3px #e326451c}
+body:has(.hdr) label{color:#535d70}
+.badge.v{background:#e6f7ed;color:#167444;border:1px solid #bde8ce}.badge.n{background:#fff0f1;color:#a11c32;border:1px solid #f0c4cb}
+.ph{border-color:#d4a84e;box-shadow:0 5px 15px #1c26331a}
+.ann{border:1px solid #e6b6bf;box-shadow:0 10px 28px #b0121216}
+.gal img{border:2px solid #d8b45e;box-shadow:0 8px 20px #1c263314}
+.tabs .btn.on{background:#252c3b;color:#fff}
+.ppl .pp,.pp{background:#fff;color:#252b39;border:1px solid #e1e5ec;border-radius:16px;box-shadow:0 8px 24px #1c26330c}
+.pp.org{border:2px solid #d4a84e;box-shadow:0 12px 30px #d4a84e35}
+.pp .role{color:#a8781d}
+.team{color:#20283a}
+.lose,.dt{color:#697386}
+.vsx{color:#c61c3b}
+.res{color:#9a711c}
+.ayat{color:#fff}
+.quotes{border-top:1px solid #d4a84e66;background:linear-gradient(180deg,#fff9f3,#f7f3ed);border:1px solid #ead9b9;border-radius:22px;padding:24px 16px;margin:32px 0 12px;box-shadow:0 12px 28px #1c26330c}
+.quotes h2{color:#8f1730}
+.qt{color:#242a37}
+.qn{color:#9b741e}.qb{color:#262b39}.qr{color:#6e7481}
+.msi{border:1px solid #d4a84e;box-shadow:0 8px 20px #1c26331a}
+.strip img.on{outline:2px solid #c69a36}
+.modal{background:#111827bb;backdrop-filter:blur(7px)}
+.mbox{background:#fff;color:#252b39;border:1px solid #d4a84e;border-radius:20px;box-shadow:0 30px 90px #05070d66}
+.mbox h3{color:#a80f2d}
+.tlink{color:#a80f2d;text-decoration-color:#d4a84e}
+.alist{border-bottom:1px solid #e7e9ee}
+.fwa{background:linear-gradient(135deg,#25d366,#13a653);color:#062b18;border:1px solid #a3f0bf;box-shadow:0 10px 24px #0a5b3033;transition:transform .2s,box-shadow .2s}
+.fwa:hover{transform:translateY(-3px);box-shadow:0 15px 30px #0a5b3044}
+.credit{color:#8d6a25;background:#171d2a;border-top:2px solid #d4a84e;opacity:1;padding:28px 14px 22px;line-height:2}
+.credit strong{color:#f3d38c}
+.credit span{display:block;color:#c4cad5;font-size:.68rem}
+.orgwrap .pp{background:#fff}
+.mem .pp{background:#fff}
+.splash{background:radial-gradient(ellipse at 50% 40%,#771a2d 0%,#2c1721 42%,#111722 82%);backdrop-filter:blur(2px)}
+.sp-t{ text-shadow:0 0 18px #e32645,0 0 50px #d4a84e66}
+.sp-t span{color:#ff6478;text-shadow:0 0 18px #e32645,0 0 55px #b01212}
+.sp-line{background:linear-gradient(90deg,transparent,#d4a84e,#fff,#d4a84e,transparent)}
+.sp-organizer strong{color:#ff6478}
+.sp-sound{border-color:#d4a84e;background:#171d2add;box-shadow:0 6px 20px #0005}
+.sp-shot-scene{filter:drop-shadow(0 14px 26px #0008)}
+/* Gentle reveal for existing page sections; no content or controls are removed. */
+body:has(.hdr) main>section,body:has(.hdr) main>.card,body:has(.hdr) main>.duo,body:has(.hdr) main>.two,body:has(.hdr) main>.ppl,body:has(.hdr) main>.orgwrap,body:has(.hdr) main>.mem,body:has(.hdr) main>.quotes{animation:bjlSectionReveal .65s cubic-bezier(.2,.7,.2,1) both}
+body:has(.hdr) main>.duo:nth-of-type(2){animation-delay:.06s}
+@keyframes bjlSectionReveal{from{opacity:.01;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bjlHeroShine{0%,68%,100%{transform:translateX(-100%)}82%{transform:translateX(100%)}}
+@keyframes bjlCalligraphyShine{0%,65%,100%{background-position:120% 0}82%{background-position:-120% 0}}
+@media(max-width:700px){
+ body:has(.hdr) main{padding:13px 12px 90px}
+ .hdr{padding:10px 12px}
+ .hdr nav{gap:8px}
+ .hdr nav a{font-size:.8rem}
+ .hero{border-radius:19px;padding:34px 14px}
+ .duo{gap:9px}
+ .duo .card{padding:12px}
+ .card{border-radius:15px;padding:14px}
+ .quotes{padding:19px 12px}
+}
+@media(prefers-reduced-motion:reduce){
+ .hero:before,.calli:after,body:has(.hdr) main>section,body:has(.hdr) main>.card,body:has(.hdr) main>.duo,body:has(.hdr) main>.two,body:has(.hdr) main>.ppl,body:has(.hdr) main>.orgwrap,body:has(.hdr) main>.mem,body:has(.hdr) main>.quotes{animation:none!important}
+ .card,.btn,.lang,.fwa{transition:none!important}
+ .card:hover,.btn:hover,.lang:hover,.fwa:hover{transform:none}
+}
