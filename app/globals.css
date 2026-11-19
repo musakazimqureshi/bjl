@@ -954,3 +954,33 @@ body:has(.hdr) main :where(.fwa){color:#062b18}
 @media(prefers-reduced-motion:reduce){
  body:has(.hdr) main *{scroll-behavior:auto}
 }
+
+
+/* BJL PUBLIC V5 — mobile contrast fix for registration and registered-team cards.
+   Keeps the existing dark card treatment, while making every label readable. */
+body:has(.hdr) main form .card,
+body:has(.hdr) main .two > .card{
+  background:linear-gradient(145deg,#303441 0%,#222733 100%)!important;
+  color:#f7f8fb!important;
+  border:1px solid #50596b!important;
+  box-shadow:0 10px 24px #11182730!important;
+}
+body:has(.hdr) main form .card b,
+body:has(.hdr) main form .card label,
+body:has(.hdr) main form .card small,
+body:has(.hdr) main .two > .card b,
+body:has(.hdr) main .two > .card small,
+body:has(.hdr) main .two > .card .players .pl div,
+body:has(.hdr) main .two > .card .players .pl small{
+  color:#f4f6fb!important;
+  opacity:1!important;
+}
+body:has(.hdr) main form .card label{font-weight:750;color:#e5e9f2!important}
+body:has(.hdr) main form .card input,
+body:has(.hdr) main form .card select{
+  background:#fff!important;color:#202638!important;
+  border:1px solid #cbd2df!important;
+}
+body:has(.hdr) main form .card input::placeholder{color:#737d8e!important;opacity:1}
+body:has(.hdr) main > h2{color:#202638!important;font-weight:900!important}
+body:has(.hdr) main > h3{color:#30394b!important;font-weight:850!important}
