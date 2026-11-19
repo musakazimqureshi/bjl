@@ -14,9 +14,18 @@ export default function TeamLogin() {
     const { data, error } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').eq('captain_email', (u.email || '').toLowerCase());
     if (error) setMsg(error.message); setTeams(data || []);
     const ownIds = (data || []).map(t => t.id);
-    const [otherResult, objectionResult, messageResult] = await Promise.all([supabase.from('teams').select('id,name,players:players!players_team_id_fkey(id,name,age,position)').not('id','in', '(' + ownIds.join(',') + ')').order('name'), supabase.from('player_objections').select('*, players(name,age), teams(name)').order('created_at',{ascending:false}), supabase.from('team_messages').select('*').in('team_id',ownIds).order('created_at',{ascending:false})]);
-    setOpponents(otherResult.data || []); if (otherResult.error) setMsg(otherResult.error.message); setObjections(objectionResult.data || []); if (objectionResult.error) setMsg(objectionResult.error.message); setTeamMessages(messageResult.data || []); if (messageResult.error) setMsg(messageResult.error.message);
-    const ids = ownIds; if (ids.length) { const { data: matchRows, error: matchError } = await supabase.from('matches').select('id,team_a,team_b,winner_team,match_date,published').or('team_a.in.(' + ids.join(',') + '),team_b.in.(' + ids.join(',') + ')'); setMatches(matchRows || []); if (matchError) setMsg(matchError.message); }
+    if (ownIds.length) {
+      const [otherResult, objectionResult, messageResult] = await Promise.all([
+        supabase.from('teams').select('id,name,players:players!players_team_id_fkey(id,name,age,position)').not('id','in', '(' + ownIds.join(',') + ')').order('name'),
+        supabase.from('player_objections').select('*, players(name,age), teams(name)').order('created_at',{ascending:false}),
+        supabase.from('team_messages').select('*').in('team_id',ownIds).order('created_at',{ascending:false})
+      ]);
+      setOpponents(otherResult.data || []); if (otherResult.error) setMsg(otherResult.error.message);
+      setObjections(objectionResult.data || []); if (objectionResult.error) setMsg(objectionResult.error.message);
+      setTeamMessages(messageResult.data || []); if (messageResult.error) setMsg(messageResult.error.message);
+      const { data: matchRows, error: matchError } = await supabase.from('matches').select('id,team_a,team_b,winner_team,match_date,published').or('team_a.in.(' + ownIds.join(',') + '),team_b.in.(' + ownIds.join(',') + ')');
+      setMatches(matchRows || []); if (matchError) setMsg(matchError.message);
+    } else { setOpponents([]); setObjections([]); setTeamMessages([]); setMatches([]); }
   }
   useEffect(() => {
     let active = true;
