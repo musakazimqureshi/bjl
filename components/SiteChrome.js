@@ -1,5 +1,7 @@
 'use client';
 import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import Header from './Header';
 import People from './People';
 import FloatingWA from './FloatingWA';
@@ -10,6 +12,16 @@ import ScrollProgress from './ScrollProgress';
 
 export default function SiteChrome({ children }) {
   const pathname = usePathname();
+  useEffect(() => {
+    if (pathname === '/admin' || pathname.startsWith('/admin/')) return;
+    try {
+      let visitorId = localStorage.getItem('bjl_visitor_id');
+      if (!visitorId) { visitorId = window.crypto.randomUUID(); localStorage.setItem('bjl_visitor_id', visitorId); }
+      const width = window.innerWidth;
+      const device = width < 640 ? 'mobile' : width < 1024 ? 'tablet' : 'desktop';
+      supabase.from('page_visits').insert({ anonymous_id: visitorId, page_path: pathname, device_type: device, visitor_email: null }).then(() => {});
+    } catch (_) {}
+  }, [pathname]);
   if (pathname === '/admin' || pathname.startsWith('/admin/')) return children;
   return (
     <>
