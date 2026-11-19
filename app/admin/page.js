@@ -11,7 +11,7 @@ export default function Admin() {
   const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
   const [tab, setTab] = useState('overview'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
   const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
-  const [objections, setObjections] = useState([]); const [objectionPlayer, setObjectionPlayer] = useState(null); const [objectionDraft, setObjectionDraft] = useState({ reason: '', raised_by: '', details: '' });
+  const [objections, setObjections] = useState([]); const [objectionPlayer, setObjectionPlayer] = useState(null); const [objectionDraft, setObjectionDraft] = useState({ reason: '', raised_by: '', details: '' }); const [operationTeamId, setOperationTeamId] = useState(''); const [operationPlayerId, setOperationPlayerId] = useState('');
   const [profile, setProfile] = useState({ name: 'Musa Kazim Qureshi', role: 'Founder & Organizer · Battagram Junior League', bio: 'Building a strong cricket community in Battagram.', photo_path: '/demo-admin-avatar.svg' });
   const [profileFile, setProfileFile] = useState(null); const [profileSaving, setProfileSaving] = useState(false);
   async function check() {
@@ -434,7 +434,17 @@ export default function Admin() {
         <button className="btn" onClick={() => save(['moments_fit','moments_zoom'])}>Save Moments Display Settings</button>
       </div>
     </>)}
-    {tab === 'teams' && (<><div className="card">Total teams: {teams.length} · Verified payments: {teams.filter(x => x.payment === 'verified').length}</div>
+    {tab === 'teams' && (<><section className="card admin-operations-panel">
+        <div className="admin-operations-heading"><div><span className="admin-eyebrow">REGISTERED TEAMS</span><h2>Operations by Admin / Objections</h2><p>Select a team and player, record the reason and complaint details. Active objections appear publicly on that team's profile.</p></div><span className="admin-objection-status open">{objections.filter(o => o.status === 'open' || o.status === 'under_review').length} ACTIVE</span></div>
+        <form className="admin-objection-form" onSubmit={e => { const team = teams.find(x => String(x.id) === operationTeamId); const player = team?.players?.find(x => String(x.id) === operationPlayerId); if (!team || !player) { e.preventDefault(); setMsg('Please select both a team and a player.'); return; } raiseObjection(e, player, team); }}>
+          <label>Team Name</label><select required value={operationTeamId} onChange={e => { setOperationTeamId(e.target.value); setOperationPlayerId(''); }}><option value="">Select registered team</option>{teams.map(team => <option key={team.id} value={team.id}>{team.name} · {team.reg_id}</option>)}</select>
+          <label>Player Name</label><select required value={operationPlayerId} onChange={e => setOperationPlayerId(e.target.value)} disabled={!operationTeamId}><option value="">Select player</option>{(teams.find(x => String(x.id) === operationTeamId)?.players || []).slice().sort((x,y) => x.seq-y.seq).map(player => <option key={player.id} value={player.id}>{player.name} · Age {player.age}</option>)}</select>
+          <label>Objection Reason</label><select required value={objectionDraft.reason} onChange={e => setObjectionDraft(v => ({ ...v, reason: e.target.value }))}><option value="">Select a reason</option><option value="Senior Player">Senior Player</option><option value="Over Age">Over Age</option><option value="Community Misconduct">Misbehaved with community</option></select>
+          <label>Complaint By (Name)</label><input required value={objectionDraft.raised_by} onChange={e => setObjectionDraft(v => ({ ...v, raised_by: e.target.value }))} placeholder="Name of the complainant" />
+          <label>Details / Evidence</label><textarea required rows="3" value={objectionDraft.details} onChange={e => setObjectionDraft(v => ({ ...v, details: e.target.value }))} placeholder="Explain why this objection was submitted..." />
+          <div className="row"><button className="btn" type="submit" disabled={!operationTeamId || !operationPlayerId}>＋ Record Objection</button><button className="btn alt" type="button" onClick={() => { setOperationTeamId(''); setOperationPlayerId(''); setObjectionDraft({ reason: '', raised_by: '', details: '' }); }}>Clear</button></div>
+        </form>
+      </section><div className="card">Total teams: {teams.length} · Verified payments: {teams.filter(x => x.payment === 'verified').length}</div>
       {teams.map(tm => { const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
         return (<div className="card" key={tm.id}><b>{tm.name}</b> <small>{tm.reg_id}</small> {tm.payment === 'verified' ? '✅ VERIFIED' : '❌ NOT VERIFIED'}
           <div dir="ltr">{tm.captain_email}</div><div dir="ltr">C1: {ps[0] && ps[0].name} {ps[0] && ps[0].mobile} | C2: {ps[1] && ps[1].name} {ps[1] && ps[1].mobile}</div>
