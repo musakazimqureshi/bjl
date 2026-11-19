@@ -32,12 +32,12 @@ Object.assign(UR, { todayWinner:'آج کا فاتح', defeated:'شکست خور�
  noAnn:'ابھی کوئی اعلان نہیں۔', contactTitle:'WhatsApp پر رابطہ کریں', askFalak:'فلک سے پوچھیں (آرگنائزر)', soon:'جلد اعلان ہوگا', date:'تاریخ', time:'وقت' });
 Object.assign(EN, { Batter:'Batsman', 'Wicket-Keeper':'Wicketkeeper', cap1:'Captain 1', cap2:'Captain 2', others13:'Remaining 13 Players',
  teamsRegistered:'TEAMS REGISTERED', verifiedT:'Verified Teams', notVerifiedT:'Not Verified Teams', verifiedBadge:'VERIFIED', notVerifiedBadge:'NOT VERIFIED',
- fee:'Admission fee: PKR 4,000 per team. A team shows VERIFIED only after the admin personally confirms your payment.',
+ fee:'Admission fee: PKR 5,000 per team. A team shows VERIFIED only after the admin personally confirms your payment.',
  refLabel:'Registration ID', txnOpt:'Transaction ID (optional)', mobLead:'Mobile number', teamName:'Team Name',
  ok:'Registration submitted! Your Registration ID:' });
 Object.assign(UR, { cap1:'کپتان 1', cap2:'کپتان 2', others13:'باقی 13 کھلاڑی',
  teamsRegistered:'ٹیمیں رجسٹرڈ', verifiedT:'تصدیق شدہ ٹیمیں', notVerifiedT:'غیر تصدیق شدہ ٹیمیں', verifiedBadge:'تصدیق شدہ', notVerifiedBadge:'غیر تصدیق شدہ',
- fee:'داخلہ فیس: ہر ٹیم کے لیے 4,000 روپے۔ ایڈمن خود ادائیگی کی تصدیق کرے تو ہی ٹیم "تصدیق شدہ" دکھے گی۔',
+ fee:'داخلہ فیس: ہر ٹیم کے لیے 5,000 روپے۔ ایڈمن خود ادائیگی کی تصدیق کرے تو ہی ٹیم "تصدیق شدہ" دکھے گی۔',
  refLabel:'رجسٹریشن آئی ڈی', txnOpt:'Transaction ID (اختیاری)', mobLead:'موبائل نمبر',
  ok:'رجسٹریشن جمع ہو گئی! آپ کی رجسٹریشن آئی ڈی:' });
 Object.assign(EN, { momentsT:'BJL MOMENTS & HIGHLIGHTS', orgT:'BJL ORGANIZER & MEMBERS', matchDate:'MATCH DATE', close:'Close' });
