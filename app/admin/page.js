@@ -140,7 +140,7 @@ export default function Admin() {
     <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} dir="ltr" autoComplete="username" />
     <input placeholder="Password" type="password" value={pw} onChange={e => setPw(e.target.value)} dir="ltr" autoComplete="current-password" />
     {msg && <div className="err">{msg}</div>}<button className="btn">Login</button></form></div>);
-  if (!isAdmin) return (<div className="admin-login-wrap"><div className="card admin-login"><div className="err">آپ ایڈمن نہیں ہیں۔</div></nav></div>);
+  if (!isAdmin) return (<div className="admin-login-wrap"><div className="card admin-login"><div className="err">آپ ایڈمن نہیں ہیں۔</div><button className="btn" onClick={logout}>Logout</button></div></div>);
   const inp = (k, label, type = 'text') => (<><label>{label}</label><input type={type} list={['winner_team', 'loser_team', 'next_a', 'next_b'].includes(k) ? 'tn' : undefined} value={c[k] || ''} onChange={e => set(k, e.target.value)} /></>);
   const tsel = (k, label) => (<><label>{label}</label><select value={c[k] || ''} onChange={e => set(k, e.target.value)}><option value="">— ٹیم منتخب کریں —</option>{c[k] && !teams.some(x => x.name === c[k]) && <option value={c[k]}>{c[k]}</option>}{teams.map(x => <option key={x.id} value={x.name}>{x.name}</option>)}</select></>);
   const show = (k, l) => (<label><input type="checkbox" checked={c[k] !== '0'} onChange={e => set(k, e.target.checked ? '1' : '0')} style={{ width: 'auto' }} /> {l}</label>);
