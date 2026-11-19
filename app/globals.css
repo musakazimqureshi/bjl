@@ -1101,3 +1101,20 @@ body:has(.hdr) main .card :where(.warn){color:#87470b!important}
 
 /* Public Help Center name contrast and public player objections */
 .help-contact-name{display:block!important;color:#fff!important;font-size:1.12rem!important;font-weight:900!important;line-height:1.35;margin-bottom:3px;text-shadow:0 1px 2px #0008}.help-contact-role{color:#d6d9e2!important;font-weight:650;font-size:.9rem;margin-bottom:4px}.help-contact-number{color:#fff!important;font-size:1rem;font-weight:800;letter-spacing:.02em}.objections-public{margin:18px 0;padding:14px;border:1px solid #d4af3777;border-radius:12px;background:linear-gradient(145deg,#251b1b,#17171c)}.objections-public h4{margin:0 0 12px;color:#f0cc69;font-size:1.05rem}.objection-public{padding:12px;margin:10px 0;border:1px solid #ffffff20;border-radius:10px;background:#ffffff08}.objection-public-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;color:#fff}.objection-public p{margin:7px 0;color:#e7e7eb;overflow-wrap:anywhere}.objection-public p b{color:#f2cf79}.objection-public small{color:#b8bdc9}.objection-status{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:800;background:#5b4515;color:#ffe08a}.objection-status.resolved{background:#124d30;color:#8df0b1}.objection-status.under-review{background:#1e3c68;color:#a9d0ff}
+
+/* BJL mobile admin usability and editable homepage information */
+.admin-tabs{display:flex!important;flex-wrap:nowrap!important;gap:8px!important;overflow-x:auto!important;overflow-y:hidden!important;white-space:nowrap!important;max-width:100%;padding:8px 2px 12px!important;scrollbar-width:thin;position:relative;z-index:5}
+.admin-tabs .btn{flex:0 0 auto!important;width:auto!important;min-width:max-content!important;padding:10px 15px!important;border-radius:10px!important}
+.admin-workspace{min-width:0}
+.admin-shell .admin-site-copy textarea{display:block;width:100%;min-height:110px;resize:vertical;padding:13px;border:1px solid #dce4f2;border-radius:12px;background:#f8faff;color:#17233f;font:inherit;line-height:1.6;margin:6px 0 10px}
+.admin-shell .admin-site-copy label{display:block;margin-top:16px;color:#34415c;font-weight:800}
+.admin-shell .admin-site-copy .btn{margin:0 0 12px}
+.admin-objection-actions{gap:8px;flex-wrap:wrap}
+.bjl-info-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0}
+.bjl-info-card{position:relative;overflow:hidden;min-height:180px;border:1px solid #d4af3766;background:linear-gradient(145deg,#242630,#151720);box-shadow:0 12px 28px #0002;animation:adminCardEnter .5s ease both}
+.bjl-info-card h2{font-size:1.15rem;color:#f0d78a;margin:4px 0 12px}
+.bjl-info-icon{font-size:1.4rem;filter:drop-shadow(0 0 8px #e0242b88)}
+.bjl-info-copy{white-space:pre-line;color:#f2f3f8;line-height:1.9;font-size:.96rem}
+@keyframes adminCardEnter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(max-width:700px){.bjl-info-grid{grid-template-columns:1fr}.admin-shell{padding:16px 12px 36px 12px!important}.admin-brand{position:relative!important;width:100%!important;height:auto!important;bottom:auto!important;padding:12px 16px!important;display:flex;gap:12px;align-items:center}.admin-topbar{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:12px!important}.admin-top-actions{width:100%;flex-wrap:wrap}.admin-tabs{margin:10px 0!important}.admin-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}.admin-workspace{padding:0!important}}
+@media(prefers-reduced-motion:reduce){.bjl-info-card{animation:none!important}}
