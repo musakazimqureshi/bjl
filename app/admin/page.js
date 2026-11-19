@@ -25,7 +25,7 @@ export default function Admin() {
     } catch (error) {
       setLogged(false);
       setIsAdmin(false);
-      setMsg(error?.message || 'لاگ اِن چیک نہیں ہو سکا۔');
+      setMsg(error?.message || 'Could not verify login.');
     } finally {
       setReady(true);
     }
@@ -71,16 +71,16 @@ export default function Admin() {
   }
   async function setPay(tm, status) {
     let reason = null;
-    if (status === 'rejected') { reason = prompt('مسترد کرنے کی وجہ لکھیں'); if (!reason) return; }
+    if (status === 'rejected') { reason = prompt('Enter the rejection reason'); if (!reason) return; }
     const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
     const val = status === 'verified' ? 'verified' : status === 'rejected' ? 'rejected' : (last ? 'submitted' : 'pending');
     const { error } = await supabase.from('teams').update({ payment: val, payment_rejection_reason: reason }).eq('id', tm.id);
     if (!error && last) await supabase.from('payments').update({ status: val === 'verified' ? 'verified' : val === 'rejected' ? 'rejected' : 'submitted', rejection_reason: reason }).eq('id', last.id);
-    setMsg(error ? error.message : 'ہو گیا ✔'); loadTeams();
+    setMsg(error ? error.message : 'Done ✔'); loadTeams();
   }
   async function delTeam(tm) {
-    if (!confirm('پوری ٹیم ہمیشہ کے لیے حذف کریں؟')) return;
-    const { error } = await supabase.from('teams').delete().eq('id', tm.id); setMsg(error ? error.message : 'ٹیم حذف ہو گئی'); loadTeams();
+    if (!confirm('Permanently delete this entire team?')) return;
+    const { error } = await supabase.from('teams').delete().eq('id', tm.id); setMsg(error ? error.message : 'Team deleted'); loadTeams();
   }
   useEffect(() => { check(); }, []);
   useEffect(() => { if (isAdmin) { load(); loadTeams(); loadObjections(); } }, [isAdmin]);
@@ -97,67 +97,67 @@ export default function Admin() {
   async function save(keys) {
     setMsg('');
     const { error } = await supabase.from('settings').upsert(keys.map(k => ({ key: k, value: c[k] || '' })));
-    setMsg(error ? error.message : 'محفوظ ہو گیا ✔');
+    setMsg(error ? error.message : 'محفوظ Done ✔');
   }
   async function uploadKey(key, file) {
-    setMsg(''); if (!okImg(file)) return setMsg('تصویر JPG/PNG/WEBP ہو۔');
+    setMsg(''); if (!okImg(file)) return setMsg('Image must be JPG, PNG, or WEBP.');
     const path = `site/${key}-${Date.now()}.jpg`; const blob = await shrink(file, 1100);
     const { error } = await supabase.storage.from('announcements').upload(path, blob, { contentType: 'image/jpeg' }); if (error) return setMsg(error.message);
     const { error: e2 } = await supabase.from('settings').upsert({ key: key + '_path', value: path });
-    setMsg(e2 ? e2.message : 'تصویر لگ گئی ✔'); load();
+    setMsg(e2 ? e2.message : 'Image uploaded ✔'); load();
   }
-  async function clearKey(key) { await supabase.from('settings').upsert({ key: key + '_path', value: '' }); setMsg('ہٹا دی گئی'); load(); }
+  async function clearKey(key) { await supabase.from('settings').upsert({ key: key + '_path', value: '' }); setMsg('Removed'); load(); }
   async function move(i, d) {
     const arr = ann.slice(); const j = i + d; if (j < 0 || j >= arr.length) return;
     [arr[i], arr[j]] = [arr[j], arr[i]];
     await Promise.all(arr.map((x, k) => supabase.from('announcements').update({ sort_order: k }).eq('id', x.id))); load();
   }
   async function editAnn(x) {
-    const t = prompt('عنوان', x.title); if (t === null) return; const d = prompt('تفصیل', x.description || ''); if (d === null) return;
+    const t = prompt('Title', x.title); if (t === null) return; const d = prompt('Description', x.description || ''); if (d === null) return;
     await supabase.from('announcements').update({ title: t, description: d }).eq('id', x.id); load();
   }
   async function addMoments(e) {
     e.preventDefault(); setMsg('');
-    if (!mf.files.length || !mf.date) return setMsg('تاریخ اور تصاویر ضروری ہیں۔');
-    setMsg('اپلوڈ ہو رہا ہے، انتظار کریں...');
+    if (!mf.files.length || !mf.date) return setMsg('Date and images are required.');
+    setMsg('Uploading, please wait...');
     for (const [i, file] of Array.from(mf.files).entries()) {
-      if (!okImg(file)) return setMsg('ہر تصویر JPG/PNG/WEBP ہو۔');
+      if (!okImg(file)) return setMsg('ہر Image must be JPG, PNG, or WEBP.');
       const path = `moments/${Date.now()}-${i}.jpg`; const blob = await shrink(file, 1400);
       const { error } = await supabase.storage.from('announcements').upload(path, blob, { contentType: 'image/jpeg' }); if (error) return setMsg(error.message);
       const { error: e2 } = await supabase.from('moments').insert({ image_path: path, caption: mf.caption, moment_date: mf.date }); if (e2) return setMsg(e2.message);
     }
-    setMf({ caption: '', date: '', files: [] }); e.target.reset(); setMsg('تصاویر شائع ہو گئیں ✔'); load();
+    setMf({ caption: '', date: '', files: [] }); e.target.reset(); setMsg('Photos published ✔'); load();
   }
   async function addQuote(e) {
-    e.preventDefault(); if (!qf.body.trim() || !qf.ref.trim()) return setMsg('قول اور حوالہ دونوں ضروری ہیں۔');
+    e.preventDefault(); if (!qf.body.trim() || !qf.ref.trim()) return setMsg('Quote text and reference are required.');
     const { error } = await supabase.from('quotes').insert({ body: qf.body.trim(), book: qf.book, ref: qf.ref.trim(), sort_order: qs.length + 1 });
-    setMsg(error ? error.message : 'قول شامل ہو گیا ✔'); setQf({ ...qf, body: '', ref: '' }); load();
+    setMsg(error ? error.message : 'قول شامل Done ✔'); setQf({ ...qf, body: '', ref: '' }); load();
   }
   async function editQuote(x) {
-    const b = prompt('قول (اردو)', x.body); if (b === null) return; const k = prompt('کتاب', x.book); if (k === null) return; const r = prompt('حوالہ', x.ref); if (r === null) return;
+    const b = prompt('Quote Text', x.body); if (b === null) return; const k = prompt('Book', x.book); if (k === null) return; const r = prompt('حوالہ', x.ref); if (r === null) return;
     await supabase.from('quotes').update({ body: b, book: k, ref: r }).eq('id', x.id); load();
   }
   async function togQuote(x) { await supabase.from('quotes').update({ published: !x.published }).eq('id', x.id); load(); }
-  async function delQuote(x) { if (!confirm('قول حذف کریں؟')) return; await supabase.from('quotes').delete().eq('id', x.id); load(); }
+  async function delQuote(x) { if (!confirm('Delete this quote?')) return; await supabase.from('quotes').delete().eq('id', x.id); load(); }
   async function moveQuote(i, d) {
     const arr = qs.slice(); const j = i + d; if (j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]];
     await Promise.all(arr.map((x, k) => supabase.from('quotes').update({ sort_order: k + 1 }).eq('id', x.id))); load();
   }
-  async function delMoment(m) { if (!confirm('تصویر حذف کریں؟')) return; await supabase.storage.from('announcements').remove([m.image_path]); await supabase.from('moments').delete().eq('id', m.id); load(); }
+  async function delMoment(m) { if (!confirm('Delete this image?')) return; await supabase.storage.from('announcements').remove([m.image_path]); await supabase.from('moments').delete().eq('id', m.id); load(); }
   async function togMoment(m) { await supabase.from('moments').update({ published: !m.published }).eq('id', m.id); load(); }
-  async function capMoment(m) { const v = prompt('کیپشن', m.caption || ''); if (v === null) return; await supabase.from('moments').update({ caption: v }).eq('id', m.id); load(); }
+  async function capMoment(m) { const v = prompt('Caption', m.caption || ''); if (v === null) return; await supabase.from('moments').update({ caption: v }).eq('id', m.id); load(); }
   async function addAnn(e) {
     e.preventDefault(); setMsg('');
-    if (!f.title.trim() || !f.date || !okImg(f.file)) return setMsg('عنوان، تاریخ اور تصویر (JPG/PNG، 3MB تک) ضروری ہیں۔');
+    if (!f.title.trim() || !f.date || !okImg(f.file)) return setMsg('Title, date, and image (JPG/PNG, up to 15 MB) are required.');
     const path = `ann/${Date.now()}.jpg`; const blob = await shrink(f.file, 1400);
     const { error } = await supabase.storage.from('announcements').upload(path, blob, { contentType: 'image/jpeg' }); if (error) return setMsg(error.message);
     const { error: e2 } = await supabase.from('announcements').insert({ title: f.title.trim(), description: f.description, image_path: path, announce_date: f.date, announce_time: f.time || null, published: true, sort_order: Math.min(0, ...ann.map(x => x.sort_order || 0)) - 1 });
     if (e2) return setMsg(e2.message);
-    setF({ title: '', description: '', date: '', time: '', file: null }); e.target.reset(); setMsg('اعلان شائع ہو گیا ✔'); load();
+    setF({ title: '', description: '', date: '', time: '', file: null }); e.target.reset(); setMsg('اعلان شائع Done ✔'); load();
   }
   async function toggle(a) { await supabase.from('announcements').update({ published: !a.published }).eq('id', a.id); load(); }
   async function del(a) {
-    if (!confirm('یہ اعلان ہمیشہ کے لیے حذف کریں؟')) return;
+    if (!confirm('Permanently delete this announcement?')) return;
     await supabase.storage.from('announcements').remove([a.image_path]); await supabase.from('announcements').delete().eq('id', a.id); load();
   }
   if (!ready) return <div className="admin-loading"><span className="admin-spinner" /> Loading admin workspace...</div>;
@@ -210,7 +210,7 @@ export default function Admin() {
       <label>Image</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setF({ ...f, file: e.target.files[0] })} />
       <button className="btn">Publish</button></form>
       {ann.map((a, i) => (<div className="card" key={a.id}><b>{a.title}</b> <small>{a.announce_date}</small> {a.published ? '✅' : '⛔'}
-        <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt" onClick={() => move(i, -1)}>▲</button><button className="btn alt" onClick={() => move(i, 1)}>▼</button><button className="btn alt" onClick={() => editAnn(a)}>Edit</button><button className="btn alt" onClick={() => toggle(a)}>{a.published ? 'چھپائیں' : 'دکھائیں'}</button>
+        <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt" onClick={() => move(i, -1)}>▲</button><button className="btn alt" onClick={() => move(i, 1)}>▼</button><button className="btn alt" onClick={() => editAnn(a)}>Edit</button><button className="btn alt" onClick={() => toggle(a)}>{a.published ? 'Hide' : 'Show'}</button>
           <button className="btn" onClick={() => del(a)}>Delete Team</button></div></div>))}</>)}
     {tab === 'people' && (<>{[[1, 'AMAN MALIK – MEMBER'], [2, 'WALEED AFRIDI – MEMBER'], [3, 'MUHAMMAD HASNAIN – MEMBER'], [4, 'FALAK – ORGANIZER']].map(([n, l]) => (<div className="card" key={n}><h3>{l}</h3>
       {c['person' + n + '_path'] && <img src={pa(c['person' + n + '_path'])} alt="" width="90" style={{ borderRadius: 8 }} />}
@@ -237,7 +237,7 @@ export default function Admin() {
         <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt" onClick={() => moveQuote(i, -1)}>▲</button><button className="btn alt" onClick={() => moveQuote(i, 1)}>▼</button>
           <button className="btn alt" onClick={() => editQuote(x)}>Edit</button><button className="btn alt" onClick={() => togQuote(x)}>{x.published ? 'Hide' : 'Publish'}</button><button className="btn alt" onClick={() => delQuote(x)}>Delete Team</button></div></div>))}</>)}
     {tab === 'set' && (<div className="card"><h3>WhatsApp Contact Button</h3>
-      {inp('falak_whatsapp', 'WhatsApp نمبر (بین الاقوامی، مثلاً 923411620498)')}{inp('falak_btn', 'Button Text')}{inp('falak_msg', 'Default WhatsApp Message')}
+      {inp('falak_whatsapp', 'WhatsApp Number (international format, e.g. 923001234567)')}{inp('falak_btn', 'Button Text')}{inp('falak_msg', 'Default WhatsApp Message')}
       <label><input type="checkbox" style={{ width: 'auto' }} checked={c.registration_open !== 'false'} onChange={e => set('registration_open', e.target.checked ? 'true' : 'false')} /> Team registration is open</label>
       <button className="btn" onClick={() => save(['falak_whatsapp', 'falak_btn', 'falak_msg', 'registration_open'])}>Save Changes</button></div>)}
     {tab === 'teams' && (<><div className="card">Total teams: {teams.length} · Verified payments: {teams.filter(x => x.payment === 'verified').length}</div>
