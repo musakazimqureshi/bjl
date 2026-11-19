@@ -48,7 +48,8 @@ export default function Home() {
         <div className="ar" lang="ar" dir="rtl">لَا فَتَىٰ إِلَّا عَلِيٌّ وَلَا سَيْفَ إِلَّا ذُو الْفَقَارِ</div>}</div>
       <p>{t('season')}</p><p>{t('loc')}</p>
       <div className="row">
-        <a href="https://chat.whatsapp.com/D5RUqQB6XVIIwHkYJkz5vZ" className="btn" target="_blank" rel="noopener noreferrer">{lang === 'ur' ? 'آفیشل واٹس ایپ گروپ میں شامل ہوں' : 'Join Official WhatsApp Group'}</a>
+        <Link href="/register" className="btn register-cta">{t('regBtn')}</Link>
+        <a href="https://chat.whatsapp.com/D5RUqQB6XVIIwHkYJkz5vZ" className="btn alt" target="_blank" rel="noopener noreferrer">{lang === 'ur' ? 'آفیشل واٹس ایپ گروپ میں شامل ہوں' : 'Join Official WhatsApp Group'}</a>
         <Link href="/teams" className="btn alt">{t('viewBtn')}</Link>
         <Link href="/team" className="btn alt">🔑 {t('captainSignIn')}</Link>
       </div>
