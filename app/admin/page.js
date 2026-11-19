@@ -160,6 +160,7 @@ export default function Admin() {
       <article className="admin-stat"><span className="admin-stat-icon violet">▣</span><div><small>اعلانات</small><strong>{ann.length}</strong><em>Announcements</em></div></article>
     </section>
     <div className="admin-content-label"><span>WORKSPACE</span><strong>{({teams:'Team Management',match:'Match Center',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',quotes:'Quotes & Content',set:'Website Settings'})[tab]}</strong></div>
+    <main className="admin-workspace">
     {tab === 'match' && (<><div className="card"><h3>آج کا فاتح</h3>
       {tsel('winner_team', 'جیتنے والی ٹیم')}{tsel('loser_team', 'مخالف (ہارنے والی) ٹیم')}{inp('winner_result', 'نتیجہ / مختصر اعلان (اختیاری)')}{inp('winner_date', 'میچ کی تاریخ', 'date')}{show('winner_show', 'ہوم پیج پر دکھائیں')}
       <button className="btn" onClick={() => save(['winner_team', 'loser_team', 'winner_result', 'winner_date', 'winner_show'])}>محفوظ کریں</button></div>
@@ -217,5 +218,6 @@ export default function Admin() {
             <button className="btn alt" onClick={() => setPay(tm, 'notverified')}>غیر تصدیق شدہ</button>
             <button className="btn alt" onClick={() => setPay(tm, 'rejected')}>مسترد</button>
             <button className="btn alt" onClick={() => delTeam(tm)}>حذف</button></div></div>); })}</>)}
+    </main>
   </div>);
 }
