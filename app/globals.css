@@ -910,3 +910,47 @@ body:has(.hdr) main .quotes .quote-nav{
 @media(prefers-reduced-motion:reduce){
   body:has(.hdr) main .quotes,body:has(.hdr) main .quotes .qb{animation:none!important}
 }
+
+
+/* BJL PUBLIC V4 — consistent readable text palette across every public route.
+   Scoped away from the admin dashboard and intentional dark hero/calligraphy areas. */
+body:has(.hdr) main{color:#202638}
+body:has(.hdr) main :where(h1,h2,h3,h4,h5,h6){color:#202638}
+body:has(.hdr) main :where(p,li,dd,dt,figcaption,caption,blockquote){color:#394356}
+body:has(.hdr) main :where(small,.muted,.hint,.sub,.description,.meta,.date,.time){color:#626d80}
+body:has(.hdr) main :where(label,legend){color:#465166;font-weight:650}
+body:has(.hdr) main :where(input,select,textarea){color:#202638;background-color:#fff}
+body:has(.hdr) main :where(input,select,textarea)::placeholder{color:#7b8494;opacity:1}
+body:has(.hdr) main :where(a:not(.btn),.tlink){color:#a81735}
+body:has(.hdr) main :where(a:not(.btn),.tlink):hover{color:#761128}
+body:has(.hdr) main :where(table,th,td){color:#30394b}
+body:has(.hdr) main :where(hr){border-color:#dfe3ea}
+body:has(.hdr) main :where(.card,.pp,.mbox,.quotes,.ann,.admin-panel){color:#252b39}
+body:has(.hdr) main :where(.card,.pp,.mbox) :where(h1,h2,h3,h4,h5,h6){color:#8f1730}
+body:has(.hdr) main :where(.card,.pp,.mbox) :where(p,li,small,span,div){color:inherit}
+body:has(.hdr) main :where(.card,.pp,.mbox) small{color:#626b7b}
+body:has(.hdr) main :where(.card,.pp,.mbox) label{color:#465166}
+body:has(.hdr) main :where(.badge,.badge.v,.badge.n,.good,.err,.warn){font-weight:750}
+body:has(.hdr) main :where(.good){background:#e7f7ed;color:#176b42;border:1px solid #bde5cc}
+body:has(.hdr) main :where(.err){background:#fff0f1;color:#9e1b31;border:1px solid #f0c4cb}
+body:has(.hdr) main :where(.warn){background:#fff4e8;color:#87470b;border:1px solid #f1d3a8}
+body:has(.hdr) main :where(.badge.v){background:#e6f7ed;color:#167444}
+body:has(.hdr) main :where(.badge.n){background:#fff0f1;color:#a11c32}
+body:has(.hdr) main :where(.hero,.calli,.splash,.credit){color:#fff}
+body:has(.hdr) main :where(.hero,.calli,.splash,.credit) :where(h1,h2,h3,h4,h5,h6,p,small,span,li,label){color:inherit}
+body:has(.hdr) main :where(.hero,.calli) a:not(.btn){color:#f5d68d}
+body:has(.hdr) main :where(.hero) p{color:#e2e5ec}
+body:has(.hdr) main :where(.credit) span{color:#c4cad5}
+body:has(.hdr) main :where(.quotes) :where(h2,.qt,.qn,.qb,.qr){color:inherit}
+body:has(.hdr) main :where(.team){color:#202638}
+body:has(.hdr) main :where(.lose,.dt,.empty){color:#596477}
+body:has(.hdr) main :where(.vsx){color:#b71939}
+body:has(.hdr) main :where(.res){color:#806018}
+body:has(.hdr) main :where(.role){color:#8a641d}
+body:has(.hdr) main :where(.sp-organizer small){color:#e7d9a5}
+body:has(.hdr) main :where(.sp-organizer strong,.sp-t span){color:#ff6478}
+body:has(.hdr) main :where(.sp-sound){color:#fff}
+body:has(.hdr) main :where(.fwa){color:#062b18}
+@media(prefers-reduced-motion:reduce){
+ body:has(.hdr) main *{scroll-behavior:auto}
+}
