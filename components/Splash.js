@@ -29,8 +29,8 @@ export default function Splash() {
       const master = ctx.createGain();
       master.gain.setValueAtTime(0.0001, now);
       master.gain.exponentialRampToValueAtTime(0.24, now + 0.8);
-      master.gain.setValueAtTime(0.24, now + 10.6);
-      master.gain.exponentialRampToValueAtTime(0.0001, now + 11.8);
+      master.gain.setValueAtTime(0.24, now + 6.6);
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 7.8);
       master.connect(ctx.destination);
 
       // Original 12-second cinematic sports intro: layered brass-like synth,
@@ -43,7 +43,7 @@ export default function Splash() {
       ];
       chordProgression.forEach((chord, section) => {
         chord.forEach((freq, index) => {
-          const start = now + section * 2.7 + index * 0.09;
+          const start = now + section * 1.7 + index * 0.09;
           const osc = ctx.createOscillator();
           const voice = ctx.createGain();
           const tone = ctx.createBiquadFilter();
@@ -51,18 +51,18 @@ export default function Splash() {
           osc.frequency.setValueAtTime(freq, start);
           tone.type = 'lowpass';
           tone.frequency.setValueAtTime(index < 2 ? 520 : 1450, start);
-          tone.frequency.linearRampToValueAtTime(index < 2 ? 900 : 2200, start + 2.45);
+          tone.frequency.linearRampToValueAtTime(index < 2 ? 900 : 2200, start + 1.45);
           voice.gain.setValueAtTime(0.0001, start);
-          voice.gain.exponentialRampToValueAtTime(index < 2 ? 0.075 : 0.045, start + 0.55);
-          voice.gain.setValueAtTime(index < 2 ? 0.075 : 0.045, start + 2.25);
-          voice.gain.exponentialRampToValueAtTime(0.0001, start + 2.65);
+          voice.gain.exponentialRampToValueAtTime(index < 2 ? 0.075 : 0.045, start + 0.4);
+          voice.gain.setValueAtTime(index < 2 ? 0.075 : 0.045, start + 1.35);
+          voice.gain.exponentialRampToValueAtTime(0.0001, start + 1.65);
           osc.connect(tone); tone.connect(voice); voice.connect(master);
-          osc.start(start); osc.stop(start + 2.7);
+          osc.start(start); osc.stop(start + 1.7);
         });
       });
 
       // Deep, spaced cinematic impacts.
-      [0.15, 3.0, 5.8, 8.6].forEach((offset, index) => {
+      [0.15, 2.0, 4.0, 6.0].forEach((offset, index) => {
         const start = now + offset;
         const drum = ctx.createOscillator();
         const drumGain = ctx.createGain();
@@ -77,7 +77,7 @@ export default function Splash() {
       });
 
       // Short snare-like accents add a stadium entrance rhythm.
-      [1.55, 4.35, 7.15, 9.95].forEach((offset) => {
+      [1.2, 2.9, 4.6, 6.3].forEach((offset) => {
         const start = now + offset;
         const length = Math.floor(ctx.sampleRate * 0.24);
         const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
@@ -96,7 +96,7 @@ export default function Splash() {
       });
 
       // Gentle crowd-like ambience, kept subtle under the main music.
-      const ambienceBuffer = ctx.createBuffer(1, ctx.sampleRate * 12, ctx.sampleRate);
+      const ambienceBuffer = ctx.createBuffer(1, ctx.sampleRate * 8, ctx.sampleRate);
       const ambienceData = ambienceBuffer.getChannelData(0);
       for (let i = 0; i < ambienceData.length; i++) ambienceData[i] = (Math.random() * 2 - 1) * 0.18;
       const ambience = ctx.createBufferSource();
@@ -106,14 +106,14 @@ export default function Splash() {
       ambienceFilter.type = 'bandpass'; ambienceFilter.frequency.value = 1050; ambienceFilter.Q.value = 0.45;
       ambienceGain.gain.setValueAtTime(0.0001, now);
       ambienceGain.gain.linearRampToValueAtTime(0.035, now + 2.2);
-      ambienceGain.gain.setValueAtTime(0.035, now + 9.8);
-      ambienceGain.gain.exponentialRampToValueAtTime(0.0001, now + 11.8);
+      ambienceGain.gain.setValueAtTime(0.035, now + 6.8);
+      ambienceGain.gain.exponentialRampToValueAtTime(0.0001, now + 7.8);
       ambience.connect(ambienceFilter); ambienceFilter.connect(ambienceGain); ambienceGain.connect(master);
-      ambience.start(now); ambience.stop(now + 12);
+      ambience.start(now); ambience.stop(now + 8);
 
       // Bright final lift before the welcome screen fades away.
       [659.25, 783.99, 987.77].forEach((freq, index) => {
-        const start = now + 9.4 + index * 0.12;
+        const start = now + 5.5 + index * 0.12;
         const bell = ctx.createOscillator();
         const bellGain = ctx.createGain();
         bell.type = 'sine'; bell.frequency.value = freq;
@@ -130,7 +130,7 @@ export default function Splash() {
           ctx.close().catch(() => {});
           audioRef.current = null;
         }
-      }, 12400);
+      }, 8400);
     } catch (e) {
       // Audio is optional; the welcome animation still works if the browser blocks it.
     }
