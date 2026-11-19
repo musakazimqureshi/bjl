@@ -9,13 +9,13 @@ const ROLE = { batter: 'Batsman', bowler: 'Bowler', all_rounder: 'All-Rounder', 
 export default function TeamLogin() {
   const { lang } = useLang(); const tx = (e, u) => (lang === 'ur' ? u : e);
   const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
-  const [user, setUser] = useState(null); const [teams, setTeams] = useState(null); const [objections, setObjections] = useState([]); const [opponents, setOpponents] = useState([]); const [opponentId, setOpponentId] = useState(''); const [playerId, setPlayerId] = useState(''); const [reason, setReason] = useState(''); const [details, setDetails] = useState(''); const [sending, setSending] = useState(false); const [matches, setMatches] = useState([]);
+  const [user, setUser] = useState(null); const [teams, setTeams] = useState(null); const [objections, setObjections] = useState([]); const [opponents, setOpponents] = useState([]); const [opponentId, setOpponentId] = useState(''); const [playerId, setPlayerId] = useState(''); const [reason, setReason] = useState(''); const [details, setDetails] = useState(''); const [sending, setSending] = useState(false); const [matches, setMatches] = useState([]); const [teamMessages, setTeamMessages] = useState([]); const [replyText, setReplyText] = useState(''); const [replyBusy, setReplyBusy] = useState(false);
   async function load(u) {
     const { data, error } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').eq('captain_email', (u.email || '').toLowerCase());
     if (error) setMsg(error.message); setTeams(data || []);
     const ownIds = (data || []).map(t => t.id);
-    const [otherResult, objectionResult] = await Promise.all([supabase.from('teams').select('id,name,players:players!players_team_id_fkey(id,name,age,position)').not('id','in', '(' + ownIds.join(',') + ')').order('name'), supabase.from('player_objections').select('*, players(name,age), teams(name)').order('created_at',{ascending:false})]);
-    setOpponents(otherResult.data || []); if (otherResult.error) setMsg(otherResult.error.message); setObjections(objectionResult.data || []); if (objectionResult.error) setMsg(objectionResult.error.message);
+    const [otherResult, objectionResult, messageResult] = await Promise.all([supabase.from('teams').select('id,name,players:players!players_team_id_fkey(id,name,age,position)').not('id','in', '(' + ownIds.join(',') + ')').order('name'), supabase.from('player_objections').select('*, players(name,age), teams(name)').order('created_at',{ascending:false}), supabase.from('team_messages').select('*').in('team_id',ownIds).order('created_at',{ascending:false})]);
+    setOpponents(otherResult.data || []); if (otherResult.error) setMsg(otherResult.error.message); setObjections(objectionResult.data || []); if (objectionResult.error) setMsg(objectionResult.error.message); setTeamMessages(messageResult.data || []); if (messageResult.error) setMsg(messageResult.error.message);
     const ids = ownIds; if (ids.length) { const { data: matchRows, error: matchError } = await supabase.from('matches').select('id,team_a,team_b,winner_team,match_date,published').or('team_a.in.(' + ids.join(',') + '),team_b.in.(' + ids.join(',') + ')'); setMatches(matchRows || []); if (matchError) setMsg(matchError.message); }
   }
   useEffect(() => {
@@ -53,6 +53,12 @@ export default function TeamLogin() {
     } catch (err) { setMsg(err.message || 'Could not submit objection.'); }
     finally { setSending(false); }
   }
+  async function sendTeamReply(e, ownTeam) {
+    e.preventDefault(); setReplyBusy(true);
+    const { error } = await supabase.from('team_messages').insert({team_id:ownTeam.id,sender_role:'captain',message:replyText.trim()});
+    if (error) setMsg(error.message); else { setReplyText(''); setMsg(tx('Reply sent to admin.','جواب ایڈمن کو بھیج دیا گیا۔')); const {data}=await supabase.from('team_messages').select('*').eq('team_id',ownTeam.id).order('created_at',{ascending:false}); setTeamMessages(data||[]); }
+    setReplyBusy(false);
+  }
   async function logout() { await supabase.auth.signOut(); setUser(null); setTeams(null); }
   const status = tm => {
     const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
@@ -75,7 +81,12 @@ export default function TeamLogin() {
           <span className={'badge ' + (tm.payment === 'verified' ? 'v' : 'n')}>{tm.payment === 'verified' ? '✓ VERIFIED' : 'NOT VERIFIED'}</span>
           <p>{status(tm)}</p><div className="card"><h3>{tx('Team Statistics','ٹیم کے اعدادوشمار')}</h3><div className="row"><span>{tx('Matches','میچز')}: <b>{teamMatches.length}</b></span><span>{tx('Wins','جیت')}: <b>{wins}</b></span><span>{tx('Losses','ہار')}: <b>{losses}</b></span></div><small>{tx('Based on recorded match results.','درج شدہ میچ نتائج کی بنیاد پر۔')}</small></div>
           {tm.payment !== 'verified' && <Link className="btn" href={'/pay?ref=' + tm.reg_id}>{tx('Go to Payment', 'ادائیگی کے صفحے پر جائیں')}</Link>}
-          <section className="card">
+                    <section className="card">
+            <h3>{tx('Messages from Admin','ایڈمن کے پیغامات')}</h3>
+            {teamMessages.length ? teamMessages.map(m=><div className="card" key={m.id}><p>{m.message}</p><small>{formatDateTime(m.created_at)} · {m.sender_role==='admin'?tx('Admin','ایڈمن'):tx('Your reply','آپ کا جواب')}</small></div>) : <p>{tx('No messages yet.','ابھی کوئی پیغام نہیں۔')}</p>}
+            <form onSubmit={e=>sendTeamReply(e,tm)}><label>{tx('Reply to Admin','ایڈمن کو جواب دیں')}</label><textarea required minLength={1} maxLength={4000} rows={3} value={replyText} onChange={e=>setReplyText(e.target.value)} /><button className="btn" disabled={replyBusy}>{replyBusy?tx('Sending...','بھیج رہا ہے...'):tx('Send Reply','جواب بھیجیں')}</button></form>
+          </section>
+<section className="card">
             <h3>{tx('Report an Objection / Appeal', 'اعتراض یا اپیل جمع کریں')}</h3>
             <p>{tx('Select an opposing registered team and the player you want the admin to review.', 'مخالف رجسٹرڈ ٹیم اور اس کھلاڑی کو منتخب کریں جس کا ایڈمن سے جائزہ کروانا ہے۔')}</p>
             <form onSubmit={e => submitObjection(e, tm)}>
