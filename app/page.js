@@ -87,8 +87,8 @@ export default function Home() {
         <div className="qn">قول نمبر {qi + 1}</div>
         <p className="qb">{qs[qi].body}</p>
         <div className="qr">کتاب: {qs[qi].book}</div><div className="qr">حوالہ: {qs[qi].ref}</div></div>
-      <div className="row"><button className="btn alt" onClick={() => stepQ(-1)} aria-label="prev">▶</button>
-        <span>{qi + 1} / {qs.length}</span><button className="btn alt" onClick={() => stepQ(1)} aria-label="next">◀</button></div></section>}
+      <div className="row quote-controls" dir="ltr"><button className="btn alt quote-nav quote-prev" onClick={() => stepQ(-1)} aria-label="Previous quote" title="Previous quote"><span aria-hidden="true">←</span></button>
+        <span>{qi + 1} / {qs.length}</span><button className="btn alt quote-nav quote-next" onClick={() => stepQ(1)} aria-label="Next quote" title="Next quote"><span aria-hidden="true">→</span></button></div></section>}
     {allAnn && <div className="modal" onClick={() => setAllAnn(false)}><div className="mbox" onClick={e => e.stopPropagation()}>
       <button className="btn alt" onClick={() => setAllAnn(false)}>✕ {t('close')}</button>
       {ann.map(a => (<div className="alist" key={a.id} onClick={() => { setAllAnn(false); setLb(a); }}><img src={img(a.image_path)} alt="" /><div><b>{a.title}</b><div><small>{a.announce_date}</small></div></div></div>))}</div></div>}
