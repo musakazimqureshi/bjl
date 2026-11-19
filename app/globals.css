@@ -1137,3 +1137,81 @@ body:has(.hdr) main .card :where(.warn){color:#87470b!important}
  .admin-content-label{grid-column:1!important;grid-row:5!important}
  .admin-workspace{grid-column:1!important;grid-row:6!important}
 }
+
+
+/* BJL PUBLIC V7 — high-contrast information panels and subtle motion polish.
+   Additive only: no routes, content, or existing interactions are changed. */
+body:has(.hdr) main .bjl-register-guide,
+body:has(.hdr) main .bjl-editable-info > section{
+  position:relative!important;isolation:isolate!important;overflow:hidden!important;
+  color:#17243a!important;
+  background:linear-gradient(145deg,#ffffff 0%,#f3f6fc 100%)!important;
+  border:1px solid #cbd5e3!important;
+  box-shadow:0 12px 30px #17243a18!important;
+}
+body:has(.hdr) main .bjl-register-guide h2,
+body:has(.hdr) main .bjl-editable-info h2{
+  display:flex!important;align-items:center!important;gap:10px!important;
+  color:#182b49!important;font-size:clamp(1.15rem,4vw,1.45rem)!important;
+  font-weight:900!important;letter-spacing:.01em!important;
+  margin:0 0 14px!important;
+}
+body:has(.hdr) main .bjl-register-guide h2:before,
+body:has(.hdr) main .bjl-editable-info h2:before{
+  content:"";display:block;width:5px;height:25px;border-radius:8px;
+  background:linear-gradient(180deg,#e0242b,#c9a227);flex:none;
+}
+body:has(.hdr) main .bjl-register-guide ol{
+  list-style:none!important;counter-reset:bjl-step;padding:0!important;margin:0!important;
+  display:grid!important;gap:10px!important;
+}
+body:has(.hdr) main .bjl-register-guide li{
+  counter-increment:bjl-step;display:flex!important;align-items:flex-start!important;gap:11px!important;
+  padding:10px 12px!important;border:1px solid #e1e7f0!important;border-radius:12px!important;
+  background:#fff!important;color:#27364d!important;font-size:.96rem!important;
+  font-weight:650!important;line-height:1.6!important;
+}
+body:has(.hdr) main .bjl-register-guide li:before{
+  content:counter(bjl-step,decimal-leading-zero);display:grid;place-items:center;flex:none;
+  width:30px;height:30px;border-radius:9px;background:#fff0f1;color:#a81735;
+  font-size:.72rem;font-weight:900;
+}
+body:has(.hdr) main .bjl-editable-info{gap:12px!important}
+body:has(.hdr) main .bjl-editable-info > section{min-height:180px!important;padding:18px!important}
+body:has(.hdr) main .bjl-editable-info > section p{
+  color:#34445d!important;opacity:1!important;font-size:1rem!important;
+  font-weight:600!important;line-height:1.8!important;margin:0!important;
+  overflow-wrap:anywhere!important;
+}
+body:has(.hdr) main .bjl-editable-info > section:after{
+  content:"";position:absolute;z-index:-1;width:130px;height:130px;right:-48px;bottom:-55px;
+  border:18px solid #b0121210;border-radius:50%;pointer-events:none;
+}
+body:has(.hdr) main .bjl-register-guide,
+body:has(.hdr) main .bjl-editable-info > section,
+body:has(.hdr) main > .card,
+body:has(.hdr) main > .duo,
+body:has(.hdr) main > .quotes{
+  animation:bjlHomeEnter .65s cubic-bezier(.2,.75,.25,1) both;
+}
+body:has(.hdr) main .bjl-editable-info > section:nth-child(2){animation-delay:.1s}
+body:has(.hdr) main .bjl-register-guide{animation-delay:.04s}
+@keyframes bjlHomeEnter{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+body:has(.hdr) main .card{transition:transform .24s ease,box-shadow .24s ease,border-color .24s ease}
+body:has(.hdr) main .card:hover{box-shadow:0 13px 28px #11182722;border-color:#c6cedb}
+body:has(.hdr) main .bjl-site-footer{color:#f5f7fb!important;background:linear-gradient(145deg,#202735,#111722)!important;border:1px solid #465168!important;border-radius:18px!important;box-shadow:0 12px 30px #11182730!important}
+body:has(.hdr) main .bjl-site-footer :where(strong,span,a){color:#f5f7fb!important;opacity:1!important}
+body:has(.hdr) main .bjl-site-footer nav a{min-height:44px;display:inline-flex;align-items:center;padding:8px 10px}
+@media(max-width:600px){
+ body:has(.hdr) main .duo.bjl-editable-info{grid-template-columns:1fr!important}
+ body:has(.hdr) main .bjl-editable-info > section{min-height:145px!important}
+ body:has(.hdr) main .bjl-register-guide li{font-size:.9rem!important;padding:9px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ body:has(.hdr) main .bjl-register-guide,
+ body:has(.hdr) main .bjl-editable-info > section,
+ body:has(.hdr) main > .card,
+ body:has(.hdr) main > .duo,
+ body:has(.hdr) main > .quotes{animation:none!important}
+ body:has(.hdr) main .card{transition:none!important}
+}
