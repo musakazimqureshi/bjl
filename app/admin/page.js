@@ -292,7 +292,7 @@ export default function Admin() {
     <header className="admin-topbar"><div><span className="admin-eyebrow">MANAGEMENT CONSOLE</span><h1>BJL Admin Dashboard</h1><p>Manage your tournament, teams, matches and player reviews in one place.</p></div><div className="admin-top-actions"><button className="admin-profile-chip" onClick={() => { setTab('profile'); setMsg(''); }} aria-label="Open your admin profile"><span className="admin-profile-chip-photo">{profile.photo_path ? <img src={pa(profile.photo_path)} alt="" /> : 'MK'}</span><span><b>{profile.name || 'Musa Kazim'}</b><small>Administrator</small></span></button><span className="admin-live"><i /> SYSTEM ONLINE</span><button className="btn admin-logout" onClick={logout}>Logout ↗</button></div></header>
     <datalist id="tn">{teams.map(x => <option key={x.id} value={x.name} />)}</datalist>
     <nav className="tabs admin-tabs" aria-label="Admin sections">
-      {[['overview', 'Overview'], ['teams', 'Teams'], ['match', 'Match Center'], ['objections', 'Operations by Admin / Objections'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['quotes', 'Quotes'], ['set', 'Homepage Content & Settings'], ['profile', 'My Profile']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
+      {[['overview', 'Overview'], ['teams', 'Teams'], ['match', 'Match Center'], ['objections', 'Operations by Admin / Objections'], ['content', 'How to Register · Rules · Prizes'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['quotes', 'Quotes'], ['set', 'Website Settings'], ['profile', 'My Profile']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
       </nav>
     {msg && <div className="good admin-message">{msg}</div>}
     <section className="admin-stats" aria-label="Live tournament statistics">
@@ -303,7 +303,7 @@ export default function Admin() {
       <article className="admin-stat"><span className="admin-stat-icon blue">▣</span><div><small>Announcements</small><strong>{ann.length}</strong><em>Published and draft items</em></div></article>
       <article className="admin-stat"><span className="admin-stat-icon green">!</span><div><small>Open Objections</small><strong>{openObjections}</strong><em>Need administrator review</em></div></article>
     </section>
-    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({overview:'Tournament Overview',teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',quotes:'Quotes & Content',set:'Website Settings',profile:'My Admin Profile'})[tab]}</strong></div>
+    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({overview:'Tournament Overview',teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',quotes:'Quotes & Content',content:'Homepage Content: Registration, Rules & Prizes',set:'Website Settings',profile:'My Admin Profile'})[tab]}</strong></div>
     <main className="admin-workspace">
     {tab === 'profile' && (<section className="admin-profile-page">
       <div className="admin-overview-heading"><div><span className="admin-eyebrow">PERSONAL ADMIN ACCOUNT</span><h2>Your profile</h2><p>Manage the name, portrait and introduction shown in your BJL admin workspace.</p></div><span className="admin-updated">● Private admin profile</span></div>
@@ -402,6 +402,15 @@ export default function Admin() {
       {inp('falak_whatsapp', 'WhatsApp Number (international format, e.g. 923001234567)')}{inp('falak_btn', 'Button Text')}{inp('falak_msg', 'Default WhatsApp Message')}
       <label><input type="checkbox" style={{ width: 'auto' }} checked={c.registration_open !== 'false'} onChange={e => set('registration_open', e.target.checked ? 'true' : 'false')} /> Team registration is open</label>
       <button className="btn" onClick={() => save(['falak_whatsapp', 'falak_btn', 'falak_msg', 'registration_open'])}>Save Changes</button></div>
+      <div className="card admin-moment-settings"><h3>Homepage Moments · Image Fit & Zoom</h3>
+        <p>Control how player and team photos appear in the Moments carousel on the public homepage.</p>
+        <label>Image Fit</label><select value={c.moments_fit || 'cover'} onChange={e => set('moments_fit', e.target.value)}><option value="cover">Fill frame (Cover)</option><option value="contain">Show full photo (Contain)</option></select>
+        <label>Zoom · {c.moments_zoom || '100'}%</label><input type="range" min="80" max="160" step="5" value={Number(c.moments_zoom || 100)} onChange={e => set('moments_zoom', e.target.value)} />
+        <div className="admin-moment-preview"><img src={moms[0] ? pa(moms[0].image_path) : ''} alt="Moment preview" style={{ objectFit: c.moments_fit || 'cover', transform: 'scale(' + (Number(c.moments_zoom || 100) / 100) + ')' }} />{!moms[0] && <span>Upload a photo in BJL Moments to preview</span>}</div>
+        <button className="btn" onClick={() => save(['moments_fit','moments_zoom'])}>Save Moments Display Settings</button>
+      </div>
+    </>)}
+    {tab === 'content' && (<>
       <div className="card admin-site-copy">
         <h3>Homepage Information Controls</h3><p>Edit the public How to Register, Rules and Prizes sections.</p>
         <label>How to Register</label><textarea rows="5" value={c.how_to_register || '1. Register your team with exactly 15 players.\n2. Provide the captain mobile number.\n3. Pay PKR 5,000 through EasyPaisa.\n4. Upload the payment receipt.\n5. Wait for admin verification.'} onChange={e => set('how_to_register', e.target.value)} placeholder="Enter registration steps, one per line..." />
@@ -411,13 +420,7 @@ export default function Admin() {
         <label>Prizes</label><textarea rows="5" value={c.prizes || 'Will be announced soon'} onChange={e => set('prizes', e.target.value)} placeholder="Enter prizes, one per line..." />
         <button className="btn" onClick={() => save(['prizes'])}>Save Prizes</button>
       </div>
-      <div className="card admin-moment-settings"><h3>Homepage Moments · Image Fit & Zoom</h3>
-        <p>Control how player and team photos appear in the Moments carousel on the public homepage.</p>
-        <label>Image Fit</label><select value={c.moments_fit || 'cover'} onChange={e => set('moments_fit', e.target.value)}><option value="cover">Fill frame (Cover)</option><option value="contain">Show full photo (Contain)</option></select>
-        <label>Zoom · {c.moments_zoom || '100'}%</label><input type="range" min="80" max="160" step="5" value={Number(c.moments_zoom || 100)} onChange={e => set('moments_zoom', e.target.value)} />
-        <div className="admin-moment-preview"><img src={moms[0] ? pa(moms[0].image_path) : ''} alt="Moment preview" style={{ objectFit: c.moments_fit || 'cover', transform: 'scale(' + (Number(c.moments_zoom || 100) / 100) + ')' }} />{!moms[0] && <span>Upload a photo in BJL Moments to preview</span>}</div>
-        <button className="btn" onClick={() => save(['moments_fit','moments_zoom'])}>Save Moments Display Settings</button>
-      </div>
+      <div className="card"><h3>How these changes appear</h3><p>Saved text is shown on the public homepage under How to Register, Rules and Prizes. Line breaks are preserved. You can edit and save each section independently.</p></div>
     </>)}
     {tab === 'teams' && (<><div className="card">Total teams: {teams.length} · Verified payments: {teams.filter(x => x.payment === 'verified').length}</div>
       {teams.map(tm => { const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
