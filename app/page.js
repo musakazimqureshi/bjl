@@ -40,6 +40,7 @@ export default function Home() {
   const showWin = c.winner_show !== '0' && c.winner_team; const showNext = c.next_show !== '0' && c.next_a && c.next_b;
   return (<>
     <section className="hero">
+      <div className="stadium-ball" aria-hidden="true"><span /></div>
       <div className="shield" style={{ display: 'inline-block', fontSize: '2rem' }}>BJL</div>
       <h1>{t('title')}</h1>
       <div className="calli">{c.calli_path ? <img src={img(c.calli_path)} alt="" /> :
@@ -71,7 +72,7 @@ export default function Home() {
           {ann.length > 1 && <button className="tlink" style={{ marginTop: 6, textAlign: 'start' }} onClick={() => setAllAnn(true)}>{t('allAnn')} ({ann.length})</button>}</>)}</div>
       <div className="card"><h3>{t('momentsT')}</h3>
         {!cm ? <div className="empty">{t('noMom')}</div> : (<div className="ms" onMouseEnter={pauseM} onTouchStart={pauseM}>
-          <img className="sqimg" key={cm.id} src={img(cm.image_path)} alt="" onClick={() => setGi(moms.indexOf(cm))} />
+          <div className="moments-frame" onClick={() => setGi(moms.indexOf(cm))}><img className="sqimg" key={cm.id} src={img(cm.image_path)} alt={cm.caption || 'BJL player moment'} style={{ objectFit: c.moments_fit || 'cover', transform: 'scale(' + (Number(c.moments_zoom || 100) / 100) + ')' }} /></div>
           <button className="msb l" onClick={() => stepM(-1)} aria-label="prev">◀</button><button className="msb r" onClick={() => stepM(1)} aria-label="next">▶</button>
           <small>{moms.indexOf(cm) + 1}/{moms.length}</small></div>)}</div>
     </div>
