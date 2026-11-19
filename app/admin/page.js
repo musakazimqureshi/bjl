@@ -404,11 +404,11 @@ export default function Admin() {
       <button className="btn" onClick={() => save(['falak_whatsapp', 'falak_btn', 'falak_msg', 'registration_open'])}>Save Changes</button></div>
       <div className="card admin-site-copy">
         <h3>Homepage Information Controls</h3><p>Edit the public How to Register, Rules and Prizes sections.</p>
-        <label>How to Register</label><textarea rows="5" value={c.how_to_register || ''} onChange={e => set('how_to_register', e.target.value)} placeholder="Enter registration steps, one per line..." />
+        <label>How to Register</label><textarea rows="5" value={c.how_to_register || '1. Register your team with exactly 15 players.\n2. Provide the captain mobile number.\n3. Pay PKR 5,000 through EasyPaisa.\n4. Upload the payment receipt.\n5. Wait for admin verification.'} onChange={e => set('how_to_register', e.target.value)} placeholder="Enter registration steps, one per line..." />
         <button className="btn" onClick={() => save(['how_to_register'])}>Save How to Register</button>
-        <label>Rules</label><textarea rows="5" value={c.rules || ''} onChange={e => set('rules', e.target.value)} placeholder="Enter tournament rules, one per line..." />
+        <label>Rules</label><textarea rows="5" value={c.rules || 'Will be announced soon'} onChange={e => set('rules', e.target.value)} placeholder="Enter tournament rules, one per line..." />
         <button className="btn" onClick={() => save(['rules'])}>Save Rules</button>
-        <label>Prizes</label><textarea rows="5" value={c.prizes || ''} onChange={e => set('prizes', e.target.value)} placeholder="Enter prizes, one per line..." />
+        <label>Prizes</label><textarea rows="5" value={c.prizes || 'Will be announced soon'} onChange={e => set('prizes', e.target.value)} placeholder="Enter prizes, one per line..." />
         <button className="btn" onClick={() => save(['prizes'])}>Save Prizes</button>
       </div>
       <div className="card admin-moment-settings"><h3>Homepage Moments · Image Fit & Zoom</h3>
