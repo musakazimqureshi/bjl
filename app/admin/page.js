@@ -151,7 +151,7 @@ export default function Admin() {
     <datalist id="tn">{teams.map(x => <option key={x.id} value={x.name} />)}</datalist>
     <nav className="tabs admin-tabs" aria-label="Admin sections">
       {[['teams', 'ٹیمیں'], ['match', 'میچ سینٹر'], ['ann', 'اعلانات'], ['people', 'ٹیم تصاویر'], ['moms', 'BJL Moments'], ['quotes', 'اقوال'], ['set', 'سیٹنگ']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
-      <button className="btn" onClick={logout}>Logout</button></div>
+      </nav>
     {msg && <div className="good admin-message">{msg}</div>}
     <section className="admin-stats" aria-label="Quick statistics">
       <article className="admin-stat"><span className="admin-stat-icon blue">♧</span><div><small>کل ٹیمیں</small><strong>{teams.length}</strong><em>Registered teams</em></div></article>
