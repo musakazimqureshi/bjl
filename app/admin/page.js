@@ -9,6 +9,7 @@ export default function Admin() {
   const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
   const [tab, setTab] = useState('teams'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
   const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
+  const [objections, setObjections] = useState([]); const [objectionPlayer, setObjectionPlayer] = useState(null); const [objectionDraft, setObjectionDraft] = useState({ reason: '', raised_by: '', details: '' });
   async function check() {
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -39,6 +40,30 @@ export default function Admin() {
     const { data } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').order('created_at', { ascending: false });
     setTeams(data || []);
   }
+  async function loadObjections() {
+    const { data, error } = await supabase.from('player_objections').select('*, players(name, age), teams(name)').order('created_at', { ascending: false });
+    if (error) { setMsg(error.message); return; }
+    setObjections(data || []);
+  }
+  async function raiseObjection(e, player, team) {
+    e.preventDefault();
+    const { error } = await supabase.from('player_objections').insert({
+      player_id: player.id, team_id: team.id, reason: objectionDraft.reason,
+      raised_by: objectionDraft.raised_by.trim(), details: objectionDraft.details.trim()
+    });
+    if (error) return setMsg(error.message);
+    setMsg('Player objection recorded successfully.');
+    setObjectionPlayer(null);
+    setObjectionDraft({ reason: '', raised_by: '', details: '' });
+    loadObjections();
+  }
+  async function setObjectionStatus(item, status) {
+    const { error } = await supabase.from('player_objections').update({
+      status, resolved_at: status === 'open' ? null : new Date().toISOString()
+    }).eq('id', item.id);
+    setMsg(error ? error.message : 'Objection status updated.');
+    loadObjections();
+  }
   const pub = p => supabase.storage.from('player-photos').getPublicUrl(p).data.publicUrl;
   async function shot(pay) {
     const { data, error } = await supabase.storage.from('payments').createSignedUrl(pay.screenshot_path, 600);
@@ -58,7 +83,7 @@ export default function Admin() {
     const { error } = await supabase.from('teams').delete().eq('id', tm.id); setMsg(error ? error.message : 'ٹیم حذف ہو گئی'); loadTeams();
   }
   useEffect(() => { check(); }, []);
-  useEffect(() => { if (isAdmin) { load(); loadTeams(); } }, [isAdmin]);
+  useEffect(() => { if (isAdmin) { load(); loadTeams(); loadObjections(); } }, [isAdmin]);
   async function login(e) {
     e.preventDefault();
     setMsg('');
@@ -147,36 +172,46 @@ export default function Admin() {
   const pa = p => supabase.storage.from('announcements').getPublicUrl(p).data.publicUrl;
   return (<div className="admin-shell">
     <aside className="admin-brand"><div className="admin-brand-mark">BJL</div><div><strong>BJL CONTROL</strong><small>SEASON 1 · ADMIN</small></div></aside>
-    <header className="admin-topbar"><div><span className="admin-eyebrow">MANAGEMENT CONSOLE</span><h1>BJL Admin Dashboard</h1><p>اپنی لیگ کی تمام سرگرمیاں ایک جگہ سے مینیج کریں۔</p></div><div className="admin-top-actions"><span className="admin-live"><i /> SYSTEM ONLINE</span><button className="btn admin-logout" onClick={logout}>Logout ↗</button></div></header>
+    <header className="admin-topbar"><div><span className="admin-eyebrow">MANAGEMENT CONSOLE</span><h1>BJL Admin Dashboard</h1><p>Manage your tournament, teams, matches and player reviews in one place.</p></div><div className="admin-top-actions"><span className="admin-live"><i /> SYSTEM ONLINE</span><button className="btn admin-logout" onClick={logout}>Logout ↗</button></div></header>
     <datalist id="tn">{teams.map(x => <option key={x.id} value={x.name} />)}</datalist>
     <nav className="tabs admin-tabs" aria-label="Admin sections">
-      {[['teams', 'ٹیمیں'], ['match', 'میچ سینٹر'], ['ann', 'اعلانات'], ['people', 'ٹیم تصاویر'], ['moms', 'BJL Moments'], ['quotes', 'اقوال'], ['set', 'سیٹنگ']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
+      {[['teams', 'Teams'], ['match', 'Match Center'], ['objections', 'Player Objections'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['quotes', 'Quotes'], ['set', 'Settings']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
       </nav>
     {msg && <div className="good admin-message">{msg}</div>}
     <section className="admin-stats" aria-label="Quick statistics">
-      <article className="admin-stat"><span className="admin-stat-icon blue">♧</span><div><small>کل ٹیمیں</small><strong>{teams.length}</strong><em>Registered teams</em></div></article>
-      <article className="admin-stat"><span className="admin-stat-icon green">✓</span><div><small>تصدیق شدہ ادائیگیاں</small><strong>{teams.filter(x => x.payment === 'verified').length}</strong><em>Verified payments</em></div></article>
-      <article className="admin-stat"><span className="admin-stat-icon amber">◷</span><div><small>زیرِ التواء ادائیگیاں</small><strong>{teams.filter(x => x.payment !== 'verified' && x.payment !== 'rejected').length}</strong><em>Awaiting review</em></div></article>
-      <article className="admin-stat"><span className="admin-stat-icon violet">▣</span><div><small>اعلانات</small><strong>{ann.length}</strong><em>Announcements</em></div></article>
+      <article className="admin-stat"><span className="admin-stat-icon blue">♧</span><div><small>Total Teams</small><strong>{teams.length}</strong><em>Registered teams</em></div></article>
+      <article className="admin-stat"><span className="admin-stat-icon green">✓</span><div><small>Verified Payments</small><strong>{teams.filter(x => x.payment === 'verified').length}</strong><em>Verified payments</em></div></article>
+      <article className="admin-stat"><span className="admin-stat-icon amber">◷</span><div><small>Pending Payments</small><strong>{teams.filter(x => x.payment !== 'verified' && x.payment !== 'rejected').length}</strong><em>Awaiting review</em></div></article>
+      <article className="admin-stat"><span className="admin-stat-icon violet">▣</span><div><small>Announcements</small><strong>{ann.length}</strong><em>Announcements</em></div></article>
     </section>
-    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({teams:'Team Management',match:'Match Center',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',quotes:'Quotes & Content',set:'Website Settings'})[tab]}</strong></div>
+    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',quotes:'Quotes & Content',set:'Website Settings'})[tab]}</strong></div>
     <main className="admin-workspace">
-    {tab === 'match' && (<><div className="card"><h3>آج کا فاتح</h3>
-      {tsel('winner_team', 'جیتنے والی ٹیم')}{tsel('loser_team', 'مخالف (ہارنے والی) ٹیم')}{inp('winner_result', 'نتیجہ / مختصر اعلان (اختیاری)')}{inp('winner_date', 'میچ کی تاریخ', 'date')}{show('winner_show', 'ہوم پیج پر دکھائیں')}
-      <button className="btn" onClick={() => save(['winner_team', 'loser_team', 'winner_result', 'winner_date', 'winner_show'])}>محفوظ کریں</button></div>
-      <div className="card"><h3>اگلا میچ</h3>
-        {tsel('next_a', 'ٹیم A')}{tsel('next_b', 'ٹیم B')}{inp('next_date', 'تاریخ', 'date')}{inp('next_time', 'وقت', 'time')}{inp('next_venue', 'مقام (خالی ہو تو: Dab Ground, Battagram)')}{show('next_show', 'ہوم پیج پر دکھائیں')}
-        <button className="btn" onClick={() => save(['next_a', 'next_b', 'next_date', 'next_time', 'next_venue', 'next_show'])}>محفوظ کریں</button></div></>)}
-    {tab === 'ann' && (<><form className="card" onSubmit={addAnn}><h3>نیا اعلان</h3>
-      <label>عنوان</label><input value={f.title} onChange={e => setF({ ...f, title: e.target.value })} />
-      <label>تفصیل</label><input value={f.description} onChange={e => setF({ ...f, description: e.target.value })} />
-      <label>تاریخ</label><input type="date" value={f.date} onChange={e => setF({ ...f, date: e.target.value })} />
-      <label>وقت</label><input type="time" value={f.time} onChange={e => setF({ ...f, time: e.target.value })} />
-      <label>تصویر</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setF({ ...f, file: e.target.files[0] })} />
-      <button className="btn">شائع کریں</button></form>
+    {tab === 'match' && (<><div className="card"><h3>Match Result</h3>
+      {tsel('winner_team', 'Winning Team')}{tsel('loser_team', 'Opposition Team')}{inp('winner_result', 'Result / Short Note (Optional)')}{inp('winner_date', 'Match Date', 'date')}{show('winner_show', 'Show on Homepage')}
+      <button className="btn" onClick={() => save(['winner_team', 'loser_team', 'winner_result', 'winner_date', 'winner_show'])}>Save Changes</button></div>
+      <div className="card"><h3>Upcoming Match</h3>
+        {tsel('next_a', 'Team A')}{tsel('next_b', 'Team B')}{inp('next_date', 'Date', 'date')}{inp('next_time', 'Time', 'time')}{inp('next_venue', 'Venue (Default: Dab Ground, Battagram)')}{show('next_show', 'Show on Homepage')}
+        <button className="btn" onClick={() => save(['next_a', 'next_b', 'next_date', 'next_time', 'next_venue', 'next_show'])}>Save Changes</button></div></>)}
+    {tab === 'objections' && (<div className="admin-objections-list">
+      <div className="card"><h3>Player Objections Overview</h3><p>{objections.filter(o => o.status === 'open').length} open · {objections.length} total records</p></div>
+      {objections.length === 0 && <div className="card">No player objections have been submitted.</div>}
+      {objections.map(o => <article className="card admin-objection-card" key={o.id}>
+        <div className="admin-objection-head"><div><span className="admin-eyebrow">{o.reason}</span><h3>{o.players?.name || 'Player'} · {o.teams?.name || 'Team'}</h3></div><span className={'admin-objection-status '+o.status}>{o.status.toUpperCase()}</span></div>
+        <p>{o.details || 'No description provided.'}</p>
+        <small>Raised by <b>{o.raised_by || 'Not provided'}</b> · {new Date(o.created_at).toLocaleString()}</small>
+        <div className="row admin-objection-actions"><button className="btn" onClick={() => setObjectionStatus(o,'resolved')} disabled={o.status==='resolved'}>Mark Resolved</button><button className="btn alt" onClick={() => setObjectionStatus(o,'dismissed')} disabled={o.status==='dismissed'}>Dismiss</button><button className="btn alt" onClick={() => setObjectionStatus(o,'open')} disabled={o.status==='open'}>Reopen</button></div>
+      </article>)}
+    </div>)}
+    {tab === 'ann' && (<><form className="card" onSubmit={addAnn}><h3>New Announcement</h3>
+      <label>Title</label><input value={f.title} onChange={e => setF({ ...f, title: e.target.value })} />
+      <label>Description</label><input value={f.description} onChange={e => setF({ ...f, description: e.target.value })} />
+      <label>Date</label><input type="date" value={f.date} onChange={e => setF({ ...f, date: e.target.value })} />
+      <label>Time</label><input type="time" value={f.time} onChange={e => setF({ ...f, time: e.target.value })} />
+      <label>Image</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setF({ ...f, file: e.target.files[0] })} />
+      <button className="btn">Publish</button></form>
       {ann.map((a, i) => (<div className="card" key={a.id}><b>{a.title}</b> <small>{a.announce_date}</small> {a.published ? '✅' : '⛔'}
         <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt" onClick={() => move(i, -1)}>▲</button><button className="btn alt" onClick={() => move(i, 1)}>▼</button><button className="btn alt" onClick={() => editAnn(a)}>ایڈٹ</button><button className="btn alt" onClick={() => toggle(a)}>{a.published ? 'چھپائیں' : 'دکھائیں'}</button>
-          <button className="btn" onClick={() => del(a)}>حذف</button></div></div>))}</>)}
+          <button className="btn" onClick={() => del(a)}>Delete Team</button></div></div>))}</>)}
     {tab === 'people' && (<>{[[1, 'AMAN MALIK – MEMBER'], [2, 'WALEED AFRIDI – MEMBER'], [3, 'MUHAMMAD HASNAIN – MEMBER'], [4, 'FALAK – ORGANIZER']].map(([n, l]) => (<div className="card" key={n}><h3>{l}</h3>
       {c['person' + n + '_path'] && <img src={pa(c['person' + n + '_path'])} alt="" width="90" style={{ borderRadius: 8 }} />}
       <p><label>نئی تصویر چنیں</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('person' + n, e.target.files[0])} /></p></div>))}
@@ -185,39 +220,52 @@ export default function Admin() {
         <p><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('calli', e.target.files[0])} /></p>
         {c.calli_path && <button className="btn alt" onClick={() => clearKey('calli')}>تصویر ہٹائیں (سادہ خطاطی واپس)</button>}</div></>)}
     {tab === 'moms' && (<><form className="card" onSubmit={addMoments}><h3>نئی تصاویر (5-6 ایک ساتھ)</h3>
-      <label>تاریخ</label><input type="date" value={mf.date} onChange={e => setMf({ ...mf, date: e.target.value })} />
+      <label>Date</label><input type="date" value={mf.date} onChange={e => setMf({ ...mf, date: e.target.value })} />
       <label>کیپشن (اختیاری)</label><input value={mf.caption} onChange={e => setMf({ ...mf, caption: e.target.value })} />
       <label>تصاویر چنیں</label><input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={e => setMf({ ...mf, files: e.target.files })} />
-      <button className="btn">شائع کریں</button></form>
+      <button className="btn">Publish</button></form>
       {moms.map(m => (<div className="card" key={m.id} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
         <img src={pa(m.image_path)} alt="" width="70" height="70" style={{ borderRadius: 8, objectFit: 'cover' }} />
         <div style={{ flex: 1 }}><small>{m.moment_date}</small><div>{m.caption} {m.published ? '✅' : '⛔'}</div>
-          <button className="btn alt" onClick={() => capMoment(m)}>کیپشن</button> <button className="btn alt" onClick={() => togMoment(m)}>{m.published ? 'چھپائیں' : 'دکھائیں'}</button> <button className="btn alt" onClick={() => delMoment(m)}>حذف</button></div></div>))}</>)}
-    {tab === 'quotes' && (<><form className="card" onSubmit={addQuote}><h3>نیا قول</h3>
-      <label>اردو ترجمہ</label><textarea rows="4" style={{ width: '100%', padding: 10, borderRadius: 8 }} value={qf.body} onChange={e => setQf({ ...qf, body: e.target.value })} />
-      <label>کتاب</label><input value={qf.book} onChange={e => setQf({ ...qf, book: e.target.value })} />
-      <label>حوالہ (نمبر)</label><input value={qf.ref} onChange={e => setQf({ ...qf, ref: e.target.value })} />
+          <button className="btn alt" onClick={() => capMoment(m)}>کیپشن</button> <button className="btn alt" onClick={() => togMoment(m)}>{m.published ? 'چھپائیں' : 'دکھائیں'}</button> <button className="btn alt" onClick={() => delMoment(m)}>Delete Team</button></div></div>))}</>)}
+    {tab === 'quotes' && (<><form className="card" onSubmit={addQuote}><h3>Add Quote</h3>
+      <label>Quote Text</label><textarea rows="4" style={{ width: '100%', padding: 10, borderRadius: 8 }} value={qf.body} onChange={e => setQf({ ...qf, body: e.target.value })} />
+      <label>Book</label><input value={qf.book} onChange={e => setQf({ ...qf, book: e.target.value })} />
+      <label>Reference</label><input value={qf.ref} onChange={e => setQf({ ...qf, ref: e.target.value })} />
       <button className="btn">شامل کریں</button></form>
       {qs.map((x, i) => (<div className="card" key={x.id} dir="rtl"><small>{i + 1}</small> {x.published ? '✅' : '⛔'}<p>{x.body}</p><small>{x.book} · {x.ref}</small>
         <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt" onClick={() => moveQuote(i, -1)}>▲</button><button className="btn alt" onClick={() => moveQuote(i, 1)}>▼</button>
-          <button className="btn alt" onClick={() => editQuote(x)}>ایڈٹ</button><button className="btn alt" onClick={() => togQuote(x)}>{x.published ? 'چھپائیں' : 'دکھائیں'}</button><button className="btn alt" onClick={() => delQuote(x)}>حذف</button></div></div>))}</>)}
-    {tab === 'set' && (<div className="card"><h3>Ask Falak بٹن</h3>
-      {inp('falak_whatsapp', 'WhatsApp نمبر (بین الاقوامی، مثلاً 923411620498)')}{inp('falak_btn', 'بٹن کا متن')}{inp('falak_msg', 'ڈیفالٹ پیغام (WhatsApp میں پہلے سے لکھا آئے گا)')}
+          <button className="btn alt" onClick={() => editQuote(x)}>ایڈٹ</button><button className="btn alt" onClick={() => togQuote(x)}>{x.published ? 'چھپائیں' : 'دکھائیں'}</button><button className="btn alt" onClick={() => delQuote(x)}>Delete Team</button></div></div>))}</>)}
+    {tab === 'set' && (<div className="card"><h3>WhatsApp Contact Button</h3>
+      {inp('falak_whatsapp', 'WhatsApp نمبر (بین الاقوامی، مثلاً 923411620498)')}{inp('falak_btn', 'Button Text')}{inp('falak_msg', 'Default WhatsApp Message')}
       <label><input type="checkbox" style={{ width: 'auto' }} checked={c.registration_open !== 'false'} onChange={e => set('registration_open', e.target.checked ? 'true' : 'false')} /> نئی ٹیموں کی رجسٹریشن کھلی ہے</label>
-      <button className="btn" onClick={() => save(['falak_whatsapp', 'falak_btn', 'falak_msg', 'registration_open'])}>محفوظ کریں</button></div>)}
+      <button className="btn" onClick={() => save(['falak_whatsapp', 'falak_btn', 'falak_msg', 'registration_open'])}>Save Changes</button></div>)}
     {tab === 'teams' && (<><div className="card">کل ٹیمیں: {teams.length} · تصدیق شدہ: {teams.filter(x => x.payment === 'verified').length}</div>
       {teams.map(tm => { const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
         return (<div className="card" key={tm.id}><b>{tm.name}</b> <small>{tm.reg_id}</small> {tm.payment === 'verified' ? '✅ VERIFIED' : '❌ NOT VERIFIED'}
           <div dir="ltr">{tm.captain_email}</div><div dir="ltr">C1: {ps[0] && ps[0].name} {ps[0] && ps[0].mobile} | C2: {ps[1] && ps[1].name} {ps[1] && ps[1].mobile}</div>
           {last && <div dir="ltr">Txn: {last.transaction_id || '-'} <button className="btn alt" onClick={() => shot(last)}>Screenshot</button></div>}
           {tm.payment_rejection_reason && <small>رد کرنے کی وجہ: {tm.payment_rejection_reason}</small>}
-          <details><summary>15 کھلاڑی</summary>{ps.map(pp => (<div key={pp.id} style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '6px 0' }}>
-            <img src={pub(pp.photo_path)} alt="" width="48" height="48" style={{ borderRadius: 8, objectFit: 'cover' }} />{pp.name} · {pp.age} · {pp.position}</div>))}</details>
+          <details><summary>View Players</summary>{ps.map(pp => (<div key={pp.id} className="admin-player-row">
+            <img src={pub(pp.photo_path)} alt="" width="48" height="48" style={{ borderRadius: 10, objectFit: 'cover' }} />
+            <div className="admin-player-main"><div><b>{pp.name}</b> · {pp.age} · {pp.position}</div>
+              <button type="button" className="btn alt admin-objection-trigger" onClick={() => { setObjectionPlayer(objectionPlayer === pp.id ? null : pp.id); setObjectionDraft({ reason: '', raised_by: '', details: '' }); }}>＋ Raise Objection</button>
+              {objectionPlayer === pp.id && <form className="admin-objection-form" onSubmit={e => raiseObjection(e, pp, tm)}>
+                <label>Objection Reason</label>
+                <select required value={objectionDraft.reason} onChange={e => setObjectionDraft(v => ({ ...v, reason: e.target.value }))}>
+                  <option value="">Select a reason</option><option value="Senior Player">Senior Player</option><option value="Over Age">Over Age</option><option value="Community Misconduct">Community Misconduct</option>
+                </select>
+                <label>Raised By (Name)</label><input required value={objectionDraft.raised_by} onChange={e => setObjectionDraft(v => ({ ...v, raised_by: e.target.value }))} placeholder="Name of the person raising the objection" />
+                <label>Description / Evidence</label><textarea required rows="2" value={objectionDraft.details} onChange={e => setObjectionDraft(v => ({ ...v, details: e.target.value }))} placeholder="Write the objection details..." />
+                <div className="row"><button className="btn">Submit Objection</button><button type="button" className="btn alt" onClick={() => setObjectionPlayer(null)}>Cancel</button></div>
+              </form>}
+              {objections.filter(o => o.player_id === pp.id).map(o => <div className="admin-objection-mini" key={o.id}><b>{o.reason}</b> · {o.status.toUpperCase()}<br/><small>Raised by {o.raised_by || 'Not provided'} · {new Date(o.created_at).toLocaleString()}</small><div>{o.details}</div></div>)}
+            </div></div>))}</details>
           <div className="row" style={{ justifyContent: 'flex-start' }}>
-            <button className="btn" onClick={() => setPay(tm, 'verified')}>✓ تصدیق</button>
-            <button className="btn alt" onClick={() => setPay(tm, 'notverified')}>غیر تصدیق شدہ</button>
-            <button className="btn alt" onClick={() => setPay(tm, 'rejected')}>مسترد</button>
-            <button className="btn alt" onClick={() => delTeam(tm)}>حذف</button></div></div>); })}</>)}
+            <button className="btn" onClick={() => setPay(tm, 'verified')}>✓ Verify Payment</button>
+            <button className="btn alt" onClick={() => setPay(tm, 'notverified')}>Mark Unverified</button>
+            <button className="btn alt" onClick={() => setPay(tm, 'rejected')}>Reject Payment</button>
+            <button className="btn alt" onClick={() => delTeam(tm)}>Delete Team</button></div></div>); })}</>)}
     </main>
   </div>);
 }
