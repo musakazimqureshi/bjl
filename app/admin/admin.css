@@ -206,3 +206,5 @@
  .admin-profile-preview{max-width:none}
 }
 @media(max-width:420px){.admin-profile-form-foot{align-items:stretch;flex-direction:column}.admin-profile-form-foot button{width:100%}}
+
+.admin-demo-photo-note{display:inline-block;margin-left:8px;color:#2e78ce;font-size:.65rem;font-weight:650}
