@@ -29,8 +29,8 @@ export default function Splash() {
       const master = ctx.createGain();
       master.gain.setValueAtTime(0.0001, now);
       master.gain.exponentialRampToValueAtTime(0.24, now + 0.8);
-      master.gain.setValueAtTime(0.24, now + 6.6);
-      master.gain.exponentialRampToValueAtTime(0.0001, now + 7.8);
+      master.gain.setValueAtTime(0.24, now + 4.8);
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 5.8);
       master.connect(ctx.destination);
 
       // Original 12-second cinematic sports intro: layered brass-like synth,
@@ -43,7 +43,7 @@ export default function Splash() {
       ];
       chordProgression.forEach((chord, section) => {
         chord.forEach((freq, index) => {
-          const start = now + section * 1.7 + index * 0.09;
+          const start = now + section * 1.25 + index * 0.07;
           const osc = ctx.createOscillator();
           const voice = ctx.createGain();
           const tone = ctx.createBiquadFilter();
@@ -54,15 +54,15 @@ export default function Splash() {
           tone.frequency.linearRampToValueAtTime(index < 2 ? 900 : 2200, start + 1.45);
           voice.gain.setValueAtTime(0.0001, start);
           voice.gain.exponentialRampToValueAtTime(index < 2 ? 0.075 : 0.045, start + 0.4);
-          voice.gain.setValueAtTime(index < 2 ? 0.075 : 0.045, start + 1.35);
-          voice.gain.exponentialRampToValueAtTime(0.0001, start + 1.65);
+          voice.gain.setValueAtTime(index < 2 ? 0.075 : 0.045, start + 1.0);
+          voice.gain.exponentialRampToValueAtTime(0.0001, start + 1.2);
           osc.connect(tone); tone.connect(voice); voice.connect(master);
-          osc.start(start); osc.stop(start + 1.7);
+          osc.start(start); osc.stop(start + 1.25);
         });
       });
 
       // Deep, spaced cinematic impacts.
-      [0.15, 2.0, 4.0, 6.0].forEach((offset, index) => {
+      [0.12, 1.55, 3.0, 4.25].forEach((offset, index) => {
         const start = now + offset;
         const drum = ctx.createOscillator();
         const drumGain = ctx.createGain();
@@ -77,7 +77,7 @@ export default function Splash() {
       });
 
       // Short snare-like accents add a stadium entrance rhythm.
-      [1.2, 2.9, 4.6, 6.3].forEach((offset) => {
+      [0.9, 2.1, 3.3, 4.5].forEach((offset) => {
         const start = now + offset;
         const length = Math.floor(ctx.sampleRate * 0.24);
         const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
@@ -96,7 +96,7 @@ export default function Splash() {
       });
 
       // Gentle crowd-like ambience, kept subtle under the main music.
-      const ambienceBuffer = ctx.createBuffer(1, ctx.sampleRate * 8, ctx.sampleRate);
+      const ambienceBuffer = ctx.createBuffer(1, ctx.sampleRate * 6, ctx.sampleRate);
       const ambienceData = ambienceBuffer.getChannelData(0);
       for (let i = 0; i < ambienceData.length; i++) ambienceData[i] = (Math.random() * 2 - 1) * 0.18;
       const ambience = ctx.createBufferSource();
@@ -106,14 +106,14 @@ export default function Splash() {
       ambienceFilter.type = 'bandpass'; ambienceFilter.frequency.value = 1050; ambienceFilter.Q.value = 0.45;
       ambienceGain.gain.setValueAtTime(0.0001, now);
       ambienceGain.gain.linearRampToValueAtTime(0.035, now + 2.2);
-      ambienceGain.gain.setValueAtTime(0.035, now + 6.8);
-      ambienceGain.gain.exponentialRampToValueAtTime(0.0001, now + 7.8);
+      ambienceGain.gain.setValueAtTime(0.035, now + 4.8);
+      ambienceGain.gain.exponentialRampToValueAtTime(0.0001, now + 5.8);
       ambience.connect(ambienceFilter); ambienceFilter.connect(ambienceGain); ambienceGain.connect(master);
-      ambience.start(now); ambience.stop(now + 8);
+      ambience.start(now); ambience.stop(now + 6);
 
       // Bright final lift before the welcome screen fades away.
       [659.25, 783.99, 987.77].forEach((freq, index) => {
-        const start = now + 5.5 + index * 0.12;
+        const start = now + 3.7 + index * 0.1;
         const bell = ctx.createOscillator();
         const bellGain = ctx.createGain();
         bell.type = 'sine'; bell.frequency.value = freq;
@@ -121,7 +121,7 @@ export default function Splash() {
         bellGain.gain.exponentialRampToValueAtTime(0.035, start + 0.18);
         bellGain.gain.exponentialRampToValueAtTime(0.0001, start + 2.1);
         bell.connect(bellGain); bellGain.connect(master);
-        bell.start(start); bell.stop(start + 2.15);
+        bell.start(start); bell.stop(start + 1.65);
       });
 
       ctx.resume().catch(() => {});
@@ -130,7 +130,7 @@ export default function Splash() {
           ctx.close().catch(() => {});
           audioRef.current = null;
         }
-      }, 8400);
+      }, 6400);
     } catch (e) {
       // Audio is optional; the welcome animation still works if the browser blocks it.
     }
@@ -144,9 +144,10 @@ export default function Splash() {
     setFade(false);
     setVisible(true);
     if (playSound && soundOnRef.current) playIntro();
-    phaseTimer.current = window.setTimeout(() => setPhase(1), 6000);
-    fadeTimer.current = window.setTimeout(() => setFade(true), 7600);
-    hideTimer.current = window.setTimeout(() => setVisible(false), 8000);
+    phaseTimer.current = window.setTimeout(() => setPhase(1), 4000);
+    phaseTimer.current = window.setTimeout(() => setPhase(2), 5700);
+    fadeTimer.current = window.setTimeout(() => setFade(true), 5800);
+    hideTimer.current = window.setTimeout(() => setVisible(false), 6000);
   }, [playIntro]);
 
   useEffect(() => {
@@ -202,8 +203,21 @@ export default function Splash() {
         <div className="sp-kicker">BATTAGRAM JUNIOR LEAGUE</div>
         <div className="sp-t">WELCOME TO<br /><span>BGL SEASON 1</span></div>
         <div className="sp-line" />
-        <div className="sp-s">{phase === 0 ? 'BATTAGRAM JUNIOR LEAGUE' : 'THE GAME BEGINS HERE'}</div>
+        <div className="sp-s">{phase === 0 ? 'BATTAGRAM JUNIOR LEAGUE' : phase === 1 ? 'THE GAME BEGINS HERE' : 'SIXER! · BATTAGRAM JUNIOR LEAGUE'}</div>
       </div>
+      {phase === 2 && <div className="sp-shot-scene" aria-label="A batsman hits a six">
+        <div className="sp-shot-stumps"><i/><i/><i/></div>
+        <svg className="sp-batsman" viewBox="0 0 180 190" aria-hidden="true">
+          <circle cx="89" cy="28" r="15" fill="#f4c9a5"/><path d="M76 19 Q88 1 103 18 L105 28 Q89 20 74 29Z" fill="#171717"/>
+          <path d="M75 48 Q90 40 105 49 L116 99 L65 99Z" fill="#c91525" stroke="#f5d27c" strokeWidth="2"/>
+          <path d="M72 56 L46 91 L61 101 L83 75 M106 55 L130 75 L120 87 L98 77" fill="none" stroke="#f4c9a5" strokeWidth="12" strokeLinecap="round"/>
+          <path d="M78 98 L72 145 L53 178 M103 98 L110 145 L132 177" fill="none" stroke="#f4c9a5" strokeWidth="15" strokeLinecap="round"/>
+          <path d="M45 179 L63 179 M126 179 L141 179" stroke="#f4c9a5" strokeWidth="9" strokeLinecap="round"/>
+          <path d="M123 76 L158 18" stroke="#d8b36a" strokeWidth="8" strokeLinecap="round"/>
+        </svg>
+        <span className="sp-shot-ball"/>
+        <div className="sp-six">SIX!</div>
+      </div>}
       <button className="sp-sound" onClick={toggleSound} type="button" aria-label={soundOn ? 'Turn welcome sound off' : 'Turn welcome sound on'}>
         {soundOn ? '🔊 SOUND ON · TAP TO MUTE' : '🔇 SOUND OFF · TAP TO ENABLE'}
       </button>
