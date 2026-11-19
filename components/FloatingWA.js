@@ -7,6 +7,6 @@ export default function FloatingWA() {
   const path = usePathname(); const [c, setC] = useState({});
   useEffect(() => { supabase.rpc('public_content').then(({ data }) => data && setC(data)); }, []);
   if ((path || '').startsWith('/admin')) return null;
-  const num = c.falak_whatsapp || CONTACTS[0].num;
+  const num = c.falak_whatsapp || '923165738591';
   return <a className="fwa" href={`https://wa.me/${num}?text=${encodeURIComponent(c.falak_msg || '')}`} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">💬 {c.falak_btn || 'Ask Falak'}</a>;
 }
