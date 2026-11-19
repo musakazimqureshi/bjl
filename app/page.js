@@ -48,8 +48,9 @@ export default function Home() {
         <div className="ar" lang="ar" dir="rtl">لَا فَتَىٰ إِلَّا عَلِيٌّ وَلَا سَيْفَ إِلَّا ذُو الْفَقَارِ</div>}</div>
       <p>{t('season')}</p><p>{t('loc')}</p>
       <div className="row">
-        <a href="https://chat.whatsapp.com/D5RUqQB6XVIIwHkYJkz5vZ" className="btn" target="_blank" rel="noopener noreferrer">{lang === 'ur' ? 'آفیشل واٹس ایپ گروپ میں شامل ہوں' : 'Join Official WhatsApp Group'}</a>
+        <Link href="/register" className="btn register-cta">{t('regBtn')}</Link>
         <Link href="/teams" className="btn alt">{t('viewBtn')}</Link>
+        <a href="https://chat.whatsapp.com/D5RUqQB6XVIIwHkYJkz5vZ" className="btn alt" target="_blank" rel="noopener noreferrer">{lang === 'ur' ? 'آفیشل واٹس ایپ گروپ میں شامل ہوں' : 'Join Official WhatsApp Group'}</a>
         <Link href="/team" className="btn alt">🔑 {t('captainSignIn')}</Link>
       </div>
     </section>
@@ -78,8 +79,11 @@ export default function Home() {
           <small>{moms.indexOf(cm) + 1}/{moms.length}</small></div>)}</div>
     </div>
     <People inline />
-    <div className="card"><div className="big">{s.total} {t('teamsRegistered')}</div>
-      <div>✓ {t('verifiedT')}: {s.verified}</div><div>{t('notVerifiedT')}: {s.not_verified}</div><small>{t('fee')}</small></div>
+    <div className="card home-registration-cta">
+      <div className="big">{s.total} {t('teamsRegistered')}</div>
+      <div>✓ {t('verifiedT')}: {s.verified}</div><div>{t('notVerifiedT')}: {s.not_verified}</div><small>{t('fee')}</small>
+      <div className="row home-register-actions"><Link href="/register" className="btn register-cta">{t('regBtn')}</Link><Link href="/teams" className="btn alt">{t('viewBtn')}</Link></div>
+    </div>
     <section className="bjl-info-grid" aria-label="Tournament information">
       {[['How to Register', c.how_to_register || '1. Register your team with exactly 15 players.\n2. Provide the captain’s mobile number.\n3. Pay the registration fee of PKR 5,000 through EasyPaisa.\n4. Upload the payment receipt.\n5. Wait for admin verification.', '📝'], ['Rules', c.rules || 'Will be announced soon', '📋'], ['Prizes', c.prizes || 'Will be announced soon', '🏆']].map(([title, body, symbol]) => body?.trim() ? <article className="card bjl-info-card" key={title}><span className="bjl-info-icon">{symbol}</span><h2>{title}</h2><div className="bjl-info-copy">{body}</div></article> : null)}
     </section>
