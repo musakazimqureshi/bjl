@@ -7,6 +7,8 @@ export default function Splash() {
   const [visible, setVisible] = useState(false);
   const [fade, setFade] = useState(false);
   const [soundOn, setSoundOn] = useState(false);
+  const [phase, setPhase] = useState(0);
+  const phaseTimer = useRef(null);
   const hideTimer = useRef(null);
   const fadeTimer = useRef(null);
   const audioRef = useRef(null);
@@ -137,11 +139,14 @@ export default function Splash() {
   const showWelcome = useCallback((playSound = true) => {
     if (hideTimer.current) window.clearTimeout(hideTimer.current);
     if (fadeTimer.current) window.clearTimeout(fadeTimer.current);
+    if (phaseTimer.current) window.clearTimeout(phaseTimer.current);
+    setPhase(0);
     setFade(false);
     setVisible(true);
     if (playSound && soundOnRef.current) playIntro();
-    fadeTimer.current = window.setTimeout(() => setFade(true), 11200);
-    hideTimer.current = window.setTimeout(() => setVisible(false), 12000);
+    phaseTimer.current = window.setTimeout(() => setPhase(1), 6000);
+    fadeTimer.current = window.setTimeout(() => setFade(true), 7600);
+    hideTimer.current = window.setTimeout(() => setVisible(false), 8000);
   }, [playIntro]);
 
   useEffect(() => {
@@ -168,6 +173,7 @@ export default function Splash() {
       document.removeEventListener('visibilitychange', onVisibility);
       if (hideTimer.current) window.clearTimeout(hideTimer.current);
       if (fadeTimer.current) window.clearTimeout(fadeTimer.current);
+      if (phaseTimer.current) window.clearTimeout(phaseTimer.current);
       if (audioStopTimer.current) window.clearTimeout(audioStopTimer.current);
       if (audioRef.current) audioRef.current.close().catch(() => {});
     };
@@ -196,7 +202,7 @@ export default function Splash() {
         <div className="sp-kicker">BATTAGRAM JUNIOR LEAGUE</div>
         <div className="sp-t">WELCOME TO<br /><span>BGL SEASON 1</span></div>
         <div className="sp-line" />
-        <div className="sp-s">THE GAME BEGINS HERE</div>
+        <div className="sp-s">{phase === 0 ? 'BATTAGRAM JUNIOR LEAGUE' : 'THE GAME BEGINS HERE'}</div>
       </div>
       <button className="sp-sound" onClick={toggleSound} type="button" aria-label={soundOn ? 'Turn welcome sound off' : 'Turn welcome sound on'}>
         {soundOn ? '🔊 SOUND ON · TAP TO MUTE' : '🔇 SOUND OFF · TAP TO ENABLE'}
