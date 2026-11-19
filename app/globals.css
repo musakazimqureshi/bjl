@@ -202,3 +202,64 @@ main{padding-bottom:84px}
 .admin-objection-actions{margin-top:14px;flex-wrap:wrap}
 .admin-objections-list> .card:first-child p{margin:6px 0 0;color:#7d8aa4}
 @media(max-width:700px){.admin-player-row{gap:9px}.admin-player-row img{width:42px;height:42px}.admin-objection-head{flex-direction:column}.admin-objection-actions .btn{flex:1}}
+
+
+/* Final BJL motion polish: richer but lightweight, with reduced-motion support */
+.hero{position:relative;isolation:isolate;overflow:hidden}
+.hero:before{content:"";position:absolute;z-index:0;inset:-45% -20%;pointer-events:none;background:conic-gradient(from 0deg,transparent 0 68%,#d4af3712 74%,transparent 82%),radial-gradient(ellipse at 50% 45%,#e0242b20,transparent 58%);animation:bjlHeroAura 18s linear infinite}
+.hero>*{position:relative;z-index:1}
+.hero .shield{animation:bjlBadgeFloat 4.5s ease-in-out infinite;box-shadow:0 0 0 7px #d4af3710,0 10px 35px #e0242b55}
+.hero h1{animation:bjlTitleReveal .85s cubic-bezier(.2,.8,.2,1) both}
+.hero .calli{animation:bjlCalligraphyIn 1.1s .12s both}
+.hero .row .btn{position:relative;overflow:hidden;isolation:isolate;transition:transform .22s,box-shadow .22s,filter .22s}
+.hero .row .btn:after{content:"";position:absolute;z-index:-1;top:-80%;left:-55%;width:34%;height:260%;transform:rotate(24deg);background:linear-gradient(90deg,transparent,#ffffff70,transparent);transition:left .55s ease}
+.hero .row .btn:hover{transform:translateY(-4px) scale(1.025);box-shadow:0 12px 26px #e0242b35;filter:brightness(1.08)}
+.hero .row .btn:hover:after{left:130%}
+.duo .card{position:relative;transition:transform .28s cubic-bezier(.2,.75,.25,1),box-shadow .28s,border-color .28s}
+.duo .card:before{content:"";position:absolute;inset:0 0 auto;height:2px;opacity:0;background:linear-gradient(90deg,transparent,var(--gold),#e0242b,transparent);transition:opacity .25s}
+.duo .card:hover{transform:translateY(-5px);box-shadow:0 16px 34px #0005;border-color:#d4af3780}
+.duo .card:hover:before{opacity:1}
+.duo .mc .team{transition:transform .25s,text-shadow .25s}
+.duo .mc:hover .team{transform:translateX(3px);text-shadow:0 0 18px #d4af3740}
+.vsx{display:inline-block;animation:bjlVsBeat 2.2s ease-in-out infinite;text-shadow:0 0 15px #e0242b55}
+.sqimg{transition:transform .55s cubic-bezier(.2,.75,.25,1),filter .4s;will-change:transform}
+.duo .card:hover .sqimg{transform:scale(1.035);filter:saturate(1.12) contrast(1.03)}
+.ms .msb{transition:transform .2s,background .2s,box-shadow .2s}
+.ms .msb:hover{transform:scale(1.12);background:#e0242b!important;box-shadow:0 0 0 5px #d4af3720,0 0 20px #e0242b88}
+.pp img{transition:transform .5s cubic-bezier(.2,.75,.25,1),filter .4s;transform-origin:center bottom}
+.pp:hover img{transform:scale(1.035);filter:saturate(1.12)}
+.pp{transition:transform .25s,box-shadow .25s,border-color .25s}
+.pp:hover{transform:translateY(-4px);box-shadow:0 14px 28px #0004;border-color:var(--gold)}
+.quotes h2{position:relative;width:fit-content;max-width:100%;margin-inline:auto}
+.quotes h2:after{content:"";display:block;width:42%;height:2px;margin:8px auto 0;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:bjlUnderline 3s ease-in-out infinite}
+.quotes .qt{animation:bjlQuoteEnter .65s cubic-bezier(.2,.8,.2,1) both}
+.quote-controls{align-items:center;gap:18px}
+.quote-controls>span{min-width:54px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+.quote-nav{width:46px;height:42px;display:inline-grid;place-items:center;padding:0!important;border-radius:24px!important;font-size:23px!important;line-height:1!important}
+.quote-nav span{display:block;transition:transform .22s}
+.quote-prev:hover span{animation:bjlArrowLeft .55s ease}
+.quote-next:hover span{animation:bjlArrowRight .55s ease}
+.admin-reorder{min-width:54px;display:inline-flex;align-items:center;justify-content:center;gap:5px;direction:ltr}
+.admin-reorder span{font-size:20px;line-height:1;font-weight:900;transition:transform .2s}
+.admin-reorder small{font-size:8px!important;font-weight:900;letter-spacing:.08em}
+.admin-reorder:hover:not(:disabled) span{animation:bjlArrowVertical .55s ease}
+.admin-reorder:disabled{opacity:.32!important;cursor:not-allowed;transform:none!important}
+.hdr nav a{position:relative;transition:color .2s,transform .2s}
+.hdr nav a:after{content:"";position:absolute;left:0;right:0;bottom:-5px;height:2px;transform:scaleX(0);transform-origin:center;background:linear-gradient(90deg,var(--gold),#e0242b);transition:transform .25s}
+.hdr nav a:hover{transform:translateY(-2px);color:var(--gold)}
+.hdr nav a:hover:after{transform:scaleX(1)}
+@keyframes bjlHeroAura{to{transform:rotate(360deg)}}
+@keyframes bjlBadgeFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes bjlTitleReveal{from{opacity:0;transform:translateY(18px);filter:blur(5px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes bjlCalligraphyIn{from{opacity:0;transform:scale(.94);filter:blur(4px)}to{opacity:1;transform:scale(1);filter:blur(0)}}
+@keyframes bjlVsBeat{0%,100%{transform:scale(1);text-shadow:0 0 8px #e0242b33}50%{transform:scale(1.12);text-shadow:0 0 20px #e0242b99}}
+@keyframes bjlUnderline{0%,100%{opacity:.55;transform:scaleX(.8)}50%{opacity:1;transform:scaleX(1.2)}}
+@keyframes bjlQuoteEnter{from{opacity:0;transform:translateY(12px) scale(.99);filter:blur(3px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes bjlArrowLeft{50%{transform:translateX(-5px)}}
+@keyframes bjlArrowRight{50%{transform:translateX(5px)}}
+@keyframes bjlArrowVertical{50%{transform:translateY(-4px)}}
+@media(prefers-reduced-motion:reduce){
+ .hero:before,.hero .shield,.hero h1,.hero .calli,.vsx,.quotes h2:after{animation:none!important}
+ .hero .row .btn,.duo .card,.sqimg,.pp,.pp img,.quote-nav span,.hdr nav a{transition:none!important}
+ .hero .row .btn:after,.hdr nav a:after{display:none}
+}
