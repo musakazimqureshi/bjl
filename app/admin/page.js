@@ -99,17 +99,21 @@ export default function Admin() {
       checking = true;
       try {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user || user.email?.toLowerCase() !== ADMIN_EMAIL) throw userError || new Error('Admin session is no longer valid.');
+        if (userError || !user || user.email?.toLowerCase() !== ADMIN_EMAIL) {
+          await supabase.auth.signOut({ scope: 'local' });
+          setLogged(false); setIsAdmin(false);
+          setMsg('Your admin session has expired. Please sign in again.');
+          return;
+        }
         const { data, error } = await supabase.from('admins').select('id').eq('id', user.id).maybeSingle();
-        if (error || !data) {
+        if (error) { setMsg('Could not verify the admin session. Check your connection and try again.'); return; }
+        if (!data) {
           await supabase.auth.signOut({ scope: 'local' });
           setLogged(false); setIsAdmin(false);
           setMsg('This admin session has ended because a new login was detected. Please sign in again.');
         }
       } catch (error) {
-        await supabase.auth.signOut({ scope: 'local' });
-        setLogged(false); setIsAdmin(false);
-        setMsg('Your admin session has expired. Please sign in again.');
+        setMsg('Could not verify the admin session. Check your connection and try again.');
       } finally { checking = false; }
     };
     const id = window.setInterval(verifyActiveSession, 15000);
