@@ -5,6 +5,7 @@ import { useLang } from '../lib/i18n';
 import { supabase } from '../lib/supabase';
 import { CONTACTS } from '../lib/config';
 import People from '../components/People';
+import { formatDate } from '../lib/date';
 const fmt = tm => { if (!tm) return ''; const [h, m] = tm.split(':'); const hh = +h; return `${((hh + 11) % 12) + 1}:${m} ${hh >= 12 ? 'PM' : 'AM'}`; };
 const img = p => supabase.storage.from('announcements').getPublicUrl(p).data.publicUrl;
 const pubP = p => supabase.storage.from('player-photos').getPublicUrl(p).data.publicUrl;
@@ -57,10 +58,10 @@ export default function Home() {
         {showWin ? (<><div className="team">🏆 {nm(c.winner_team)}</div>
           {c.loser_team && <div className="lose"><span className="dl">{t('defeated')}</span> {nm(c.loser_team)}</div>}
           {c.winner_result && <div className="res">{c.winner_result}</div>}
-          {c.winner_date && <div className="dt">📅 {c.winner_date}</div>}</>) : <div className="empty">{t('noWinner')}</div>}</div>
+          {c.winner_date && <div className="dt">📅 {formatDate(c.winner_date)}</div>}</>) : <div className="empty">{t('noWinner')}</div>}</div>
       <div className="card mc"><h3>{t('nextMatch')}</h3>
         {showNext ? (<><div className="team">{nm(c.next_a)}</div><div className="vsx">{t('vs')}</div><div className="team">{nm(c.next_b)}</div>
-          <div className="dt">📅 {c.next_date} {c.next_time && '· ' + fmt(c.next_time)}</div>
+          <div className="dt">📅 {formatDate(c.next_date)} {c.next_time && '· ' + fmt(c.next_time)}</div>
           <div className="dt">📍 {c.next_venue || 'Dab Ground, Battagram'}</div>
           {cd && <div className="dt">⏳ {t('startsIn')}: {cd}</div>}</>) : <div className="empty">{t('noNext')}</div>}</div>
     </div>
@@ -68,7 +69,7 @@ export default function Home() {
       <div className="card"><h3>{t('annTitle')}</h3>
         {!la ? <div className="empty">{t('noAnnCard')}</div> : (<>
           <img className="sqimg" src={img(la.image_path)} alt={la.title} loading="lazy" onClick={() => setLb(la)} />
-          <div className="annt">{la.title}</div><small>{la.announce_date}</small>
+          <div className="annt">{la.title}</div><small>{formatDate(la.announce_date)}</small>
           {ann.length > 1 && <button className="tlink" style={{ marginTop: 6, textAlign: 'start' }} onClick={() => setAllAnn(true)}>{t('allAnn')} ({ann.length})</button>}</>)}</div>
       <div className="card"><h3>{t('momentsT')}</h3>
         {!cm ? <div className="empty">{t('noMom')}</div> : (<div className="ms" onMouseEnter={pauseM} onTouchStart={pauseM}>
@@ -99,17 +100,17 @@ export default function Home() {
         <span>{qi + 1} / {qs.length}</span><button className="btn alt quote-nav quote-next" onClick={() => stepQ(1)} aria-label="Next quote" title="Next quote"><span aria-hidden="true">→</span></button></div></section>}
     {allAnn && <div className="modal" onClick={() => setAllAnn(false)}><div className="mbox" onClick={e => e.stopPropagation()}>
       <button className="btn alt" onClick={() => setAllAnn(false)}>✕ {t('close')}</button>
-      {ann.map(a => (<div className="alist" key={a.id} onClick={() => { setAllAnn(false); setLb(a); }}><img src={img(a.image_path)} alt="" /><div><b>{a.title}</b><div><small>{a.announce_date}</small></div></div></div>))}</div></div>}
+      {ann.map(a => (<div className="alist" key={a.id} onClick={() => { setAllAnn(false); setLb(a); }}><img src={img(a.image_path)} alt="" /><div><b>{a.title}</b><div><small>{formatDate(a.announce_date)}</small></div></div></div>))}</div></div>}
     {lb && <div className="modal" onClick={() => setLb(null)}><div className="mbox" onClick={e => e.stopPropagation()}>
       <button className="btn alt" onClick={() => setLb(null)}>✕ {t('close')}</button>
       <img src={img(lb.image_path)} alt={lb.title} style={{ width: '100%', borderRadius: 10, marginTop: 8 }} /><h3>{lb.title}</h3>
-      <p style={{ whiteSpace: 'pre-wrap' }}>{lb.description}</p><small>{lb.announce_date}</small>
+      <p style={{ whiteSpace: 'pre-wrap' }}>{lb.description}</p><small>{formatDate(lb.announce_date)}</small>
       <div style={{ marginTop: 10 }}><a className="btn" href={`https://wa.me/?text=${encodeURIComponent(lb.title + ' – ' + (typeof window !== 'undefined' ? window.location.href : ''))}`} target="_blank" rel="noopener noreferrer">{t('share')}</a></div></div></div>}
     {gi !== null && moms[gi] && <div className="modal" onClick={() => setGi(null)}><div className="mbox" onClick={e => e.stopPropagation()}>
       <div className="row" style={{ justifyContent: 'space-between' }}><button className="btn alt" onClick={() => step(-1)}>◀</button>
         <button className="btn alt" onClick={() => setGi(null)}>✕</button><button className="btn alt" onClick={() => step(1)}>▶</button></div>
       <img src={img(moms[gi].image_path)} alt="" style={{ width: '100%', borderRadius: 10 }} />
-      <p>{moms[gi].caption}</p><small>{moms[gi].moment_date}</small></div></div>}
+      <p>{moms[gi].caption}</p><small>{formatDate(moms[gi].moment_date)}</small></div></div>}
     {tmSel && <div className="modal" onClick={() => setTmSel(null)}><div className="mbox" onClick={e => e.stopPropagation()}>
       <button className="btn alt" onClick={() => setTmSel(null)}>✕ {t('close')}</button>
       <h3>{tmSel.name} <small>{tmSel.reg_id}</small></h3>
