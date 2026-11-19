@@ -8,7 +8,7 @@ const okImg = f => f && ['image/jpeg', 'image/png', 'image/webp'].includes(f.typ
 export default function Admin() {
   const [ready, setReady] = useState(false); const [isAdmin, setIsAdmin] = useState(false); const [logged, setLogged] = useState(false);
   const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
-  const [tab, setTab] = useState('teams'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
+  const [tab, setTab] = useState('overview'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
   const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
   const [objections, setObjections] = useState([]); const [objectionPlayer, setObjectionPlayer] = useState(null); const [objectionDraft, setObjectionDraft] = useState({ reason: '', raised_by: '', details: '' });
   async function check() {
@@ -213,6 +213,21 @@ export default function Admin() {
     <input placeholder="Password" type="password" value={pw} onChange={e => setPw(e.target.value)} dir="ltr" autoComplete="current-password" />
     {msg && <div className="err">{msg}</div>}<button className="btn">Login</button></form></div>);
   if (!isAdmin) return (<div className="admin-login-wrap"><div className="card admin-login"><div className="err">This account does not have administrator access.</div><button className="btn" onClick={logout}>Logout</button></div></div>);
+  const totalPlayers = teams.reduce((sum, team) => sum + (team.players || []).length, 0);
+  const verifiedCount = teams.filter(team => team.payment === 'verified').length;
+  const pendingCount = teams.filter(team => team.payment !== 'verified' && team.payment !== 'rejected').length;
+  const rejectedCount = teams.filter(team => team.payment === 'rejected').length;
+  const openObjections = objections.filter(item => item.status === 'open').length;
+  const paymentTotal = verifiedCount + pendingCount + rejectedCount;
+  const verifiedPct = paymentTotal ? Math.round(verifiedCount / paymentTotal * 100) : 0;
+  const pendingPct = paymentTotal ? Math.round(pendingCount / paymentTotal * 100) : 0;
+  const monthlyRegistrations = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(); date.setDate(1); date.setMonth(date.getMonth() - (5 - index));
+    const count = teams.filter(team => { const created = new Date(team.created_at); return !Number.isNaN(created.getTime()) && created.getMonth() === date.getMonth() && created.getFullYear() === date.getFullYear(); }).length;
+    return { label: date.toLocaleDateString('en', { month: 'short' }), count };
+  });
+  const maxMonthlyRegistrations = Math.max(1, ...monthlyRegistrations.map(item => item.count));
+  const recentTeams = teams.slice(0, 5);
   const inp = (k, label, type = 'text') => (<><label>{label}</label><input type={type} list={['winner_team', 'loser_team', 'next_a', 'next_b'].includes(k) ? 'tn' : undefined} value={c[k] || ''} onChange={e => set(k, e.target.value)} /></>);
   const tsel = (k, label) => (<><label>{label}</label><select value={c[k] || ''} onChange={e => set(k, e.target.value)}><option value="">— Select a team —</option>{c[k] && !teams.some(x => x.name === c[k]) && <option value={c[k]}>{c[k]}</option>}{teams.map(x => <option key={x.id} value={x.name}>{x.name}</option>)}</select></>);
   const show = (k, l) => (<label><input type="checkbox" checked={c[k] !== '0'} onChange={e => set(k, e.target.checked ? '1' : '0')} style={{ width: 'auto' }} /> {l}</label>);
@@ -222,17 +237,41 @@ export default function Admin() {
     <header className="admin-topbar"><div><span className="admin-eyebrow">MANAGEMENT CONSOLE</span><h1>BJL Admin Dashboard</h1><p>Manage your tournament, teams, matches and player reviews in one place.</p></div><div className="admin-top-actions"><span className="admin-live"><i /> SYSTEM ONLINE</span><button className="btn admin-logout" onClick={logout}>Logout ↗</button></div></header>
     <datalist id="tn">{teams.map(x => <option key={x.id} value={x.name} />)}</datalist>
     <nav className="tabs admin-tabs" aria-label="Admin sections">
-      {[['teams', 'Teams'], ['match', 'Match Center'], ['objections', 'Player Objections'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['quotes', 'Quotes'], ['set', 'Settings']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
+      {[['overview', 'Overview'], ['teams', 'Teams'], ['match', 'Match Center'], ['objections', 'Player Objections'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['quotes', 'Quotes'], ['set', 'Settings']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
       </nav>
     {msg && <div className="good admin-message">{msg}</div>}
-    <section className="admin-stats" aria-label="Quick statistics">
+    <section className="admin-stats" aria-label="Live tournament statistics">
       <article className="admin-stat"><span className="admin-stat-icon blue">♧</span><div><small>Total Teams</small><strong>{teams.length}</strong><em>Registered teams</em></div></article>
-      <article className="admin-stat"><span className="admin-stat-icon green">✓</span><div><small>Verified Payments</small><strong>{teams.filter(x => x.payment === 'verified').length}</strong><em>Verified payments</em></div></article>
-      <article className="admin-stat"><span className="admin-stat-icon amber">◷</span><div><small>Pending Payments</small><strong>{teams.filter(x => x.payment !== 'verified' && x.payment !== 'rejected').length}</strong><em>Awaiting review</em></div></article>
-      <article className="admin-stat"><span className="admin-stat-icon violet">▣</span><div><small>Announcements</small><strong>{ann.length}</strong><em>Announcements</em></div></article>
+      <article className="admin-stat"><span className="admin-stat-icon green">♙</span><div><small>Total Players</small><strong>{totalPlayers}</strong><em>Player records</em></div></article>
+      <article className="admin-stat"><span className="admin-stat-icon violet">✓</span><div><small>Verified Payments</small><strong>{verifiedCount}</strong><em>Confirmed payments</em></div></article>
+      <article className="admin-stat"><span className="admin-stat-icon amber">◷</span><div><small>Pending Payments</small><strong>{pendingCount}</strong><em>Awaiting review</em></div></article>
+      <article className="admin-stat"><span className="admin-stat-icon blue">▣</span><div><small>Announcements</small><strong>{ann.length}</strong><em>Published and draft items</em></div></article>
+      <article className="admin-stat"><span className="admin-stat-icon green">!</span><div><small>Open Objections</small><strong>{openObjections}</strong><em>Need administrator review</em></div></article>
     </section>
-    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',quotes:'Quotes & Content',set:'Website Settings'})[tab]}</strong></div>
+    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({overview:'Tournament Overview',teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',quotes:'Quotes & Content',set:'Website Settings'})[tab]}</strong></div>
     <main className="admin-workspace">
+    {tab === 'overview' && (<section className="admin-overview">
+      <div className="admin-overview-heading"><div><span className="admin-eyebrow">LIVE SNAPSHOT</span><h2>Tournament at a glance</h2><p>These figures are calculated from the current BJL records.</p></div><span className="admin-updated">● Connected data</span></div>
+      <div className="admin-analytics-grid">
+        <article className="admin-panel admin-chart-panel"><div className="admin-panel-head"><div><h3>Payment overview</h3><p>Team payment status breakdown</p></div><span className="admin-panel-icon">◉</span></div>
+          <div className="admin-payment-chart"><div className="admin-donut" style={{ background: paymentTotal ? `conic-gradient(#24a66a 0 ${verifiedPct}%, #e8a23b ${verifiedPct}% ${verifiedPct + pendingPct}%, #e05b66 ${verifiedPct + pendingPct}% 100%)` : '#e9eef5' }}><div><strong>{paymentTotal}</strong><small>Teams</small></div></div>
+            <div className="admin-legend"><div><i className="verified"/><span>Verified</span><b>{verifiedCount}</b></div><div><i className="pending"/><span>Pending</span><b>{pendingCount}</b></div><div><i className="rejected"/><span>Rejected</span><b>{rejectedCount}</b></div></div></div>
+        </article>
+        <article className="admin-panel admin-chart-panel"><div className="admin-panel-head"><div><h3>Registration activity</h3><p>New teams over the last six months</p></div><span className="admin-panel-icon">▥</span></div>
+          <div className="admin-bars" role="img" aria-label="Monthly team registrations">{monthlyRegistrations.map((item, index) => <div className="admin-bar-column" key={item.label + index}><strong>{item.count}</strong><div className="admin-bar-track"><span style={{ height: `${item.count ? Math.max(8, item.count / maxMonthlyRegistrations * 100) : 3}%` }} /></div><small>{item.label}</small></div>)}</div>
+        </article>
+      </div>
+      <div className="admin-analytics-grid admin-lower-grid">
+        <article className="admin-panel"><div className="admin-panel-head"><div><h3>Recently registered teams</h3><p>Latest five records from the database</p></div><button className="btn alt admin-mini-link" onClick={() => setTab('teams')}>View all teams ↗</button></div>
+          {recentTeams.length ? <div className="admin-recent-list">{recentTeams.map(team => <div className="admin-recent-row" key={team.id}><span className="admin-team-avatar">{(team.name || 'T').slice(0,1).toUpperCase()}</span><div className="admin-recent-main"><b>{team.name}</b><small>{team.reg_id || 'Registration'} · {team.created_at ? new Date(team.created_at).toLocaleDateString() : 'Date unavailable'}</small></div><span className={'admin-status-pill ' + (team.payment === 'verified' ? 'is-verified' : team.payment === 'rejected' ? 'is-rejected' : 'is-pending')}>{team.payment === 'verified' ? 'Verified' : team.payment === 'rejected' ? 'Rejected' : 'Pending'}</span></div>)}</div> : <p className="admin-empty-state">No team registrations yet.</p>}
+        </article>
+        <article className="admin-panel"><div className="admin-panel-head"><div><h3>Admin attention</h3><p>Items that may need your review</p></div><span className="admin-panel-icon">✦</span></div>
+          <div className="admin-attention-item"><span className="admin-attention-icon amber">◷</span><div><b>{pendingCount} payment reviews</b><small>Teams awaiting payment verification</small></div><button onClick={() => setTab('teams')}>Open</button></div>
+          <div className="admin-attention-item"><span className="admin-attention-icon red">!</span><div><b>{openObjections} open objections</b><small>Player eligibility and review cases</small></div><button onClick={() => setTab('objections')}>Review</button></div>
+          <div className="admin-attention-item"><span className="admin-attention-icon blue">▣</span><div><b>{ann.length} announcements</b><small>Manage tournament updates</small></div><button onClick={() => setTab('ann')}>Manage</button></div>
+        </article>
+      </div>
+    </section>)}
     {tab === 'match' && (<><div className="card"><h3>Match Result</h3>
       {tsel('winner_team', 'Winning Team')}{tsel('loser_team', 'Opposition Team')}{inp('winner_result', 'Result / Short Note (Optional)')}{inp('winner_date', 'Match Date', 'date')}{show('winner_show', 'Show on Homepage')}
       <button className="btn" onClick={() => save(['winner_team', 'loser_team', 'winner_result', 'winner_date', 'winner_show'])}>Save Changes</button></div>
