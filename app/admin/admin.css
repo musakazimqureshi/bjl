@@ -1,221 +1,75 @@
-'use client';
-import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
-import { shrink } from '../../lib/img';
-const ext = f => (f.type === 'image/png' ? 'png' : f.type === 'image/webp' ? 'webp' : 'jpg');
-const okImg = f => f && ['image/jpeg', 'image/png', 'image/webp'].includes(f.type) && f.size <= 15 * 1024 * 1024;
-export default function Admin() {
-  const [ready, setReady] = useState(false); const [isAdmin, setIsAdmin] = useState(false); const [logged, setLogged] = useState(false);
-  const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
-  const [tab, setTab] = useState('teams'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
-  const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
-  async function check() {
-    try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) throw sessionError;
-      setLogged(!!session);
-      if (!session) {
-        setIsAdmin(false);
-      } else {
-        const { data, error } = await supabase.from('admins').select('id').eq('id', session.user.id).maybeSingle();
-        if (error) throw error;
-        setIsAdmin(!!data);
-      }
-    } catch (error) {
-      setLogged(false);
-      setIsAdmin(false);
-      setMsg(error?.message || 'لاگ اِن چیک نہیں ہو سکا۔');
-    } finally {
-      setReady(true);
-    }
-  }
-  async function load() {
-    const { data } = await supabase.rpc('public_content'); setC(data || {});
-    const { data: a } = await supabase.from('announcements').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: false }); setAnn(a || []);
-    const { data: m } = await supabase.from('moments').select('*').order('moment_date', { ascending: false }).order('created_at', { ascending: false }); setMoms(m || []);
-    const { data: q } = await supabase.from('quotes').select('*').order('sort_order', { ascending: true }); setQs(q || []);
-  }
-  async function loadTeams() {
-    const { data } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').order('created_at', { ascending: false });
-    setTeams(data || []);
-  }
-  const pub = p => supabase.storage.from('player-photos').getPublicUrl(p).data.publicUrl;
-  async function shot(pay) {
-    const { data, error } = await supabase.storage.from('payments').createSignedUrl(pay.screenshot_path, 600);
-    if (error) return setMsg(error.message); window.open(data.signedUrl, '_blank');
-  }
-  async function setPay(tm, status) {
-    let reason = null;
-    if (status === 'rejected') { reason = prompt('مسترد کرنے کی وجہ لکھیں'); if (!reason) return; }
-    const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
-    const val = status === 'verified' ? 'verified' : status === 'rejected' ? 'rejected' : (last ? 'submitted' : 'pending');
-    const { error } = await supabase.from('teams').update({ payment: val, payment_rejection_reason: reason }).eq('id', tm.id);
-    if (!error && last) await supabase.from('payments').update({ status: val === 'verified' ? 'verified' : val === 'rejected' ? 'rejected' : 'submitted', rejection_reason: reason }).eq('id', last.id);
-    setMsg(error ? error.message : 'ہو گیا ✔'); loadTeams();
-  }
-  async function delTeam(tm) {
-    if (!confirm('پوری ٹیم ہمیشہ کے لیے حذف کریں؟')) return;
-    const { error } = await supabase.from('teams').delete().eq('id', tm.id); setMsg(error ? error.message : 'ٹیم حذف ہو گئی'); loadTeams();
-  }
-  useEffect(() => { check(); }, []);
-  useEffect(() => { if (isAdmin) { load(); loadTeams(); } }, [isAdmin]);
-  async function login(e) {
-    e.preventDefault();
-    setMsg('');
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: pw });
-    if (error) return setMsg(error.message);
-    setPw('');
-    await check();
-  }
-  async function logout() { await supabase.auth.signOut(); setLogged(false); setIsAdmin(false); }
-  const set = (k, v) => setC(x => ({ ...x, [k]: v }));
-  async function save(keys) {
-    setMsg('');
-    const { error } = await supabase.from('settings').upsert(keys.map(k => ({ key: k, value: c[k] || '' })));
-    setMsg(error ? error.message : 'محفوظ ہو گیا ✔');
-  }
-  async function uploadKey(key, file) {
-    setMsg(''); if (!okImg(file)) return setMsg('تصویر JPG/PNG/WEBP ہو۔');
-    const path = `site/${key}-${Date.now()}.jpg`; const blob = await shrink(file, 1100);
-    const { error } = await supabase.storage.from('announcements').upload(path, blob, { contentType: 'image/jpeg' }); if (error) return setMsg(error.message);
-    const { error: e2 } = await supabase.from('settings').upsert({ key: key + '_path', value: path });
-    setMsg(e2 ? e2.message : 'تصویر لگ گئی ✔'); load();
-  }
-  async function clearKey(key) { await supabase.from('settings').upsert({ key: key + '_path', value: '' }); setMsg('ہٹا دی گئی'); load(); }
-  async function move(i, d) {
-    const arr = ann.slice(); const j = i + d; if (j < 0 || j >= arr.length) return;
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-    await Promise.all(arr.map((x, k) => supabase.from('announcements').update({ sort_order: k }).eq('id', x.id))); load();
-  }
-  async function editAnn(x) {
-    const t = prompt('عنوان', x.title); if (t === null) return; const d = prompt('تفصیل', x.description || ''); if (d === null) return;
-    await supabase.from('announcements').update({ title: t, description: d }).eq('id', x.id); load();
-  }
-  async function addMoments(e) {
-    e.preventDefault(); setMsg('');
-    if (!mf.files.length || !mf.date) return setMsg('تاریخ اور تصاویر ضروری ہیں۔');
-    setMsg('اپلوڈ ہو رہا ہے، انتظار کریں...');
-    for (const [i, file] of Array.from(mf.files).entries()) {
-      if (!okImg(file)) return setMsg('ہر تصویر JPG/PNG/WEBP ہو۔');
-      const path = `moments/${Date.now()}-${i}.jpg`; const blob = await shrink(file, 1400);
-      const { error } = await supabase.storage.from('announcements').upload(path, blob, { contentType: 'image/jpeg' }); if (error) return setMsg(error.message);
-      const { error: e2 } = await supabase.from('moments').insert({ image_path: path, caption: mf.caption, moment_date: mf.date }); if (e2) return setMsg(e2.message);
-    }
-    setMf({ caption: '', date: '', files: [] }); e.target.reset(); setMsg('تصاویر شائع ہو گئیں ✔'); load();
-  }
-  async function addQuote(e) {
-    e.preventDefault(); if (!qf.body.trim() || !qf.ref.trim()) return setMsg('قول اور حوالہ دونوں ضروری ہیں۔');
-    const { error } = await supabase.from('quotes').insert({ body: qf.body.trim(), book: qf.book, ref: qf.ref.trim(), sort_order: qs.length + 1 });
-    setMsg(error ? error.message : 'قول شامل ہو گیا ✔'); setQf({ ...qf, body: '', ref: '' }); load();
-  }
-  async function editQuote(x) {
-    const b = prompt('قول (اردو)', x.body); if (b === null) return; const k = prompt('کتاب', x.book); if (k === null) return; const r = prompt('حوالہ', x.ref); if (r === null) return;
-    await supabase.from('quotes').update({ body: b, book: k, ref: r }).eq('id', x.id); load();
-  }
-  async function togQuote(x) { await supabase.from('quotes').update({ published: !x.published }).eq('id', x.id); load(); }
-  async function delQuote(x) { if (!confirm('قول حذف کریں؟')) return; await supabase.from('quotes').delete().eq('id', x.id); load(); }
-  async function moveQuote(i, d) {
-    const arr = qs.slice(); const j = i + d; if (j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]];
-    await Promise.all(arr.map((x, k) => supabase.from('quotes').update({ sort_order: k + 1 }).eq('id', x.id))); load();
-  }
-  async function delMoment(m) { if (!confirm('تصویر حذف کریں؟')) return; await supabase.storage.from('announcements').remove([m.image_path]); await supabase.from('moments').delete().eq('id', m.id); load(); }
-  async function togMoment(m) { await supabase.from('moments').update({ published: !m.published }).eq('id', m.id); load(); }
-  async function capMoment(m) { const v = prompt('کیپشن', m.caption || ''); if (v === null) return; await supabase.from('moments').update({ caption: v }).eq('id', m.id); load(); }
-  async function addAnn(e) {
-    e.preventDefault(); setMsg('');
-    if (!f.title.trim() || !f.date || !okImg(f.file)) return setMsg('عنوان، تاریخ اور تصویر (JPG/PNG، 3MB تک) ضروری ہیں۔');
-    const path = `ann/${Date.now()}.jpg`; const blob = await shrink(f.file, 1400);
-    const { error } = await supabase.storage.from('announcements').upload(path, blob, { contentType: 'image/jpeg' }); if (error) return setMsg(error.message);
-    const { error: e2 } = await supabase.from('announcements').insert({ title: f.title.trim(), description: f.description, image_path: path, announce_date: f.date, announce_time: f.time || null, published: true, sort_order: Math.min(0, ...ann.map(x => x.sort_order || 0)) - 1 });
-    if (e2) return setMsg(e2.message);
-    setF({ title: '', description: '', date: '', time: '', file: null }); e.target.reset(); setMsg('اعلان شائع ہو گیا ✔'); load();
-  }
-  async function toggle(a) { await supabase.from('announcements').update({ published: !a.published }).eq('id', a.id); load(); }
-  async function del(a) {
-    if (!confirm('یہ اعلان ہمیشہ کے لیے حذف کریں؟')) return;
-    await supabase.storage.from('announcements').remove([a.image_path]); await supabase.from('announcements').delete().eq('id', a.id); load();
-  }
-  if (!ready) return <div className="admin-loading"><span className="admin-spinner" /> ایڈمن پینل لوڈ ہو رہا ہے...</div>;
-  if (!logged) return (<div className="admin-login-wrap"><form onSubmit={login} className="card admin-login"><h2>Admin Login</h2>
-    <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} dir="ltr" autoComplete="username" />
-    <input placeholder="Password" type="password" value={pw} onChange={e => setPw(e.target.value)} dir="ltr" autoComplete="current-password" />
-    {msg && <div className="err">{msg}</div>}<button className="btn">Login</button></form></div>);
-  if (!isAdmin) return (<div className="admin-login-wrap"><div className="card admin-login"><div className="err">آپ ایڈمن نہیں ہیں۔</div><button className="btn" onClick={logout}>Logout</button></div></div>);
-  const inp = (k, label, type = 'text') => (<><label>{label}</label><input type={type} list={['winner_team', 'loser_team', 'next_a', 'next_b'].includes(k) ? 'tn' : undefined} value={c[k] || ''} onChange={e => set(k, e.target.value)} /></>);
-  const tsel = (k, label) => (<><label>{label}</label><select value={c[k] || ''} onChange={e => set(k, e.target.value)}><option value="">— ٹیم منتخب کریں —</option>{c[k] && !teams.some(x => x.name === c[k]) && <option value={c[k]}>{c[k]}</option>}{teams.map(x => <option key={x.id} value={x.name}>{x.name}</option>)}</select></>);
-  const show = (k, l) => (<label><input type="checkbox" checked={c[k] !== '0'} onChange={e => set(k, e.target.checked ? '1' : '0')} style={{ width: 'auto' }} /> {l}</label>);
-  const pa = p => supabase.storage.from('announcements').getPublicUrl(p).data.publicUrl;
-  return (<div className="admin-shell">
-    <aside className="admin-brand"><div className="admin-brand-mark">BJL</div><div><strong>BJL CONTROL</strong><small>SEASON 1 · ADMIN</small></div></aside>
-    <header className="admin-topbar"><div><span className="admin-eyebrow">MANAGEMENT CONSOLE</span><h1>BJL Admin Dashboard</h1><p>اپنی لیگ کی تمام سرگرمیاں ایک جگہ سے مینیج کریں۔</p></div><div className="admin-top-actions"><span className="admin-live"><i /> SYSTEM ONLINE</span><button className="btn admin-logout" onClick={logout}>Logout ↗</button></div></header>
-    <datalist id="tn">{teams.map(x => <option key={x.id} value={x.name} />)}</datalist>
-    <nav className="tabs admin-tabs" aria-label="Admin sections">
-      {[['teams', 'ٹیمیں'], ['match', 'میچ سینٹر'], ['ann', 'اعلانات'], ['people', 'ٹیم تصاویر'], ['moms', 'BJL Moments'], ['quotes', 'اقوال'], ['set', 'سیٹنگ']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
-      </nav>
-    {msg && <div className="good admin-message">{msg}</div>}
-    <section className="admin-stats" aria-label="Quick statistics">
-      <article className="admin-stat"><span className="admin-stat-icon blue">♧</span><div><small>کل ٹیمیں</small><strong>{teams.length}</strong><em>Registered teams</em></div></article>
-      <article className="admin-stat"><span className="admin-stat-icon green">✓</span><div><small>تصدیق شدہ ادائیگیاں</small><strong>{teams.filter(x => x.payment === 'verified').length}</strong><em>Verified payments</em></div></article>
-      <article className="admin-stat"><span className="admin-stat-icon amber">◷</span><div><small>زیرِ التواء ادائیگیاں</small><strong>{teams.filter(x => x.payment !== 'verified' && x.payment !== 'rejected').length}</strong><em>Awaiting review</em></div></article>
-      <article className="admin-stat"><span className="admin-stat-icon violet">▣</span><div><small>اعلانات</small><strong>{ann.length}</strong><em>Announcements</em></div></article>
-    </section>
-    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({teams:'Team Management',match:'Match Center',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',quotes:'Quotes & Content',set:'Website Settings'})[tab]}</strong></div>
-    {tab === 'match' && (<><div className="card"><h3>آج کا فاتح</h3>
-      {tsel('winner_team', 'جیتنے والی ٹیم')}{tsel('loser_team', 'مخالف (ہارنے والی) ٹیم')}{inp('winner_result', 'نتیجہ / مختصر اعلان (اختیاری)')}{inp('winner_date', 'میچ کی تاریخ', 'date')}{show('winner_show', 'ہوم پیج پر دکھائیں')}
-      <button className="btn" onClick={() => save(['winner_team', 'loser_team', 'winner_result', 'winner_date', 'winner_show'])}>محفوظ کریں</button></div>
-      <div className="card"><h3>اگلا میچ</h3>
-        {tsel('next_a', 'ٹیم A')}{tsel('next_b', 'ٹیم B')}{inp('next_date', 'تاریخ', 'date')}{inp('next_time', 'وقت', 'time')}{inp('next_venue', 'مقام (خالی ہو تو: Dab Ground, Battagram)')}{show('next_show', 'ہوم پیج پر دکھائیں')}
-        <button className="btn" onClick={() => save(['next_a', 'next_b', 'next_date', 'next_time', 'next_venue', 'next_show'])}>محفوظ کریں</button></div></>)}
-    {tab === 'ann' && (<><form className="card" onSubmit={addAnn}><h3>نیا اعلان</h3>
-      <label>عنوان</label><input value={f.title} onChange={e => setF({ ...f, title: e.target.value })} />
-      <label>تفصیل</label><input value={f.description} onChange={e => setF({ ...f, description: e.target.value })} />
-      <label>تاریخ</label><input type="date" value={f.date} onChange={e => setF({ ...f, date: e.target.value })} />
-      <label>وقت</label><input type="time" value={f.time} onChange={e => setF({ ...f, time: e.target.value })} />
-      <label>تصویر</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setF({ ...f, file: e.target.files[0] })} />
-      <button className="btn">شائع کریں</button></form>
-      {ann.map((a, i) => (<div className="card" key={a.id}><b>{a.title}</b> <small>{a.announce_date}</small> {a.published ? '✅' : '⛔'}
-        <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt" onClick={() => move(i, -1)}>▲</button><button className="btn alt" onClick={() => move(i, 1)}>▼</button><button className="btn alt" onClick={() => editAnn(a)}>ایڈٹ</button><button className="btn alt" onClick={() => toggle(a)}>{a.published ? 'چھپائیں' : 'دکھائیں'}</button>
-          <button className="btn" onClick={() => del(a)}>حذف</button></div></div>))}</>)}
-    {tab === 'people' && (<>{[[1, 'AMAN MALIK – MEMBER'], [2, 'WALEED AFRIDI – MEMBER'], [3, 'MUHAMMAD HASNAIN – MEMBER'], [4, 'FALAK – ORGANIZER']].map(([n, l]) => (<div className="card" key={n}><h3>{l}</h3>
-      {c['person' + n + '_path'] && <img src={pa(c['person' + n + '_path'])} alt="" width="90" style={{ borderRadius: 8 }} />}
-      <p><label>نئی تصویر چنیں</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('person' + n, e.target.files[0])} /></p></div>))}
-      <div className="card"><h3>عربی خطاطی کی تصویر (اختیاری)</h3>
-        {c.calli_path && <img src={pa(c.calli_path)} alt="" width="200" style={{ borderRadius: 8 }} />}
-        <p><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('calli', e.target.files[0])} /></p>
-        {c.calli_path && <button className="btn alt" onClick={() => clearKey('calli')}>تصویر ہٹائیں (سادہ خطاطی واپس)</button>}</div></>)}
-    {tab === 'moms' && (<><form className="card" onSubmit={addMoments}><h3>نئی تصاویر (5-6 ایک ساتھ)</h3>
-      <label>تاریخ</label><input type="date" value={mf.date} onChange={e => setMf({ ...mf, date: e.target.value })} />
-      <label>کیپشن (اختیاری)</label><input value={mf.caption} onChange={e => setMf({ ...mf, caption: e.target.value })} />
-      <label>تصاویر چنیں</label><input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={e => setMf({ ...mf, files: e.target.files })} />
-      <button className="btn">شائع کریں</button></form>
-      {moms.map(m => (<div className="card" key={m.id} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-        <img src={pa(m.image_path)} alt="" width="70" height="70" style={{ borderRadius: 8, objectFit: 'cover' }} />
-        <div style={{ flex: 1 }}><small>{m.moment_date}</small><div>{m.caption} {m.published ? '✅' : '⛔'}</div>
-          <button className="btn alt" onClick={() => capMoment(m)}>کیپشن</button> <button className="btn alt" onClick={() => togMoment(m)}>{m.published ? 'چھپائیں' : 'دکھائیں'}</button> <button className="btn alt" onClick={() => delMoment(m)}>حذف</button></div></div>))}</>)}
-    {tab === 'quotes' && (<><form className="card" onSubmit={addQuote}><h3>نیا قول</h3>
-      <label>اردو ترجمہ</label><textarea rows="4" style={{ width: '100%', padding: 10, borderRadius: 8 }} value={qf.body} onChange={e => setQf({ ...qf, body: e.target.value })} />
-      <label>کتاب</label><input value={qf.book} onChange={e => setQf({ ...qf, book: e.target.value })} />
-      <label>حوالہ (نمبر)</label><input value={qf.ref} onChange={e => setQf({ ...qf, ref: e.target.value })} />
-      <button className="btn">شامل کریں</button></form>
-      {qs.map((x, i) => (<div className="card" key={x.id} dir="rtl"><small>{i + 1}</small> {x.published ? '✅' : '⛔'}<p>{x.body}</p><small>{x.book} · {x.ref}</small>
-        <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt" onClick={() => moveQuote(i, -1)}>▲</button><button className="btn alt" onClick={() => moveQuote(i, 1)}>▼</button>
-          <button className="btn alt" onClick={() => editQuote(x)}>ایڈٹ</button><button className="btn alt" onClick={() => togQuote(x)}>{x.published ? 'چھپائیں' : 'دکھائیں'}</button><button className="btn alt" onClick={() => delQuote(x)}>حذف</button></div></div>))}</>)}
-    {tab === 'set' && (<div className="card"><h3>Ask Falak بٹن</h3>
-      {inp('falak_whatsapp', 'WhatsApp نمبر (بین الاقوامی، مثلاً 923411620498)')}{inp('falak_btn', 'بٹن کا متن')}{inp('falak_msg', 'ڈیفالٹ پیغام (WhatsApp میں پہلے سے لکھا آئے گا)')}
-      <label><input type="checkbox" style={{ width: 'auto' }} checked={c.registration_open !== 'false'} onChange={e => set('registration_open', e.target.checked ? 'true' : 'false')} /> نئی ٹیموں کی رجسٹریشن کھلی ہے</label>
-      <button className="btn" onClick={() => save(['falak_whatsapp', 'falak_btn', 'falak_msg', 'registration_open'])}>محفوظ کریں</button></div>)}
-    {tab === 'teams' && (<><div className="card">کل ٹیمیں: {teams.length} · تصدیق شدہ: {teams.filter(x => x.payment === 'verified').length}</div>
-      {teams.map(tm => { const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
-        return (<div className="card" key={tm.id}><b>{tm.name}</b> <small>{tm.reg_id}</small> {tm.payment === 'verified' ? '✅ VERIFIED' : '❌ NOT VERIFIED'}
-          <div dir="ltr">{tm.captain_email}</div><div dir="ltr">C1: {ps[0] && ps[0].name} {ps[0] && ps[0].mobile} | C2: {ps[1] && ps[1].name} {ps[1] && ps[1].mobile}</div>
-          {last && <div dir="ltr">Txn: {last.transaction_id || '-'} <button className="btn alt" onClick={() => shot(last)}>Screenshot</button></div>}
-          {tm.payment_rejection_reason && <small>رد کرنے کی وجہ: {tm.payment_rejection_reason}</small>}
-          <details><summary>15 کھلاڑی</summary>{ps.map(pp => (<div key={pp.id} style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '6px 0' }}>
-            <img src={pub(pp.photo_path)} alt="" width="48" height="48" style={{ borderRadius: 8, objectFit: 'cover' }} />{pp.name} · {pp.age} · {pp.position}</div>))}</details>
-          <div className="row" style={{ justifyContent: 'flex-start' }}>
-            <button className="btn" onClick={() => setPay(tm, 'verified')}>✓ تصدیق</button>
-            <button className="btn alt" onClick={() => setPay(tm, 'notverified')}>غیر تصدیق شدہ</button>
-            <button className="btn alt" onClick={() => setPay(tm, 'rejected')}>مسترد</button>
-            <button className="btn alt" onClick={() => delTeam(tm)}>حذف</button></div></div>); })}</>)}
-  </div>);
+/* BJL Admin workspace redesign. Scoped to /admin only. */
+.admin-shell{min-height:100vh!important;display:grid!important;grid-template-columns:248px minmax(0,1fr);grid-template-rows:auto auto auto auto auto 1fr;gap:0!important;padding:0!important;background:#f3f6fb!important;color:#17243a!important;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif!important}
+.admin-shell>*{min-width:0}
+.admin-brand{grid-column:1;grid-row:1/3;position:sticky;top:0;height:100vh;align-self:start;display:flex!important;align-items:center!important;gap:13px!important;padding:26px 20px!important;background:linear-gradient(160deg,#172c4d,#0d1930)!important;color:#fff!important;border:0!important;box-shadow:8px 0 28px #10234418}
+.admin-brand-mark{width:48px!important;height:48px!important;display:grid!important;place-items:center!important;border-radius:15px!important;background:linear-gradient(145deg,#5c95e8,#2457a6)!important;color:white!important;font-size:1.05rem!important;font-weight:900!important;letter-spacing:.08em;box-shadow:0 8px 20px #3478d455}
+.admin-brand strong{display:block!important;color:#fff!important;font-size:.9rem!important;letter-spacing:.12em}
+.admin-brand small{display:block!important;color:#9fb6d6!important;font-size:.65rem!important;letter-spacing:.17em;margin-top:4px}
+.admin-topbar{grid-column:2;grid-row:1;display:flex!important;justify-content:space-between!important;align-items:center!important;gap:18px!important;margin:0!important;padding:25px clamp(18px,3vw,42px)!important;background:#fff!important;border-bottom:1px solid #e5ebf3!important}
+.admin-eyebrow{font-size:.68rem!important;font-weight:800!important;letter-spacing:.16em!important;color:#6480a5!important}
+.admin-topbar h1{font-size:clamp(1.45rem,2.4vw,2rem)!important;line-height:1.2!important;margin:5px 0!important;color:#17243a!important;font-weight:800!important;letter-spacing:-.035em}
+.admin-topbar p{margin:0!important;color:#74839a!important;font-size:.88rem!important}
+.admin-top-actions{display:flex!important;align-items:center!important;gap:12px!important}
+.admin-live{display:inline-flex!important;align-items:center!important;gap:8px!important;padding:8px 12px!important;border-radius:99px!important;background:#eaf8f0!important;color:#16824a!important;font-size:.68rem!important;font-weight:800!important;letter-spacing:.06em}
+.admin-live i{width:7px!important;height:7px!important;border-radius:50%!important;background:#20b66a!important;box-shadow:0 0 0 4px #20b66a20}
+.admin-logout{white-space:nowrap}
+.admin-shell>.tabs,.admin-shell>.admin-tabs{grid-column:1;grid-row:3/7;align-self:stretch;display:flex!important;flex-direction:column!important;gap:7px!important;padding:22px 14px!important;margin:0!important;background:#0d1930!important;border:0!important;border-radius:0!important}
+.admin-shell nav button{width:100%!important;display:flex!important;justify-content:flex-start!important;align-items:center!important;text-align:left!important;padding:12px 14px!important;border:1px solid transparent!important;border-radius:11px!important;background:transparent!important;color:#bdcbe0!important;box-shadow:none!important;font-size:.86rem!important;font-weight:600!important;transition:all .2s ease}
+.admin-shell nav button:hover{background:#ffffff12!important;color:#fff!important;transform:translateX(2px)}
+.admin-shell nav button.on{background:linear-gradient(100deg,#3478d44a,#3478d414)!important;color:#fff!important;border-color:#6da1e83b!important;box-shadow:inset 3px 0 #69a1ed!important}
+.admin-shell>.admin-stats{grid-column:2;grid-row:2;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:14px!important;margin:0!important;padding:22px clamp(18px,3vw,42px) 8px!important;background:#f3f6fb!important}
+.admin-stat{display:flex!important;align-items:center!important;gap:14px!important;min-height:112px!important;padding:18px!important;background:#fff!important;border:1px solid #e7edf5!important;border-radius:17px!important;box-shadow:0 7px 24px #1b35520b!important;transition:transform .2s,box-shadow .2s}
+.admin-stat:hover{transform:translateY(-3px)!important;box-shadow:0 13px 30px #1b355217!important}
+.admin-stat-icon{width:43px!important;height:43px!important;display:grid!important;place-items:center!important;flex:none!important;border-radius:13px!important;font-size:1.2rem!important;font-weight:800!important}
+.admin-stat-icon.blue{background:#eaf2ff!important;color:#3674c8!important}.admin-stat-icon.green{background:#e7f8ef!important;color:#19965b!important}.admin-stat-icon.amber{background:#fff4df!important;color:#c88720!important}.admin-stat-icon.violet{background:#f1edff!important;color:#7958c8!important}
+.admin-stat small{display:block!important;color:#718098!important;font-size:.76rem!important;font-weight:650!important}
+.admin-stat strong{display:block!important;color:#17243a!important;font-size:1.8rem!important;line-height:1.25!important;font-weight:850!important}
+.admin-stat em{display:block!important;color:#9aa6b8!important;font-size:.68rem!important;font-style:normal!important}
+.admin-content-label{grid-column:2;grid-row:3;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;padding:19px clamp(18px,3vw,42px) 12px!important;color:#75849a!important}
+.admin-content-label span{font-size:.66rem!important;font-weight:850!important;letter-spacing:.16em!important}
+.admin-content-label strong{color:#233651!important;font-size:.92rem!important}
+.admin-shell>.admin-content-label+div{grid-column:2;grid-row:4/7;min-width:0;padding:8px clamp(18px,3vw,42px) 44px!important}
+.admin-shell .card{padding:21px!important;margin:0 0 15px!important;background:#fff!important;border:1px solid #e5ebf3!important;border-radius:16px!important;box-shadow:0 7px 24px #1b35520a!important;color:#1c2b42!important;transition:box-shadow .2s,transform .2s}
+.admin-shell .card:hover{box-shadow:0 12px 30px #1b355214!important}
+.admin-shell .card h3{margin:0 0 15px!important;color:#1d3453!important;font-size:1.02rem!important;font-weight:800!important}
+.admin-shell label{display:block!important;margin:10px 0 6px!important;color:#687b96!important;font-size:.78rem!important;font-weight:700!important}
+.admin-shell input:not([type=checkbox]),.admin-shell select,.admin-shell textarea{width:100%!important;max-width:100%!important;padding:11px 13px!important;margin:3px 0 9px!important;border:1px solid #dce5f0!important;border-radius:10px!important;background:#fbfcfe!important;color:#17243a!important;font:inherit!important;font-size:.88rem!important;outline:none!important;transition:border-color .2s,box-shadow .2s}
+.admin-shell input:focus,.admin-shell select:focus,.admin-shell textarea:focus{border-color:#5c91d7!important;box-shadow:0 0 0 3px #5c91d71c!important}
+.admin-shell input[type=checkbox]{accent-color:#3478d4!important}
+.admin-shell .btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;min-height:39px!important;padding:9px 15px!important;border:1px solid #2457a6!important;border-radius:10px!important;background:linear-gradient(135deg,#397bd0,#2457a6)!important;color:#fff!important;font-size:.8rem!important;font-weight:750!important;box-shadow:0 5px 13px #2457a622!important;cursor:pointer!important;transition:transform .15s,filter .15s,box-shadow .15s}
+.admin-shell .btn:hover{filter:brightness(1.06)!important;transform:translateY(-1px)!important;box-shadow:0 8px 18px #2457a633!important}
+.admin-shell .btn.alt{background:#f7f9fc!important;color:#425773!important;border:1px solid #dce5f0!important;box-shadow:none!important}
+.admin-shell .btn.alt:hover{background:#edf4ff!important;color:#2457a6!important;border-color:#b9d0ee!important}
+.admin-shell .row{display:flex!important;flex-wrap:wrap!important;gap:8px!important;margin-top:12px}
+.admin-shell .badge{display:inline-flex!important;padding:4px 10px!important;border-radius:99px!important;background:#fff3df!important;color:#a56b16!important;font-size:.7rem!important;font-weight:800!important}
+.admin-shell .badge.v{background:#e5f7ed!important;color:#16804a!important}
+.admin-shell .good,.admin-shell .admin-message{padding:12px 15px!important;border:1px solid #cdebd9!important;border-radius:12px!important;background:#effaf3!important;color:#17683e!important}
+.admin-shell .err{padding:12px 15px!important;border-radius:12px!important;background:#fff0f0!important;color:#a83232!important}
+.admin-shell details{margin:13px 0!important;padding:12px!important;border:1px solid #e7edf5!important;border-radius:11px!important;background:#fafcff!important}
+.admin-shell summary{cursor:pointer!important;color:#315e96!important;font-weight:750!important}
+.admin-shell img{max-width:100%!important}
+.admin-shell .admin-message{margin:12px clamp(18px,3vw,42px)!important}
+.admin-login-wrap{min-height:100vh!important;display:grid!important;place-items:center!important;padding:22px!important;background:radial-gradient(circle at 20% 15%,#dceaff,transparent 35%),linear-gradient(135deg,#f4f7fb,#e9eff7)!important}
+.admin-login{width:min(430px,100%)!important;padding:30px!important;border:1px solid #fff!important;border-radius:20px!important;background:#ffffffed!important;box-shadow:0 24px 70px #17345b20!important}
+.admin-login h2{margin:0 0 20px!important;color:#1c3455!important;font-size:1.55rem!important;font-weight:850!important}
+.admin-loading{min-height:100vh!important;display:grid!important;place-items:center!important;background:#f3f6fb!important;color:#42638d!important;font-weight:700}
+.admin-spinner{width:40px!important;height:40px!important;border:4px solid #dce8f7!important;border-top-color:#3478d4!important;border-radius:50%!important;animation:adminSpin .8s linear infinite}
+@keyframes adminSpin{to{transform:rotate(360deg)}}
+@media(max-width:1050px){.admin-shell>.admin-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:760px){
+ .admin-shell{grid-template-columns:1fr!important;grid-template-rows:auto auto auto auto auto auto!important}
+ .admin-brand{grid-column:1!important;grid-row:1!important;position:relative!important;height:auto!important;padding:13px 16px!important}
+ .admin-topbar{grid-column:1!important;grid-row:2!important;padding:18px 16px!important;align-items:flex-start!important}
+ .admin-top-actions{flex-wrap:wrap!important;justify-content:flex-end!important}
+ .admin-shell>.tabs,.admin-shell>.admin-tabs{grid-column:1!important;grid-row:3!important;flex-direction:row!important;overflow-x:auto!important;white-space:nowrap!important;padding:10px!important;scrollbar-width:thin}
+ .admin-shell nav button{width:auto!important;flex:none!important;padding:10px 12px!important}
+ .admin-shell>.admin-stats{grid-column:1!important;grid-row:4!important;padding:14px 12px 4px!important;gap:9px!important}
+ .admin-stat{min-height:90px!important;padding:12px!important;gap:9px!important}
+ .admin-stat-icon{width:35px!important;height:35px!important}
+ .admin-stat strong{font-size:1.4rem!important}
+ .admin-content-label{grid-column:1!important;grid-row:5!important;padding:14px 14px 8px!important}
+ .admin-shell>.admin-content-label+div{grid-column:1!important;grid-row:6!important;padding:8px 12px 30px!important}
+ .admin-shell .card{padding:15px!important}
+ .admin-live{display:none!important}
 }
+@media(max-width:430px){.admin-shell>.admin-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}.admin-topbar h1{font-size:1.35rem!important}.admin-topbar p{font-size:.78rem!important}}
