@@ -282,20 +282,19 @@ main{padding-bottom:84px}
 /* Cinematic hard-ball path in the homepage hero, four changing positions */
 .hero{overflow:hidden}
 .stadium-ball{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:.92}
-.stadium-ball span{position:absolute;left:8%;top:20%;width:17px;height:17px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#fff 0 15%,#e9e5db 30%,#b8b1a7 72%,#777 100%);box-shadow:0 0 0 2px #d62934,0 0 18px #fff9;animation:stadiumBallRoute 11s cubic-bezier(.45,.05,.55,.95) infinite}
-.stadium-ball span:after{content:"";position:absolute;left:7px;top:1px;height:15px;border-left:1.5px dashed #bd1828;transform:rotate(35deg)}
-.stadium-ball:after{content:"";position:absolute;width:70px;height:2px;left:8%;top:20%;background:linear-gradient(90deg,transparent,#fff9);filter:blur(1px);transform-origin:right center;animation:stadiumBallTrail 11s ease-in-out infinite}
+.stadium-ball span{position:absolute;left:7%;top:49%;width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 30% 26%,#ffb2b2 0 8%,#ff343b 24%,#d00018 68%,#71000d 100%);border:2px solid #ff5960;box-shadow:0 0 0 2px #8b0010,0 0 22px #ff172f,0 0 42px #e00024;animation:stadiumBallRoute 5.4s cubic-bezier(.45,.05,.55,.95) infinite}
+.stadium-ball span:after{content:"";position:absolute;left:12px;top:3px;height:20px;border-left:2px solid #ffd4d4;transform:rotate(35deg);opacity:.9}
+.stadium-ball:after{content:"";position:absolute;width:76px;height:3px;left:7%;top:50%;background:linear-gradient(90deg,transparent,#ff263f);filter:blur(1px);transform-origin:right center;animation:stadiumBallTrail 5.4s ease-in-out infinite}
+.stadium-ball:before{content:"";position:absolute;z-index:2;left:78%;top:37%;width:12px;height:92px;border-radius:8px 8px 3px 3px;background:linear-gradient(90deg,#8b5a35,#f2d2a0 35%,#a66b3c 70%,#60351f);box-shadow:0 0 0 2px #e7c58b55;transform:rotate(-24deg);transform-origin:50% 88%;animation:stadiumBatSwing 5.4s ease-in-out infinite}
+@keyframes stadiumBatSwing{0%,35%,100%{transform:rotate(-24deg)}43%{transform:rotate(42deg)}50%,65%{transform:rotate(-24deg)}}
 @keyframes stadiumBallRoute{
-  0%,8%{left:8%;top:20%;transform:rotate(0) scale(.8)}
-  24%{left:77%;top:13%;transform:rotate(260deg) scale(1.1)}
-  26%{left:77%;top:13%;transform:rotate(360deg) scale(1.1)}
-  49%{left:87%;top:76%;transform:rotate(720deg) scale(.92)}
-  51%{left:87%;top:76%;transform:rotate(800deg) scale(.92)}
-  75%{left:18%;top:82%;transform:rotate(1150deg) scale(1.08)}
-  77%{left:18%;top:82%;transform:rotate(1220deg) scale(1.08)}
-  100%{left:8%;top:20%;transform:rotate(1500deg) scale(.8)}
+  0%,8%{left:7%;top:49%;transform:rotate(0) scale(.85)}
+  34%{left:76%;top:42%;transform:rotate(520deg) scale(1.16)}
+  39%{left:78%;top:39%;transform:rotate(610deg) scale(1.28)}
+  68%{left:15%;top:24%;transform:rotate(1120deg) scale(1.08)}
+  100%{left:7%;top:49%;transform:rotate(1500deg) scale(.85)}
 }
-@keyframes stadiumBallTrail{0%,8%{left:8%;top:20%;opacity:0;transform:rotate(0)}24%,49%,75%{opacity:.7}100%{left:8%;top:20%;opacity:0;transform:rotate(0)}}
+@keyframes stadiumBallTrail{0%,8%{left:7%;top:50%;opacity:0}34%,68%{opacity:.8}100%{left:7%;top:50%;opacity:0}}
 
 /* Homepage tournament cards and BJL badge motion */
 .hero .shield{position:relative;animation:bjlBadgeFloat 3.8s ease-in-out infinite,bjlLogoGlow 2.8s ease-in-out infinite}
@@ -1215,3 +1214,16 @@ body:has(.hdr) main .bjl-site-footer nav a{min-height:44px;display:inline-flex;a
  body:has(.hdr) main > .quotes{animation:none!important}
  body:has(.hdr) main .card{transition:none!important}
 }
+
+/* Admin objection operations and animated red cricket ball */
+.admin-operations-panel{border:1px solid #e0242b88!important;background:linear-gradient(135deg,#24171b,#171922)!important}
+.admin-operations-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.admin-operations-heading h2{margin:4px 0;font-size:clamp(1.2rem,3vw,1.65rem);color:#fff}
+.admin-operations-heading p{color:#c6c6d0;max-width:680px;margin:6px 0}
+.admin-operations-panel .admin-objection-form{margin-top:14px;padding:14px;border:1px solid #ffffff1c;border-radius:12px;background:#090b12}
+.admin-operations-panel .admin-objection-form label{display:block;margin:10px 0 5px;color:#f1d4d7;font-weight:700}
+.admin-operations-panel .admin-objection-form select,.admin-operations-panel .admin-objection-form input,.admin-operations-panel .admin-objection-form textarea{width:100%;min-height:46px;padding:11px 12px;background:#171923;color:#fff;border:1px solid #ffffff35;border-radius:9px}
+.admin-operations-panel .admin-objection-form button{min-height:44px}
+.admin-operations-panel .admin-objection-form button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:600px){.admin-operations-heading{display:block}.admin-operations-heading .admin-objection-status{display:inline-flex;margin-top:8px}}
+@media(prefers-reduced-motion:reduce){.stadium-ball:before{animation:none!important;transform:rotate(-24deg)}}
