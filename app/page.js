@@ -81,7 +81,7 @@ export default function Home() {
     <div className="card"><div className="big">{s.total} {t('teamsRegistered')}</div>
       <div>✓ {t('verifiedT')}: {s.verified}</div><div>{t('notVerifiedT')}: {s.not_verified}</div><small>{t('fee')}</small></div>
     <h2>{t('contactTitle')}</h2>
-    {CONTACTS.map((x, i) => (<div className="card" key={x.num}><b>{x.name}</b> · {t(x.role)}{i !== 0 && <div dir="ltr">{x.disp}</div>}
+    {CONTACTS.map((x, i) => (<div className="card" key={x.num}><div className="help-contact-name">{x.name}</div><div className="help-contact-role">{t(x.role)}</div>{i !== 0 && <div className="help-contact-number" dir="ltr">{x.disp}</div>}
       <div style={{ marginTop: 8 }}><a className="btn" href={`https://wa.me/${i === 0 && c.falak_whatsapp ? c.falak_whatsapp : x.num}?text=${encodeURIComponent((i === 0 && c.falak_msg) || t(x.msg))}`} target="_blank" rel="noopener noreferrer">{i === 0 ? (c.falak_btn || t('askFalak')) : t('wa')}</a></div></div>))}
     <section className="card" style={{ marginTop: 16, border: '1px solid rgba(225, 29, 72, .48)', background: 'linear-gradient(135deg, rgba(105, 12, 35, .22), rgba(12, 18, 32, .96))', textAlign: 'center', padding: '22px 16px' }} aria-label="Official BJL WhatsApp Group">
       <div style={{ fontSize: '1.15rem', fontWeight: 900, letterSpacing: '.04em', color: '#f2d48b' }}>OFFICIAL BJL WHATSAPP GROUP</div>
