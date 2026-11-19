@@ -80,6 +80,20 @@ export default function Home() {
     <People inline />
     <div className="card"><div className="big">{s.total} {t('teamsRegistered')}</div>
       <div>✓ {t('verifiedT')}: {s.verified}</div><div>{t('notVerifiedT')}: {s.not_verified}</div><small>{t('fee')}</small></div>
+    <section className="card bjl-register-guide" aria-labelledby="bjl-register-title">
+      <h2 id="bjl-register-title">How to Register</h2>
+      <ol>
+        <li>Register your team with exactly 15 players.</li>
+        <li>Provide the captain's mobile number.</li>
+        <li>Pay the registration fee of Rs. 5,000 through EasyPaisa.</li>
+        <li>Upload the payment receipt.</li>
+        <li>Wait for admin verification.</li>
+      </ol>
+    </section>
+    <div className="duo bjl-editable-info">
+      <section className="card"><h2>Rules</h2><p style={{ whiteSpace: 'pre-wrap' }}>{c.tournament_rules?.trim() || 'Will be announced soon'}</p></section>
+      <section className="card"><h2>Prizes</h2><p style={{ whiteSpace: 'pre-wrap' }}>{c.tournament_prizes?.trim() || 'Will be announced soon'}</p></section>
+    </div>
     <h2>{t('contactTitle')}</h2>
     {CONTACTS.map((x, i) => (<div className="card" key={x.num}><div className="help-contact-name">{x.name}</div><div className="help-contact-role">{t(x.role)}</div>{i !== 0 && <div className="help-contact-number" dir="ltr">{x.disp}</div>}
       <div style={{ marginTop: 8 }}><a className="btn" href={`https://wa.me/${i === 0 && c.falak_whatsapp ? c.falak_whatsapp : x.num}?text=${encodeURIComponent((i === 0 && c.falak_msg) || t(x.msg))}`} target="_blank" rel="noopener noreferrer">{i === 0 ? (c.falak_btn || t('askFalak')) : t('wa')}</a></div></div>))}
