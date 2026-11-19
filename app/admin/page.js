@@ -46,20 +46,23 @@ export default function Admin() {
     const { data: q } = await supabase.from('quotes').select('*').order('sort_order', { ascending: true }); setQs(q || []);
   }
   async function loadProfile() {
-    const keys = ['admin_profile_name', 'admin_profile_role', 'admin_profile_bio', 'admin_profile_photo_path'];
-    const { data, error } = await supabase.from('settings').select('key,value').in('key', keys);
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) { setMsg('Could not identify the signed-in administrator.'); return; }
+    const { data, error } = await supabase.from('admin_profiles')
+      .select('display_name,role,bio,photo_path').eq('id', user.id).maybeSingle();
     if (error) { setMsg('Could not load your profile: ' + error.message); return; }
-    const values = Object.fromEntries((data || []).map(row => [row.key, row.value]));
     setProfile({
-      name: values.admin_profile_name || 'Musa Kazim Qureshi',
-      role: values.admin_profile_role || 'Founder & Organizer · Battagram Junior League',
-      bio: values.admin_profile_bio || '',
-      photo_path: values.admin_profile_photo_path || ''
+      name: data?.display_name || 'Musa Kazim Qureshi',
+      role: data?.role || 'Founder & Organizer · Battagram Junior League',
+      bio: data?.bio || '',
+      photo_path: data?.photo_path || ''
     });
   }
   async function saveProfile(e) {
     e.preventDefault(); setProfileSaving(true); setMsg('Saving your profile...');
     try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) throw new Error('Your admin session has expired. Please sign in again.');
       let photoPath = profile.photo_path;
       if (profileFile) {
         if (!okImg(profileFile)) throw new Error('Choose a JPG, PNG or WEBP image up to 15 MB.');
@@ -69,13 +72,14 @@ export default function Admin() {
         if (uploadError) throw uploadError;
         photoPath = path;
       }
-      const rows = [
-        { key: 'admin_profile_name', value: profile.name.trim() },
-        { key: 'admin_profile_role', value: profile.role.trim() },
-        { key: 'admin_profile_bio', value: profile.bio.trim() },
-        { key: 'admin_profile_photo_path', value: photoPath || '' }
-      ];
-      const { error } = await supabase.from('settings').upsert(rows, { onConflict: 'key' });
+      const { error } = await supabase.from('admin_profiles').upsert({
+        id: user.id,
+        display_name: profile.name.trim(),
+        role: profile.role.trim(),
+        bio: profile.bio.trim(),
+        photo_path: photoPath || '',
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
       if (error) throw error;
       if (profile.photo_path && photoPath !== profile.photo_path && profile.photo_path.startsWith('profiles/')) {
         await supabase.storage.from('announcements').remove([profile.photo_path]);
