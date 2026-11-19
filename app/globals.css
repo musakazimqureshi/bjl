@@ -1244,3 +1244,13 @@ body:has(.hdr) main .card :where(.warn){color:#87470b!important}
 @keyframes bjlBatSwing{0%,19%,100%{transform:rotate(-34deg)}22%{transform:rotate(-34deg)}25%{transform:rotate(72deg)}29%,70%{transform:rotate(12deg)}76%{transform:rotate(-34deg)}}
 @media(max-width:700px){.bjl-info-grid{grid-template-columns:1fr!important}.bjl-info-card{min-height:0!important}.home-register-actions .btn{flex:1 1 145px}.bjl-ticker-register{font-size:.66rem}}
 @media(prefers-reduced-motion:reduce){.bjl-ticker-register{animation:none}.stadium-ball:before{animation:none}}
+
+/* BJL ADMIN CONTENT TAB — make homepage copy controls easy to find on phones */
+.admin-shell .admin-tabs .btn[aria-current="page"]{outline:2px solid rgba(212,175,55,.5)}
+.admin-shell .admin-site-copy{border:1px solid rgba(212,175,55,.45)!important}
+.admin-shell .admin-site-copy h3{font-size:1.2rem;color:#d4af37}
+@media(max-width:700px){
+  .admin-shell .admin-tabs{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .admin-shell .admin-tabs .btn{min-height:46px!important;font-size:11px!important;overflow-wrap:anywhere}
+  .admin-shell .admin-tabs .btn:nth-of-type(5){background:linear-gradient(110deg,#9f1239,#e11d48)!important;color:#fff!important;border-color:#f4d98d!important;font-weight:900!important}
+}
