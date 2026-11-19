@@ -13,7 +13,7 @@ export default function Admin() {
   const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
   const [objections, setObjections] = useState([]); const [objectionPlayer, setObjectionPlayer] = useState(null); const [objectionDraft, setObjectionDraft] = useState({ reason: '', raised_by: '', details: '' });
   const [profile, setProfile] = useState({ name: 'Musa Kazim Qureshi', role: 'Founder & Organizer · Battagram Junior League', bio: 'Building a strong cricket community in Battagram.', photo_path: '/demo-admin-avatar.svg' });
-  const [profileFile, setProfileFile] = useState(null); const [profileSaving, setProfileSaving] = useState(false); const [captainTeam, setCaptainTeam] = useState(''); const [captainEmail, setCaptainEmail] = useState(''); const [captainPassword, setCaptainPassword] = useState(''); const [captainBusy, setCaptainBusy] = useState(false);
+  const [profileFile, setProfileFile] = useState(null); const [profileSaving, setProfileSaving] = useState(false); const [captainTeam, setCaptainTeam] = useState(''); const [captainEmail, setCaptainEmail] = useState(''); const [captainPassword, setCaptainPassword] = useState(''); const [captainBusy, setCaptainBusy] = useState(false); const [messageTeam,setMessageTeam]=useState(''); const [messageBody,setMessageBody]=useState(''); const [teamMessages,setTeamMessages]=useState([]);
   async function check() {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -126,6 +126,8 @@ export default function Admin() {
     setMsg(error ? error.message : 'Objection status updated.');
     loadObjections();
   }
+  async function loadTeamMessages() { const {data,error}=await supabase.from('team_messages').select('*, teams(name)').order('created_at',{ascending:false}).limit(200); if(error) setMsg(error.message); setTeamMessages(data||[]); }
+  async function sendAdminMessage(e) { e.preventDefault(); if(!messageTeam||!messageBody.trim()) return setMsg('Select a team and enter a message.'); const {error}=await supabase.from('team_messages').insert({team_id:messageTeam,sender_role:'admin',message:messageBody.trim()}); setMsg(error?error.message:'Private message sent to team.'); if(!error){setMessageBody('');loadTeamMessages();} }
   async function createCaptainAccount(e) {
     e.preventDefault(); setCaptainBusy(true); setMsg('Creating captain account...');
     try {
@@ -163,7 +165,7 @@ export default function Admin() {
   useEffect(() => { check(); }, []);
   useEffect(() => {
     if (!isAdmin) return;
-    load(); loadTeams(); loadObjections(); loadProfile();
+    load(); loadTeams(); loadObjections(); loadProfile(); loadTeamMessages();
     let checking = false;
     const verifyActiveSession = async () => {
       if (checking) return;
@@ -308,7 +310,7 @@ export default function Admin() {
     <header className="admin-topbar"><div><span className="admin-eyebrow">MANAGEMENT CONSOLE</span><h1>BJL Admin Dashboard</h1><p>Manage your tournament, teams, matches and player reviews in one place.</p></div><div className="admin-top-actions"><button className="admin-profile-chip" onClick={() => { setTab('profile'); setMsg(''); }} aria-label="Open your admin profile"><span className="admin-profile-chip-photo">{profile.photo_path ? <img src={pa(profile.photo_path)} alt="" /> : 'MK'}</span><span><b>{profile.name || 'Musa Kazim'}</b><small>Administrator</small></span></button><span className="admin-live"><i /> SYSTEM ONLINE</span><button className="btn admin-logout" onClick={logout}>Logout ↗</button></div></header>
     <datalist id="tn">{teams.map(x => <option key={x.id} value={x.name} />)}</datalist>
     <nav className="tabs admin-tabs" aria-label="Admin sections">
-      {[['overview', 'Overview'], ['teams', 'Teams'], ['accounts', 'Captain Accounts'], ['match', 'Match Center'], ['objections', 'Operations by Admin / Objections'], ['content', 'How to Register · Rules · Prizes'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['quotes', 'Quotes'], ['set', 'Website Settings'], ['profile', 'My Profile']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
+      {[['overview', 'Overview'], ['teams', 'Teams'], ['accounts', 'Captain Accounts'], ['messages', 'Team Messages'], ['match', 'Match Center'], ['objections', 'Operations by Admin / Objections'], ['content', 'How to Register · Rules · Prizes'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['quotes', 'Quotes'], ['set', 'Website Settings'], ['profile', 'My Profile']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
       </nav>
     {msg && <div className="good admin-message">{msg}</div>}
     <section className="admin-stats" aria-label="Live tournament statistics">
@@ -319,7 +321,7 @@ export default function Admin() {
       <article className="admin-stat"><span className="admin-stat-icon blue">▣</span><div><small>Announcements</small><strong>{ann.length}</strong><em>Published and draft items</em></div></article>
       <article className="admin-stat"><span className="admin-stat-icon green">!</span><div><small>Open Objections</small><strong>{openObjections}</strong><em>Need administrator review</em></div></article>
     </section>
-    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({overview:'Tournament Overview',teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',quotes:'Quotes & Content',content:'Homepage Content: Registration, Rules & Prizes',set:'Website Settings',profile:'My Admin Profile',accounts:'Captain Accounts'})[tab]}</strong></div>
+    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({overview:'Tournament Overview',teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',quotes:'Quotes & Content',content:'Homepage Content: Registration, Rules & Prizes',set:'Website Settings',profile:'My Admin Profile',accounts:'Captain Accounts',messages:'Team Messages'})[tab]}</strong></div>
     <main className="admin-workspace">
     {tab === 'accounts' && (<section className="admin-profile-page">
       <div className="admin-overview-heading"><div><span className="admin-eyebrow">TEAM ACCESS</span><h2>Captain Accounts</h2><p>Create each captain login manually after reviewing the team's registration. Passwords are stored by Supabase Auth, not in the BJL database.</p></div></div>
@@ -333,6 +335,11 @@ export default function Admin() {
         <button className="btn" disabled={captainBusy || !teams.length}>{captainBusy ? 'Creating...' : 'Create Team Account'}</button>
       </form>
       <div className="card"><h3>Account status overview</h3>{teams.map(team => <div key={team.id} className="admin-recent-row"><div className="admin-recent-main"><b>{team.name}</b><small dir="ltr">{team.captain_email || 'No captain account linked yet'}</small></div><span className={'admin-status-pill ' + (team.captain_email ? 'is-verified' : 'is-pending')}>{team.captain_email ? 'Email linked' : 'Not linked'}</span></div>)}</div>
+    </section>)}
+    {tab === 'messages' && (<section className="admin-profile-page">
+      <div className="admin-overview-heading"><div><span className="admin-eyebrow">PRIVATE TEAM COMMUNICATION</span><h2>Team Messages</h2><p>Send a private message to one registered team. Only that team's captain can read and reply.</p></div></div>
+      <form className="card" onSubmit={sendAdminMessage}><label>Choose Team</label><select required value={messageTeam} onChange={e=>setMessageTeam(e.target.value)}><option value="">Select team</option>{teams.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select><label>Message</label><textarea required minLength={1} maxLength={4000} rows={4} value={messageBody} onChange={e=>setMessageBody(e.target.value)} placeholder="Write a private message to the captain..." /><button className="btn">Send Private Message</button></form>
+      <div className="card"><h3>Message History</h3>{teamMessages.map(m=><article className="card" key={m.id}><b>{m.teams?.name || 'Team'} · {m.sender_role==='admin'?'Admin':'Captain'}</b><p>{m.message}</p><small>{formatDateTime(m.created_at)} {m.read_at?'· Read':''}</small></article>)}</div>
     </section>)}
     {tab === 'profile' && (<section className="admin-profile-page">
       <div className="admin-overview-heading"><div><span className="admin-eyebrow">PERSONAL ADMIN ACCOUNT</span><h2>Your profile</h2><p>Manage the name, portrait and introduction shown in your BJL admin workspace.</p></div><span className="admin-updated">● Private admin profile</span></div>
