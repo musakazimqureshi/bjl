@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useLang } from '../../lib/i18n';
 import { supabase } from '../../lib/supabase';
+import { formatDateTime } from '../../lib/date';
 const pub = p => supabase.storage.from('player-photos').getPublicUrl(p).data.publicUrl;
 const ROLE = { batter: 'Batsman', bowler: 'Bowler', all_rounder: 'All-Rounder', wicket_keeper: 'Wicketkeeper' };
 export default function TeamLogin() {
@@ -14,8 +15,17 @@ export default function TeamLogin() {
     if (error) setMsg(error.message); setTeams(data || []);
   }
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => { if (session) { setUser(session.user); load(session.user); } });
-    return () => subscription.unsubscribe();
+    let active = true;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (active && session) { setUser(session.user); load(session.user); }
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) return;
+      setUser(session?.user || null);
+      if (session?.user) load(session.user);
+      else setTeams(null);
+    });
+    return () => { active = false; subscription.unsubscribe(); };
   }, []);
   async function login(e) {
     e.preventDefault(); setMsg('');
