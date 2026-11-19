@@ -41,7 +41,7 @@ export default function Home() {
   const showWin = c.winner_show !== '0' && c.winner_team; const showNext = c.next_show !== '0' && c.next_a && c.next_b;
   return (<>
     <section className="hero">
-      <div className="stadium-ball" aria-hidden="true"><span /></div>
+      <div className="stadium-ball" aria-hidden="true"><span className="stadium-cricket-ball" /><span className="stadium-cricket-bat" /></div>
       <div className="shield" style={{ display: 'inline-block', fontSize: '2rem' }}>BJL</div>
       <h1>{t('title')}</h1>
       <div className="calli">{c.calli_path ? <img src={img(c.calli_path)} alt="" /> :
