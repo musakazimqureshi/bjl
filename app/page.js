@@ -10,7 +10,7 @@ const img = p => supabase.storage.from('announcements').getPublicUrl(p).data.pub
 const pubP = p => supabase.storage.from('player-photos').getPublicUrl(p).data.publicUrl;
 const LBL = { batter: 'Batter', bowler: 'Bowler', all_rounder: 'All-Rounder', wicket_keeper: 'Wicket-Keeper' };
 export default function Home() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [s, setS] = useState({ total: 0, verified: 0, not_verified: 0 });
   const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [moms, setMoms] = useState([]);
   const [lb, setLb] = useState(null); const [gi, setGi] = useState(null); const [allAnn, setAllAnn] = useState(false);
@@ -47,7 +47,7 @@ export default function Home() {
         <div className="ar" lang="ar" dir="rtl">لَا فَتَىٰ إِلَّا عَلِيٌّ وَلَا سَيْفَ إِلَّا ذُو الْفَقَارِ</div>}</div>
       <p>{t('season')}</p><p>{t('loc')}</p>
       <div className="row">
-        <Link href="/register" className="btn">{t('regBtn')}</Link>
+        <a href="https://chat.whatsapp.com/D5RUqQB6XVIIwHkYJkz5vZ" className="btn" target="_blank" rel="noopener noreferrer">{lang === 'ur' ? 'آفیشل واٹس ایپ گروپ میں شامل ہوں' : 'Join Official WhatsApp Group'}</a>
         <Link href="/teams" className="btn alt">{t('viewBtn')}</Link>
         <Link href="/team" className="btn alt">🔑 {t('captainSignIn')}</Link>
       </div>
