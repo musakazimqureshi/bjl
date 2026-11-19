@@ -399,6 +399,8 @@ export default function Admin() {
           <button className="btn alt" onClick={() => editQuote(x)}>Edit</button><button className="btn alt" onClick={() => togQuote(x)}>{x.published ? 'Hide' : 'Publish'}</button><button className="btn alt" onClick={() => delQuote(x)}>Delete Team</button></div></div>))}</>)}
     {tab === 'set' && (<>
       <div className="card"><h3>WhatsApp Contact Button</h3>
+      {inp('tutorial_video_url', 'Homepage Video Tutorial URL (YouTube or video link)')}
+      <button className="btn" onClick={() => save(['tutorial_video_url'])}>Save Tutorial Video</button>
       {inp('falak_whatsapp', 'WhatsApp Number (international format, e.g. 923001234567)')}{inp('falak_btn', 'Button Text')}{inp('falak_msg', 'Default WhatsApp Message')}
       <label><input type="checkbox" style={{ width: 'auto' }} checked={c.registration_open !== 'false'} onChange={e => set('registration_open', e.target.checked ? 'true' : 'false')} /> Team registration is open</label>
       <button className="btn" onClick={() => save(['falak_whatsapp', 'falak_btn', 'falak_msg', 'registration_open'])}>Save Changes</button></div>
