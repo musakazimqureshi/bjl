@@ -1227,3 +1227,21 @@ body:has(.hdr) main .bjl-site-footer nav a{min-height:44px;display:inline-flex;a
 .admin-operations-panel .admin-objection-form button:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:600px){.admin-operations-heading{display:block}.admin-operations-heading .admin-objection-status{display:inline-flex;margin-top:8px}}
 @media(prefers-reduced-motion:reduce){.stadium-ball:before{animation:none!important;transform:rotate(-24deg)}}
+
+
+/* BJL classic hero cricket animation: restore visible full-size ball and bat */
+.hero .stadium-ball{overflow:hidden;opacity:1}
+.hero .stadium-ball span{
+  width:34px;height:34px;
+  border-width:2px;
+  box-shadow:0 0 0 2px #8b0010,0 0 24px #ff172f,0 0 46px #e00024;
+}
+.hero .stadium-ball:before{width:15px;height:104px}
+@media(max-width:520px){
+  .hero .stadium-ball span{width:22px;height:22px}
+  .hero .stadium-ball:before{width:12px;height:82px}
+}
+@media(prefers-reduced-motion:reduce){
+  .hero .stadium-ball span,.hero .stadium-ball:after{animation:none!important}
+  .hero .stadium-ball span{left:76%;top:42%;opacity:1}
+}
