@@ -103,7 +103,7 @@ export default function Admin() {
     setTeams(data || []);
   }
   async function loadObjections() {
-    const { data, error } = await supabase.from('player_objections').select('*, players(name, age), teams(name)').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('player_objections').select('*, players(name, age), teams(name), source_team:teams!player_objections_source_team_id_fkey(name)').order('created_at', { ascending: false });
     if (error) { setMsg(error.message); return; }
     setObjections(data || []);
   }
@@ -388,8 +388,8 @@ export default function Admin() {
       {objections.map(o => <article className="card admin-objection-card" key={o.id}>
         <div className="admin-objection-head"><div><span className="admin-eyebrow">{o.reason}</span><h3>{o.players?.name || 'Player'} · {o.teams?.name || 'Team'}</h3></div><span className={'admin-objection-status '+o.status}>{o.status.toUpperCase()}</span></div>
         <p>{o.details || 'No description provided.'}</p>
-        <small>Raised by <b>{o.raised_by || 'Not provided'}</b> · {formatDateTime(o.created_at)}</small>
-        <div className="row admin-objection-actions"><button className="btn alt" onClick={() => setObjectionStatus(o,'under_review')} disabled={o.status==='under_review'}>Under Review</button><button className="btn" onClick={() => setObjectionStatus(o,'resolved')} disabled={o.status==='resolved'}>Resolve / Hide Public</button><button className="btn alt" onClick={() => setObjectionStatus(o,'dismissed')} disabled={o.status==='dismissed'}>Dismiss / Hide Public</button><button className="btn alt" onClick={() => setObjectionStatus(o,'open')} disabled={o.status==='open'}>Reopen Public</button></div><small>Resolved or dismissed objections remain in admin records and disappear from the public website.</small>
+        <small>Raised by <b>{o.raised_by || 'Not provided'}</b> · From: <b>{o.source_team?.name || 'Admin'}</b> · {formatDateTime(o.created_at)}</small>{o.admin_note && <p><b>Admin note:</b> {o.admin_note}</p>}
+        <div className="row admin-objection-actions"><button className="btn alt" onClick={() => setObjectionStatus(o,'under_review')} disabled={o.status==='under_review'}>Under Review</button><button className="btn" onClick={() => setObjectionStatus(o,'confirmed')} disabled={o.status==='confirmed'}>Confirm</button><button className="btn alt" onClick={() => setObjectionStatus(o,'rejected')} disabled={o.status==='rejected'}>Reject</button><button className="btn alt" onClick={() => setObjectionStatus(o,'open')} disabled={o.status==='open'}>Reopen</button></div><small>Resolved or dismissed objections remain in admin records and disappear from the public website.</small>
       </article>)}
     </div>)}
     {tab === 'ann' && (<><form className="card" onSubmit={addAnn}><h3>New Announcement</h3>
