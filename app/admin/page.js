@@ -135,23 +135,31 @@ export default function Admin() {
     if (!confirm('یہ اعلان ہمیشہ کے لیے حذف کریں؟')) return;
     await supabase.storage.from('announcements').remove([a.image_path]); await supabase.from('announcements').delete().eq('id', a.id); load();
   }
-  if (!ready) return <p>...</p>;
-  if (!logged) return (<form onSubmit={login} className="card"><h2>Admin Login</h2>
+  if (!ready) return <div className="admin-loading"><span className="admin-spinner" /> ایڈمن پینل لوڈ ہو رہا ہے...</div>;
+  if (!logged) return (<div className="admin-login-wrap"><form onSubmit={login} className="card admin-login"><h2>Admin Login</h2>
     <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} dir="ltr" autoComplete="username" />
     <input placeholder="Password" type="password" value={pw} onChange={e => setPw(e.target.value)} dir="ltr" autoComplete="current-password" />
-    {msg && <div className="err">{msg}</div>}<button className="btn">Login</button></form>);
-  if (!isAdmin) return (<div className="card"><div className="err">آپ ایڈمن نہیں ہیں۔</div><button className="btn" onClick={logout}>Logout</button></div>);
+    {msg && <div className="err">{msg}</div>}<button className="btn">Login</button></form></div>);
+  if (!isAdmin) return (<div className="admin-login-wrap"><div className="card admin-login"><div className="err">آپ ایڈمن نہیں ہیں۔</div></nav></div>);
   const inp = (k, label, type = 'text') => (<><label>{label}</label><input type={type} list={['winner_team', 'loser_team', 'next_a', 'next_b'].includes(k) ? 'tn' : undefined} value={c[k] || ''} onChange={e => set(k, e.target.value)} /></>);
   const tsel = (k, label) => (<><label>{label}</label><select value={c[k] || ''} onChange={e => set(k, e.target.value)}><option value="">— ٹیم منتخب کریں —</option>{c[k] && !teams.some(x => x.name === c[k]) && <option value={c[k]}>{c[k]}</option>}{teams.map(x => <option key={x.id} value={x.name}>{x.name}</option>)}</select></>);
   const show = (k, l) => (<label><input type="checkbox" checked={c[k] !== '0'} onChange={e => set(k, e.target.checked ? '1' : '0')} style={{ width: 'auto' }} /> {l}</label>);
   const pa = p => supabase.storage.from('announcements').getPublicUrl(p).data.publicUrl;
-  return (<div>
-    <h2>BJL Admin</h2>
+  return (<div className="admin-shell">
+    <aside className="admin-brand"><div className="admin-brand-mark">BJL</div><div><strong>BJL CONTROL</strong><small>SEASON 1 · ADMIN</small></div></aside>
+    <header className="admin-topbar"><div><span className="admin-eyebrow">MANAGEMENT CONSOLE</span><h1>BJL Admin Dashboard</h1><p>اپنی لیگ کی تمام سرگرمیاں ایک جگہ سے مینیج کریں۔</p></div><div className="admin-top-actions"><span className="admin-live"><i /> SYSTEM ONLINE</span><button className="btn admin-logout" onClick={logout}>Logout ↗</button></div></header>
     <datalist id="tn">{teams.map(x => <option key={x.id} value={x.name} />)}</datalist>
-    <div className="tabs">
+    <nav className="tabs admin-tabs" aria-label="Admin sections">
       {[['teams', 'ٹیمیں'], ['match', 'میچ سینٹر'], ['ann', 'اعلانات'], ['people', 'ٹیم تصاویر'], ['moms', 'BJL Moments'], ['quotes', 'اقوال'], ['set', 'سیٹنگ']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
       <button className="btn" onClick={logout}>Logout</button></div>
-    {msg && <div className="good">{msg}</div>}
+    {msg && <div className="good admin-message">{msg}</div>}
+    <section className="admin-stats" aria-label="Quick statistics">
+      <article className="admin-stat"><span className="admin-stat-icon blue">♧</span><div><small>کل ٹیمیں</small><strong>{teams.length}</strong><em>Registered teams</em></div></article>
+      <article className="admin-stat"><span className="admin-stat-icon green">✓</span><div><small>تصدیق شدہ ادائیگیاں</small><strong>{teams.filter(x => x.payment === 'verified').length}</strong><em>Verified payments</em></div></article>
+      <article className="admin-stat"><span className="admin-stat-icon amber">◷</span><div><small>زیرِ التواء ادائیگیاں</small><strong>{teams.filter(x => x.payment !== 'verified' && x.payment !== 'rejected').length}</strong><em>Awaiting review</em></div></article>
+      <article className="admin-stat"><span className="admin-stat-icon violet">▣</span><div><small>اعلانات</small><strong>{ann.length}</strong><em>Announcements</em></div></article>
+    </section>
+    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({teams:'Team Management',match:'Match Center',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',quotes:'Quotes & Content',set:'Website Settings'})[tab]}</strong></div>
     {tab === 'match' && (<><div className="card"><h3>آج کا فاتح</h3>
       {tsel('winner_team', 'جیتنے والی ٹیم')}{tsel('loser_team', 'مخالف (ہارنے والی) ٹیم')}{inp('winner_result', 'نتیجہ / مختصر اعلان (اختیاری)')}{inp('winner_date', 'میچ کی تاریخ', 'date')}{show('winner_show', 'ہوم پیج پر دکھائیں')}
       <button className="btn" onClick={() => save(['winner_team', 'loser_team', 'winner_result', 'winner_date', 'winner_show'])}>محفوظ کریں</button></div>
