@@ -126,6 +126,19 @@ export default function Admin() {
     setMsg(error ? error.message : 'Objection status updated.');
     loadObjections();
   }
+  async function saveObjectionNote(item) {
+    const note = prompt('Private admin note', item.admin_note || '');
+    if (note === null) return;
+    const { error } = await supabase.from('player_objections').update({ admin_note: note.trim() || null }).eq('id', item.id);
+    setMsg(error ? error.message : 'Admin note saved.');
+    loadObjections();
+  }
+  async function deleteObjection(item) {
+    if (!confirm('Permanently delete this objection?')) return;
+    const { error } = await supabase.from('player_objections').delete().eq('id', item.id);
+    setMsg(error ? error.message : 'Objection deleted.');
+    loadObjections();
+  }
   const pub = p => supabase.storage.from('player-photos').getPublicUrl(p).data.publicUrl;
   async function shot(pay) {
     const { data, error } = await supabase.storage.from('payments').createSignedUrl(pay.screenshot_path, 600);
@@ -360,7 +373,10 @@ export default function Admin() {
         <div className="admin-objection-head"><div><span className="admin-eyebrow">{o.reason}</span><h3>{o.players?.name || 'Player'} · {o.teams?.name || 'Team'}</h3></div><span className={'admin-objection-status '+o.status}>{o.status.toUpperCase()}</span></div>
         <p>{o.details || 'No description provided.'}</p>
         <small>Raised by <b>{o.raised_by || 'Not provided'}</b> · {formatDateTime(o.created_at)}</small>
-        <div className="row admin-objection-actions"><button className="btn" onClick={() => setObjectionStatus(o,'resolved')} disabled={o.status==='resolved'}>Mark Resolved</button><button className="btn alt" onClick={() => setObjectionStatus(o,'dismissed')} disabled={o.status==='dismissed'}>Dismiss</button><button className="btn alt" onClick={() => setObjectionStatus(o,'open')} disabled={o.status==='open'}>Reopen</button></div>
+        {o.admin_note && <p className="admin-private-note"><b>Admin note:</b> {o.admin_note}</p>}
+        <div className="row admin-objection-actions">
+          <button className="btn alt" onClick={() => saveObjectionNote(o)}>Admin Note</button>
+          <button className="btn alt" onClick={() => deleteObjection(o)}>Delete</button><button className="btn" onClick={() => setObjectionStatus(o,'resolved')} disabled={o.status==='resolved'}>Mark Resolved</button><button className="btn alt" onClick={() => setObjectionStatus(o,'dismissed')} disabled={o.status==='dismissed'}>Dismiss</button><button className="btn alt" onClick={() => setObjectionStatus(o,'open')} disabled={o.status==='open'}>Reopen</button></div>
       </article>)}
     </div>)}
     {tab === 'ann' && (<><form className="card" onSubmit={addAnn}><h3>New Announcement</h3>
