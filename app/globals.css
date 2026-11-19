@@ -183,3 +183,22 @@ main{padding-bottom:84px}
 .admin-shell .admin-tabs .btn{letter-spacing:.01em}
 .admin-shell .admin-tabs .btn.on{background:linear-gradient(110deg,#4a70f4,#2d50cb)!important;box-shadow:0 10px 24px #2447c655!important}
 @media(prefers-reduced-motion:reduce){.admin-shell .card,.admin-stat{transition:none!important}}
+
+
+/* Player objection workflow */
+.admin-player-row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #e9eef7}
+.admin-player-main{flex:1;min-width:0}
+.admin-objection-trigger{margin-top:8px}
+.admin-objection-form{display:grid;gap:7px;margin:12px 0;padding:14px;border:1px solid #dce5f8;border-radius:13px;background:linear-gradient(135deg,#f8faff,#eef3ff)}
+.admin-objection-form textarea{width:100%;resize:vertical}
+.admin-objection-mini{margin-top:10px;padding:10px 12px;border-radius:10px;background:#fff8eb;border:1px solid #f4e2bd;color:#66502a;font-size:12px}
+.admin-objection-mini small{color:#89764f}
+.admin-objection-card{border-left:4px solid #e0a12c!important}
+.admin-objection-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.admin-objection-head h3{margin:5px 0!important}
+.admin-objection-status{display:inline-flex;padding:6px 10px;border-radius:20px;font-size:10px;font-weight:900;letter-spacing:.08em;background:#fff2d9;color:#a76a09}
+.admin-objection-status.resolved{background:#e7f8ef;color:#21845a}
+.admin-objection-status.dismissed{background:#f0f2f6;color:#65718a}
+.admin-objection-actions{margin-top:14px;flex-wrap:wrap}
+.admin-objections-list> .card:first-child p{margin:6px 0 0;color:#7d8aa4}
+@media(max-width:700px){.admin-player-row{gap:9px}.admin-player-row img{width:42px;height:42px}.admin-objection-head{flex-direction:column}.admin-objection-actions .btn{flex:1}}
