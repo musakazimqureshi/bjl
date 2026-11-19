@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { adminSupabase as supabase } from '../../lib/adminSupabase';
 import { shrink } from '../../lib/img';
+const ADMIN_EMAIL = 'musakazim373@gmail.com';
 const ext = f => (f.type === 'image/png' ? 'png' : f.type === 'image/webp' ? 'webp' : 'jpg');
 const okImg = f => f && ['image/jpeg', 'image/png', 'image/webp'].includes(f.type) && f.size <= 15 * 1024 * 1024;
 export default function Admin() {
@@ -12,15 +13,21 @@ export default function Admin() {
   const [objections, setObjections] = useState([]); const [objectionPlayer, setObjectionPlayer] = useState(null); const [objectionDraft, setObjectionDraft] = useState({ reason: '', raised_by: '', details: '' });
   async function check() {
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) throw sessionError;
-      setLogged(!!session);
-      if (!session) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      const allowed = !!user && user.email?.toLowerCase() === ADMIN_EMAIL;
+      setLogged(allowed);
+      if (!allowed) {
         setIsAdmin(false);
+        if (user) await supabase.auth.signOut({ scope: 'local' });
       } else {
-        const { data, error } = await supabase.from('admins').select('id').eq('id', session.user.id).maybeSingle();
+        const { data, error } = await supabase.from('admins').select('id').eq('id', user.id).maybeSingle();
         if (error) throw error;
         setIsAdmin(!!data);
+        if (!data) {
+          await supabase.auth.signOut({ scope: 'local' });
+          setLogged(false);
+        }
       }
     } catch (error) {
       setLogged(false);
@@ -83,16 +90,52 @@ export default function Admin() {
     const { error } = await supabase.from('teams').delete().eq('id', tm.id); setMsg(error ? error.message : 'Team deleted'); loadTeams();
   }
   useEffect(() => { check(); }, []);
-  useEffect(() => { if (isAdmin) { load(); loadTeams(); loadObjections(); } }, [isAdmin]);
+  useEffect(() => {
+    if (!isAdmin) return;
+    load(); loadTeams(); loadObjections();
+    let checking = false;
+    const verifyActiveSession = async () => {
+      if (checking) return;
+      checking = true;
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user || user.email?.toLowerCase() !== ADMIN_EMAIL) throw userError || new Error('Admin session is no longer valid.');
+        const { data, error } = await supabase.from('admins').select('id').eq('id', user.id).maybeSingle();
+        if (error || !data) {
+          await supabase.auth.signOut({ scope: 'local' });
+          setLogged(false); setIsAdmin(false);
+          setMsg('This admin session has ended because a new login was detected. Please sign in again.');
+        }
+      } catch (error) {
+        await supabase.auth.signOut({ scope: 'local' });
+        setLogged(false); setIsAdmin(false);
+        setMsg('Your admin session has expired. Please sign in again.');
+      } finally { checking = false; }
+    };
+    const id = window.setInterval(verifyActiveSession, 15000);
+    return () => window.clearInterval(id);
+  }, [isAdmin]);
   async function login(e) {
     e.preventDefault();
     setMsg('');
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: pw });
+    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: pw });
     if (error) return setMsg(error.message);
+    if (data.user?.email?.toLowerCase() !== ADMIN_EMAIL) {
+      await supabase.auth.signOut({ scope: 'local' });
+      return setMsg('Access denied. Only the authorized administrator account can sign in.');
+    }
+    const { error: revokeError } = await supabase.auth.signOut({ scope: 'others' });
+    if (revokeError) {
+      await supabase.auth.signOut({ scope: 'local' });
+      return setMsg('Could not safely replace the previous admin session. Please try again.');
+    }
     setPw('');
     await check();
   }
-  async function logout() { await supabase.auth.signOut(); setLogged(false); setIsAdmin(false); }
+  async function logout() {
+    await supabase.auth.signOut({ scope: 'global' });
+    setLogged(false); setIsAdmin(false);
+  }
   const set = (k, v) => setC(x => ({ ...x, [k]: v }));
   async function save(keys) {
     setMsg('');
@@ -210,7 +253,7 @@ export default function Admin() {
       <label>Image</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setF({ ...f, file: e.target.files[0] })} />
       <button className="btn">Publish</button></form>
       {ann.map((a, i) => (<div className="card" key={a.id}><b>{a.title}</b> <small>{a.announce_date}</small> {a.published ? '✅' : '⛔'}
-        <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt" onClick={() => move(i, -1)}>▲</button><button className="btn alt" onClick={() => move(i, 1)}>▼</button><button className="btn alt" onClick={() => editAnn(a)}>Edit</button><button className="btn alt" onClick={() => toggle(a)}>{a.published ? 'Hide' : 'Show'}</button>
+        <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt admin-reorder" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move announcement up" title="Move up"><span aria-hidden="true">↑</span><small>UP</small></button><button className="btn alt admin-reorder" onClick={() => move(i, 1)} disabled={i === ann.length - 1} aria-label="Move announcement down" title="Move down"><span aria-hidden="true">↓</span><small>DOWN</small></button><button className="btn alt" onClick={() => editAnn(a)}>Edit</button><button className="btn alt" onClick={() => toggle(a)}>{a.published ? 'Hide' : 'Show'}</button>
           <button className="btn" onClick={() => del(a)}>Delete Team</button></div></div>))}</>)}
     {tab === 'people' && (<>{[[1, 'AMAN MALIK – MEMBER'], [2, 'WALEED AFRIDI – MEMBER'], [3, 'MUHAMMAD HASNAIN – MEMBER'], [4, 'FALAK – ORGANIZER']].map(([n, l]) => (<div className="card" key={n}><h3>{l}</h3>
       {c['person' + n + '_path'] && <img src={pa(c['person' + n + '_path'])} alt="" width="90" style={{ borderRadius: 8 }} />}
@@ -234,7 +277,7 @@ export default function Admin() {
       <label>Reference</label><input value={qf.ref} onChange={e => setQf({ ...qf, ref: e.target.value })} />
       <button className="btn">Add Quote</button></form>
       {qs.map((x, i) => (<div className="card" key={x.id} dir="rtl"><small>{i + 1}</small> {x.published ? '✅' : '⛔'}<p>{x.body}</p><small>{x.book} · {x.ref}</small>
-        <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt" onClick={() => moveQuote(i, -1)}>▲</button><button className="btn alt" onClick={() => moveQuote(i, 1)}>▼</button>
+        <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt admin-reorder" onClick={() => moveQuote(i, -1)} disabled={i === 0} aria-label="Move quote up" title="Move up"><span aria-hidden="true">↑</span><small>UP</small></button><button className="btn alt admin-reorder" onClick={() => moveQuote(i, 1)} disabled={i === qs.length - 1} aria-label="Move quote down" title="Move down"><span aria-hidden="true">↓</span><small>DOWN</small></button>
           <button className="btn alt" onClick={() => editQuote(x)}>Edit</button><button className="btn alt" onClick={() => togQuote(x)}>{x.published ? 'Hide' : 'Publish'}</button><button className="btn alt" onClick={() => delQuote(x)}>Delete Team</button></div></div>))}</>)}
     {tab === 'set' && (<div className="card"><h3>WhatsApp Contact Button</h3>
       {inp('falak_whatsapp', 'WhatsApp Number (international format, e.g. 923001234567)')}{inp('falak_btn', 'Button Text')}{inp('falak_msg', 'Default WhatsApp Message')}
