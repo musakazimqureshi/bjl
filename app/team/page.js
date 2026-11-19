@@ -9,10 +9,10 @@ const ROLE = { batter: 'Batsman', bowler: 'Bowler', all_rounder: 'All-Rounder', 
 export default function TeamLogin() {
   const { lang } = useLang(); const tx = (e, u) => (lang === 'ur' ? u : e);
   const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
-  const [user, setUser] = useState(null); const [teams, setTeams] = useState(null);
+  const [user, setUser] = useState(null); const [teams, setTeams] = useState(null); const [objections, setObjections] = useState([]); const [opponents, setOpponents] = useState([]); const [opponentId, setOpponentId] = useState(''); const [playerId, setPlayerId] = useState(''); const [reason, setReason] = useState(''); const [details, setDetails] = useState(''); const [sending, setSending] = useState(false);
   async function load(u) {
     const { data, error } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').eq('captain_email', (u.email || '').toLowerCase());
-    if (error) setMsg(error.message); setTeams(data || []);
+    if (error) setMsg(error.message); setTeams(data || []);\n    const ownIds = (data || []).map(t => t.id);\n    const [otherResult, objectionResult] = await Promise.all([supabase.from('teams').select('id,name,players:players!players_team_id_fkey(id,name,age,position)').not('id','in', '(' + ownIds.join(',') + ')').order('name'), supabase.from('player_objections').select('*, players(name,age), teams(name)').order('created_at',{ascending:false})]);\n    setOpponents(otherResult.data || []); if (otherResult.error) setMsg(otherResult.error.message); setObjections(objectionResult.data || []); if (objectionResult.error) setMsg(objectionResult.error.message);
   }
   useEffect(() => {
     let active = true;
@@ -32,6 +32,22 @@ export default function TeamLogin() {
     const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: pw });
     if (error) return setMsg(tx('Wrong email or password.', 'ای میل یا پاسورڈ غلط ہے۔'));
     setUser(data.user); load(data.user);
+  }
+  async function submitObjection(e, ownTeam) {
+    e.preventDefault(); setSending(true); setMsg('');
+    try {
+      if (!opponentId || !playerId || !reason || details.trim().length < 10) throw new Error(tx('Select an opposing team, player, reason and provide at least 10 characters of detail.', 'مخالف ٹیم، کھلاڑی، وجہ منتخب کریں اور کم از کم 10 حروف کی تفصیل لکھیں۔'));
+      const { error } = await supabase.from('player_objections').insert({
+        source_team_id: ownTeam.id, team_id: opponentId, player_id: playerId,
+        reason, details: details.trim(), raised_by: (user.email || '').toLowerCase(), status: 'open'
+      });
+      if (error) throw error;
+      setMsg(tx('Your objection has been submitted for admin review.', 'آپ کا اعتراض ایڈمن کے جائزے کے لیے جمع ہو گیا ہے۔'));
+      setReason(''); setDetails(''); setOpponentId(''); setPlayerId('');
+      const { data } = await supabase.from('player_objections').select('*, players(name,age), teams(name)').order('created_at',{ascending:false});
+      setObjections(data || []);
+    } catch (err) { setMsg(err.message || 'Could not submit objection.'); }
+    finally { setSending(false); }
   }
   async function logout() { await supabase.auth.signOut(); setUser(null); setTeams(null); }
   const status = tm => {
@@ -55,6 +71,22 @@ export default function TeamLogin() {
           <span className={'badge ' + (tm.payment === 'verified' ? 'v' : 'n')}>{tm.payment === 'verified' ? '✓ VERIFIED' : 'NOT VERIFIED'}</span>
           <p>{status(tm)}</p>
           {tm.payment !== 'verified' && <Link className="btn" href={'/pay?ref=' + tm.reg_id}>{tx('Go to Payment', 'ادائیگی کے صفحے پر جائیں')}</Link>}
+          <section className="card">
+            <h3>{tx('Report an Objection / Appeal', 'اعتراض یا اپیل جمع کریں')}</h3>
+            <p>{tx('Select an opposing registered team and the player you want the admin to review.', 'مخالف رجسٹرڈ ٹیم اور اس کھلاڑی کو منتخب کریں جس کا ایڈمن سے جائزہ کروانا ہے۔')}</p>
+            <form onSubmit={e => submitObjection(e, tm)}>
+              <label>{tx('Opposing Team', 'مخالف ٹیم')}</label>
+              <select required value={opponentId} onChange={e => {setOpponentId(e.target.value);setPlayerId('');}}><option value="">{tx('Select team','ٹیم منتخب کریں')}</option>{opponents.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}</select>
+              <label>{tx('Player', 'کھلاڑی')}</label>
+              <select required value={playerId} onChange={e=>setPlayerId(e.target.value)}><option value="">{tx('Select player','کھلاڑی منتخب کریں')}</option>{(opponents.find(o=>o.id===opponentId)?.players||[]).map(p=><option key={p.id} value={p.id}>{p.name} · {p.age}</option>)}</select>
+              <label>{tx('Reason', 'وجہ')}</label>
+              <select required value={reason} onChange={e=>setReason(e.target.value)}><option value="">{tx('Select reason','وجہ منتخب کریں')}</option>{['Over Age','Senior Player','Ineligible Player','Incorrect Information','Other'].map(x=><option key={x}>{x}</option>)}</select>
+              <label>{tx('Details', 'تفصیل')}</label><textarea required minLength={10} rows={4} value={details} onChange={e=>setDetails(e.target.value)} placeholder={tx('Explain your objection clearly...','اپنا اعتراض واضح طور پر لکھیں...')} />
+              <button className="btn" disabled={sending}>{sending?tx('Submitting...','جمع ہو رہا ہے...'):tx('Submit Objection','اعتراض جمع کریں')}</button>
+            </form>
+            <h3>{tx('My Objections / Appeal History','میرے اعتراضات اور اپیلز')}</h3>
+            {objections.length ? objections.map(o=><div className="card" key={o.id}><b>{o.teams?.name || tx('Opposing team','مخالف ٹیم')}</b><p>{o.players?.name} · {o.reason}</p><small>{formatDateTime(o.created_at)} · {o.status || 'open'}</small>{o.admin_note && <p>{tx('Admin note: ','ایڈمن نوٹ: ')}{o.admin_note}</p>}</div>) : <p>{tx('No objections submitted yet.','ابھی کوئی اعتراض جمع نہیں کیا گیا۔')}</p>}
+          </section>
           <div className="pgrid">{ps.map((p, i) => (<div key={p.id} className="pl"><img className="ph sm" src={pub(p.photo_path)} alt="" /><div>{p.name}</div>
             <small>{ROLE[p.position]} · {p.age}</small>{i < 2 && <small dir="ltr"> ★ {p.mobile}</small>}</div>))}</div></div>); })}</>)}
   </>);
