@@ -292,7 +292,7 @@ export default function Admin() {
     <header className="admin-topbar"><div><span className="admin-eyebrow">MANAGEMENT CONSOLE</span><h1>BJL Admin Dashboard</h1><p>Manage your tournament, teams, matches and player reviews in one place.</p></div><div className="admin-top-actions"><button className="admin-profile-chip" onClick={() => { setTab('profile'); setMsg(''); }} aria-label="Open your admin profile"><span className="admin-profile-chip-photo">{profile.photo_path ? <img src={pa(profile.photo_path)} alt="" /> : 'MK'}</span><span><b>{profile.name || 'Musa Kazim'}</b><small>Administrator</small></span></button><span className="admin-live"><i /> SYSTEM ONLINE</span><button className="btn admin-logout" onClick={logout}>Logout ↗</button></div></header>
     <datalist id="tn">{teams.map(x => <option key={x.id} value={x.name} />)}</datalist>
     <nav className="tabs admin-tabs" aria-label="Admin sections">
-      {[['overview', 'Overview'], ['teams', 'Teams'], ['match', 'Match Center'], ['objections', 'Player Objections'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['quotes', 'Quotes'], ['set', 'Settings'], ['profile', 'My Profile']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
+      {[['overview', 'Overview'], ['teams', 'Teams'], ['match', 'Match Center'], ['objections', 'Operations by Admin / Objections'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['quotes', 'Quotes'], ['set', 'Settings'], ['profile', 'My Profile']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
       </nav>
     {msg && <div className="good admin-message">{msg}</div>}
     <section className="admin-stats" aria-label="Live tournament statistics">
@@ -360,7 +360,7 @@ export default function Admin() {
         <div className="admin-objection-head"><div><span className="admin-eyebrow">{o.reason}</span><h3>{o.players?.name || 'Player'} · {o.teams?.name || 'Team'}</h3></div><span className={'admin-objection-status '+o.status}>{o.status.toUpperCase()}</span></div>
         <p>{o.details || 'No description provided.'}</p>
         <small>Raised by <b>{o.raised_by || 'Not provided'}</b> · {formatDateTime(o.created_at)}</small>
-        <div className="row admin-objection-actions"><button className="btn" onClick={() => setObjectionStatus(o,'resolved')} disabled={o.status==='resolved'}>Mark Resolved</button><button className="btn alt" onClick={() => setObjectionStatus(o,'dismissed')} disabled={o.status==='dismissed'}>Dismiss</button><button className="btn alt" onClick={() => setObjectionStatus(o,'open')} disabled={o.status==='open'}>Reopen</button></div>
+        <div className="row admin-objection-actions"><button className="btn alt" onClick={() => setObjectionStatus(o,'under_review')} disabled={o.status==='under_review'}>Under Review</button><button className="btn" onClick={() => setObjectionStatus(o,'resolved')} disabled={o.status==='resolved'}>Resolve / Hide Public</button><button className="btn alt" onClick={() => setObjectionStatus(o,'dismissed')} disabled={o.status==='dismissed'}>Dismiss / Hide Public</button><button className="btn alt" onClick={() => setObjectionStatus(o,'open')} disabled={o.status==='open'}>Reopen Public</button></div><small>Resolved or dismissed objections remain in admin records and disappear from the public website.</small>
       </article>)}
     </div>)}
     {tab === 'ann' && (<><form className="card" onSubmit={addAnn}><h3>New Announcement</h3>
@@ -402,6 +402,15 @@ export default function Admin() {
       {inp('falak_whatsapp', 'WhatsApp Number (international format, e.g. 923001234567)')}{inp('falak_btn', 'Button Text')}{inp('falak_msg', 'Default WhatsApp Message')}
       <label><input type="checkbox" style={{ width: 'auto' }} checked={c.registration_open !== 'false'} onChange={e => set('registration_open', e.target.checked ? 'true' : 'false')} /> Team registration is open</label>
       <button className="btn" onClick={() => save(['falak_whatsapp', 'falak_btn', 'falak_msg', 'registration_open'])}>Save Changes</button></div>
+      <div className="card admin-site-copy">
+        <h3>Homepage Information Controls</h3><p>Edit the public How to Register, Rules and Prizes sections.</p>
+        <label>How to Register</label><textarea rows="5" value={c.how_to_register || ''} onChange={e => set('how_to_register', e.target.value)} placeholder="Enter registration steps, one per line..." />
+        <button className="btn" onClick={() => save(['how_to_register'])}>Save How to Register</button>
+        <label>Rules</label><textarea rows="5" value={c.rules || ''} onChange={e => set('rules', e.target.value)} placeholder="Enter tournament rules, one per line..." />
+        <button className="btn" onClick={() => save(['rules'])}>Save Rules</button>
+        <label>Prizes</label><textarea rows="5" value={c.prizes || ''} onChange={e => set('prizes', e.target.value)} placeholder="Enter prizes, one per line..." />
+        <button className="btn" onClick={() => save(['prizes'])}>Save Prizes</button>
+      </div>
       <div className="card admin-moment-settings"><h3>Homepage Moments · Image Fit & Zoom</h3>
         <p>Control how player and team photos appear in the Moments carousel on the public homepage.</p>
         <label>Image Fit</label><select value={c.moments_fit || 'cover'} onChange={e => set('moments_fit', e.target.value)}><option value="cover">Fill frame (Cover)</option><option value="contain">Show full photo (Contain)</option></select>
