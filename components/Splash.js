@@ -197,10 +197,10 @@ export default function Splash() {
 
   if (!visible) return null;
   return (
-    <div className={'splash' + (fade ? ' fade' : '')} role="dialog" aria-label="Welcome to BGL Season 1">
+    <div className={'splash' + (fade ? ' fade' : '')} role="dialog" aria-label="Welcome to BJL Season 1">
       <div className="sp-in">
         <div className="sp-kicker">BATTAGRAM JUNIOR LEAGUE</div>
-        <div className="sp-t">WELCOME TO<br /><span>BGL SEASON 1</span></div>
+        <div className="sp-t">WELCOME TO<br /><span>BJL SEASON 1</span></div>
         <div className="sp-line" />
         <div className="sp-s">{phase === 0 ? 'BATTAGRAM JUNIOR LEAGUE' : phase === 1 ? 'THE GAME BEGINS HERE' : 'SIXER! · BATTAGRAM JUNIOR LEAGUE'}</div>
       </div>
