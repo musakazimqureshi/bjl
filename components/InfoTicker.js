@@ -15,6 +15,6 @@ export default function InfoTicker() {
   }, []);
   if (pathname?.startsWith('/admin')) return null;
   const items = ['TAPE BALL CRICKET', 'ENTRY FEE · RS. 5,000', 'VENUE · DAB GROUND, BATTAGRAM'];
-  if (total !== null && total > 0) items.push(`REGISTERED TEAMS · ${total}`);
-  return <div className="bjl-ticker" aria-label="BJL tournament information"><div className="bjl-ticker-track">{[...items, ...items].map((item, i) => <span key={i}><i aria-hidden="true" />{item}</span>)}</div></div>;
+  if (total !== null && total > 0) items.push(`TEAMS REGISTERED · ${total}`);
+  return <div className="bjl-ticker" aria-label="BJL tournament information"><div className="bjl-ticker-track">{[...items, ...items].map((item, i) => <span key={i}><i aria-hidden="true" />{item}</span>)}<a className="bjl-ticker-register" href="/register">REGISTER YOUR TEAM ↗</a><a className="bjl-ticker-register" href="/register">REGISTER YOUR TEAM ↗</a></div></div>;
 }
