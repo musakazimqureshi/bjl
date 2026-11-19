@@ -5,7 +5,7 @@ export default function MotionObserver() {
   const pathname = usePathname();
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const nodes = [...document.querySelectorAll('.hero,.duo > .card,main > .card,.official-group,.quotes,.orgwrap,.mem > .pp,.ppl > .pp')];
+    const nodes = [...document.querySelectorAll('.hero,main > section,main > .card,.duo > .card,.official-group,.quotes,.orgs,.orgwrap,.mem > .pp,.ppl > .pp,.match-card,.team-card,.announcement-card,.moment-card,.section-block')];
     const unique = [...new Set(nodes)];
     unique.forEach((el, i) => {
       el.classList.add('motion-item');
