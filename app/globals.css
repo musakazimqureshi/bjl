@@ -984,3 +984,117 @@ body:has(.hdr) main form .card select{
 body:has(.hdr) main form .card input::placeholder{color:#737d8e!important;opacity:1}
 body:has(.hdr) main > h2{color:#202638!important;font-weight:900!important}
 body:has(.hdr) main > h3{color:#30394b!important;font-weight:850!important}
+
+
+/* BJL PUBLIC V6 — final legibility pass for forms, team cards and admin text.
+   Preserve layout and all behavior; improve contrast, size and readability only. */
+body:has(.hdr) main form .card,
+body:has(.hdr) main .two > .card{
+  background:linear-gradient(160deg,#ffffff 0%,#f8faff 100%)!important;
+  color:#202b40!important;
+  border:1px solid #cbd5e3!important;
+  box-shadow:0 9px 24px #17203316!important;
+}
+body:has(.hdr) main form .card :where(b,strong,label,small,p,span,div){
+  color:#27344a!important;
+  opacity:1!important;
+}
+body:has(.hdr) main form .card label{
+  display:block!important;
+  margin:8px 0 5px!important;
+  color:#263751!important;
+  font-size:1rem!important;
+  line-height:1.5!important;
+  font-weight:800!important;
+}
+body:has(.hdr) main form .card b,
+body:has(.hdr) main form .card > strong{
+  color:#172b4d!important;
+  font-size:1.02rem!important;
+  font-weight:850!important;
+}
+body:has(.hdr) main form .card small{
+  color:#53627a!important;
+  font-size:.88rem!important;
+  line-height:1.55!important;
+}
+body:has(.hdr) main form .card input,
+body:has(.hdr) main form .card select,
+body:has(.hdr) main form .card textarea{
+  min-height:46px!important;
+  background:#fff!important;
+  color:#17243a!important;
+  border:1.5px solid #aebbd0!important;
+  border-radius:9px!important;
+  font-size:16px!important;
+  font-weight:550!important;
+}
+body:has(.hdr) main form .card input::placeholder,
+body:has(.hdr) main form .card textarea::placeholder{
+  color:#65738a!important;
+  opacity:1!important;
+}
+body:has(.hdr) main form .card input:focus,
+body:has(.hdr) main form .card select:focus,
+body:has(.hdr) main form .card textarea:focus{
+  border-color:#315fbb!important;
+  box-shadow:0 0 0 3px #315fbb22!important;
+}
+body:has(.hdr) main .two > .card :where(b,small,div,span){
+  color:#26344b!important;
+  opacity:1!important;
+}
+body:has(.hdr) main .two > .card > b{
+  color:#172b4d!important;
+  font-size:1.05rem!important;
+  font-weight:850!important;
+}
+body:has(.hdr) main .two > .card small{
+  color:#56647a!important;
+  font-size:.84rem!important;
+}
+body:has(.hdr) main .two > .card .badge.v{color:#14663e!important}
+body:has(.hdr) main .two > .card .badge.n{color:#9b1d32!important}
+body:has(.hdr) main > form > h2,
+body:has(.hdr) main > h2,
+body:has(.hdr) main > h3{
+  color:#17243a!important;
+  font-weight:900!important;
+}
+body:has(.hdr) main :where(.card p,.card small,.card label,.card b,.card strong){
+  text-shadow:none!important;
+}
+body:has(.hdr) main .card .big{
+  color:#a81735!important;
+  font-weight:900!important;
+}
+body:has(.hdr) main .card :where(.good){color:#176b42!important}
+body:has(.hdr) main .card :where(.err){color:#9e1b31!important}
+body:has(.hdr) main .card :where(.warn){color:#87470b!important}
+
+/* Admin workspace: raise muted labels and supporting text to readable contrast. */
+.admin-shell .card :where(p,small,label,td,th,li,dt,dd){
+  color:#3d4c65!important;
+  opacity:1!important;
+}
+.admin-shell .card label{
+  color:#263d5e!important;
+  font-size:.84rem!important;
+  font-weight:800!important;
+}
+.admin-shell .card small{
+  color:#53647e!important;
+  font-size:.78rem!important;
+}
+.admin-shell input::placeholder,
+.admin-shell textarea::placeholder{
+  color:#687992!important;
+  opacity:1!important;
+}
+.admin-shell table :where(th,td){
+  color:#263750!important;
+}
+@media(max-width:700px){
+  body:has(.hdr) main form .card label{font-size:.96rem!important}
+  body:has(.hdr) main form .card small{font-size:.84rem!important}
+}
