@@ -11,7 +11,7 @@ export default function Admin() {
   const [tab, setTab] = useState('overview'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
   const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
   const [objections, setObjections] = useState([]); const [objectionPlayer, setObjectionPlayer] = useState(null); const [objectionDraft, setObjectionDraft] = useState({ reason: '', raised_by: '', details: '' });
-  const [profile, setProfile] = useState({ name: 'Musa Kazim Qureshi', role: 'Founder & Organizer · Battagram Junior League', bio: '', photo_path: '' });
+  const [profile, setProfile] = useState({ name: 'Musa Kazim Qureshi', role: 'Founder & Organizer · Battagram Junior League', bio: 'Building a strong cricket community in Battagram.', photo_path: '/demo-admin-avatar.svg' });
   const [profileFile, setProfileFile] = useState(null); const [profileSaving, setProfileSaving] = useState(false);
   async function check() {
     try {
@@ -55,7 +55,7 @@ export default function Admin() {
       name: data?.display_name || 'Musa Kazim Qureshi',
       role: data?.role || 'Founder & Organizer · Battagram Junior League',
       bio: data?.bio || '',
-      photo_path: data?.photo_path || ''
+      photo_path: data?.photo_path || '/demo-admin-avatar.svg'
     });
   }
   async function saveProfile(e) {
@@ -277,7 +277,7 @@ export default function Admin() {
   const inp = (k, label, type = 'text') => (<><label>{label}</label><input type={type} list={['winner_team', 'loser_team', 'next_a', 'next_b'].includes(k) ? 'tn' : undefined} value={c[k] || ''} onChange={e => set(k, e.target.value)} /></>);
   const tsel = (k, label) => (<><label>{label}</label><select value={c[k] || ''} onChange={e => set(k, e.target.value)}><option value="">— Select a team —</option>{c[k] && !teams.some(x => x.name === c[k]) && <option value={c[k]}>{c[k]}</option>}{teams.map(x => <option key={x.id} value={x.name}>{x.name}</option>)}</select></>);
   const show = (k, l) => (<label><input type="checkbox" checked={c[k] !== '0'} onChange={e => set(k, e.target.checked ? '1' : '0')} style={{ width: 'auto' }} /> {l}</label>);
-  const pa = p => supabase.storage.from('announcements').getPublicUrl(p).data.publicUrl;
+  const pa = p => p?.startsWith('/') ? p : supabase.storage.from('announcements').getPublicUrl(p).data.publicUrl;
   return (<div className="admin-shell">
     <aside className="admin-brand"><div className="admin-brand-mark">BJL</div><div><strong>BJL CONTROL</strong><small>SEASON 1 · ADMIN</small></div></aside>
     <header className="admin-topbar"><div><span className="admin-eyebrow">MANAGEMENT CONSOLE</span><h1>BJL Admin Dashboard</h1><p>Manage your tournament, teams, matches and player reviews in one place.</p></div><div className="admin-top-actions"><button className="admin-profile-chip" onClick={() => { setTab('profile'); setMsg(''); }} aria-label="Open your admin profile"><span className="admin-profile-chip-photo">{profile.photo_path ? <img src={pa(profile.photo_path)} alt="" /> : 'MK'}</span><span><b>{profile.name || 'Musa Kazim'}</b><small>Administrator</small></span></button><span className="admin-live"><i /> SYSTEM ONLINE</span><button className="btn admin-logout" onClick={logout}>Logout ↗</button></div></header>
@@ -307,7 +307,7 @@ export default function Admin() {
         </article>
         <form className="admin-panel admin-profile-form" onSubmit={saveProfile}>
           <div className="admin-panel-head"><div><h3>Personal information</h3><p>Only the authorized administrator can edit this profile.</p></div><span className="admin-panel-icon">✎</span></div>
-          <label htmlFor="admin-profile-photo">Profile photo</label>
+          <label htmlFor="admin-profile-photo">Profile photo <span className="admin-demo-photo-note">Demo photo is active · You can replace it anytime</span></label>
           <div className="admin-photo-upload-row"><div className="admin-profile-upload-thumb">{profileFile ? <img src={URL.createObjectURL(profileFile)} alt="Selected profile" /> : profile.photo_path ? <img src={pa(profile.photo_path)} alt="Current profile" /> : <span>MK</span>}</div><div className="admin-photo-upload-copy"><b>Upload your portrait</b><small>JPG, PNG or WEBP · Maximum 15 MB</small><input id="admin-profile-photo" type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setProfileFile(e.target.files?.[0] || null)} /></div></div>
           <label htmlFor="admin-profile-name">Full name</label><input id="admin-profile-name" required maxLength={80} value={profile.name} onChange={e => setProfile(v => ({ ...v, name: e.target.value }))} placeholder="Musa Kazim Qureshi" />
           <label htmlFor="admin-profile-role">Position / designation</label><input id="admin-profile-role" required maxLength={100} value={profile.role} onChange={e => setProfile(v => ({ ...v, role: e.target.value }))} placeholder="Founder & Organizer · Battagram Junior League" />
