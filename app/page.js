@@ -80,6 +80,9 @@ export default function Home() {
     <People inline />
     <div className="card"><div className="big">{s.total} {t('teamsRegistered')}</div>
       <div>✓ {t('verifiedT')}: {s.verified}</div><div>{t('notVerifiedT')}: {s.not_verified}</div><small>{t('fee')}</small></div>
+    <section className="bjl-info-grid" aria-label="Tournament information">
+      {[['How to Register', c.how_to_register, '📝'], ['Rules', c.rules, '📋'], ['Prizes', c.prizes, '🏆']].map(([title, body, symbol]) => body?.trim() ? <article className="card bjl-info-card" key={title}><span className="bjl-info-icon">{symbol}</span><h2>{title}</h2><div className="bjl-info-copy">{body}</div></article> : null)}
+    </section>
     <h2>{t('contactTitle')}</h2>
     {CONTACTS.map((x, i) => (<div className="card" key={x.num}><div className="help-contact-name">{x.name}</div><div className="help-contact-role">{t(x.role)}</div>{i !== 0 && <div className="help-contact-number" dir="ltr">{x.disp}</div>}
       <div style={{ marginTop: 8 }}><a className="btn" href={`https://wa.me/${i === 0 && c.falak_whatsapp ? c.falak_whatsapp : x.num}?text=${encodeURIComponent((i === 0 && c.falak_msg) || t(x.msg))}`} target="_blank" rel="noopener noreferrer">{i === 0 ? (c.falak_btn || t('askFalak')) : t('wa')}</a></div></div>))}
