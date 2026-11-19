@@ -263,3 +263,63 @@ main{padding-bottom:84px}
  .hero .row .btn,.duo .card,.sqimg,.pp,.pp img,.quote-nav span,.hdr nav a{transition:none!important}
  .hero .row .btn:after,.hdr nav a:after{display:none}
 }
+
+
+/* BJL intro: 4-second welcome followed by a two-second batsman six */
+.sp-shot-scene{position:relative;width:min(390px,88vw);height:190px;margin:18px auto 0;overflow:hidden;border-bottom:2px solid #d4af37;border-radius:0 0 18px 18px;background:linear-gradient(180deg,#07101d00,#07101d99)}
+.sp-shot-stumps{position:absolute;right:26px;bottom:0;height:46px;display:flex;gap:5px;align-items:flex-end}
+.sp-shot-stumps i{display:block;width:4px;height:42px;border-radius:3px;background:#f2e6c6;box-shadow:0 0 8px #fff8}
+.sp-batsman{position:absolute;left:24%;bottom:0;width:150px;height:174px;transform-origin:75% 70%;animation:spBatterSwing 1.65s cubic-bezier(.3,.7,.2,1) both}
+.sp-shot-ball{position:absolute;left:48%;top:47%;width:11px;height:11px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px #c21c2b,0 0 16px #fff;animation:spSixBall 1.65s cubic-bezier(.18,.8,.22,1) both}
+.sp-shot-ball:after{content:"";position:absolute;inset:1px 4px;border-left:1px solid #c21c2b;transform:rotate(35deg)}
+.sp-six{position:absolute;right:5%;top:14%;font-size:clamp(2.2rem,10vw,4rem);font-weight:1000;font-style:italic;letter-spacing:.08em;color:#ffe58a;text-shadow:0 0 12px #ffb000,0 0 35px #e0242b;opacity:0;transform:scale(.35) rotate(-12deg);animation:spSixPop .5s 1.08s cubic-bezier(.15,.9,.25,1.3) forwards}
+@keyframes spBatterSwing{0%,20%{transform:rotate(0)}48%{transform:rotate(-34deg)}70%,100%{transform:rotate(22deg)}}
+@keyframes spSixBall{0%,34%{left:48%;top:48%;transform:scale(1)}48%{left:38%;top:39%;transform:scale(1.05)}100%{left:93%;top:-6%;transform:scale(.55)}}
+@keyframes spSixPop{to{opacity:1;transform:scale(1) rotate(-8deg)}}
+.splash .sp-in{animation:spWelcomeSettle .7s both}
+@keyframes spWelcomeSettle{from{opacity:0;transform:translateY(14px) scale(.97);filter:blur(5px)}to{opacity:1;transform:none;filter:blur(0)}}
+
+/* Cinematic hard-ball path in the homepage hero, four changing positions */
+.hero{overflow:hidden}
+.stadium-ball{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:.92}
+.stadium-ball span{position:absolute;left:8%;top:20%;width:17px;height:17px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#fff 0 15%,#e9e5db 30%,#b8b1a7 72%,#777 100%);box-shadow:0 0 0 2px #d62934,0 0 18px #fff9;animation:stadiumBallRoute 11s cubic-bezier(.45,.05,.55,.95) infinite}
+.stadium-ball span:after{content:"";position:absolute;left:7px;top:1px;height:15px;border-left:1.5px dashed #bd1828;transform:rotate(35deg)}
+.stadium-ball:after{content:"";position:absolute;width:70px;height:2px;left:8%;top:20%;background:linear-gradient(90deg,transparent,#fff9);filter:blur(1px);transform-origin:right center;animation:stadiumBallTrail 11s ease-in-out infinite}
+@keyframes stadiumBallRoute{
+  0%,8%{left:8%;top:20%;transform:rotate(0) scale(.8)}
+  24%{left:77%;top:13%;transform:rotate(260deg) scale(1.1)}
+  26%{left:77%;top:13%;transform:rotate(360deg) scale(1.1)}
+  49%{left:87%;top:76%;transform:rotate(720deg) scale(.92)}
+  51%{left:87%;top:76%;transform:rotate(800deg) scale(.92)}
+  75%{left:18%;top:82%;transform:rotate(1150deg) scale(1.08)}
+  77%{left:18%;top:82%;transform:rotate(1220deg) scale(1.08)}
+  100%{left:8%;top:20%;transform:rotate(1500deg) scale(.8)}
+}
+@keyframes stadiumBallTrail{0%,8%{left:8%;top:20%;opacity:0;transform:rotate(0)}24%,49%,75%{opacity:.7}100%{left:8%;top:20%;opacity:0;transform:rotate(0)}}
+
+/* Homepage tournament cards and BJL badge motion */
+.hero .shield{position:relative;animation:bjlBadgeFloat 3.8s ease-in-out infinite,bjlLogoGlow 2.8s ease-in-out infinite}
+@keyframes bjlLogoGlow{0%,100%{filter:drop-shadow(0 0 2px #d4af37)}50%{filter:drop-shadow(0 0 12px #ff3942)}}
+.duo .mc{overflow:hidden;isolation:isolate}
+.duo .mc:after{content:"";position:absolute;z-index:-1;inset:0;background:linear-gradient(115deg,transparent 15%,#ffffff0b 48%,transparent 70%);transform:translateX(-130%);animation:matchCardShine 7s ease-in-out infinite}
+.duo .mc:nth-child(2):after{animation-delay:2.5s}
+@keyframes matchCardShine{0%,65%{transform:translateX(-130%)}85%,100%{transform:translateX(130%)}}
+.duo .mc h3{animation:matchLabelPulse 3.5s ease-in-out infinite}
+.duo .mc .team{display:inline-block;animation:teamNameLift 3.8s ease-in-out infinite}
+.duo .mc .team:nth-of-type(2){animation-delay:.5s}
+@keyframes matchLabelPulse{0%,100%{text-shadow:0 0 0 #e0242b00}50%{text-shadow:0 0 12px #e0242b88}}
+@keyframes teamNameLift{0%,100%{filter:drop-shadow(0 0 0 #d4af3700)}50%{filter:drop-shadow(0 0 8px #d4af3788)}}
+.duo .vsx{animation:bjlVsBeat 1.6s ease-in-out infinite}
+.duo .card h3{letter-spacing:.025em}
+.moments-frame{width:100%;aspect-ratio:1/1;overflow:hidden;border-radius:8px;background:#090b12;display:grid;place-items:center;cursor:zoom-in;position:relative}
+.moments-frame:after{content:"";position:absolute;inset:0;border:1px solid #d4af3755;border-radius:8px;pointer-events:none}
+.moments-frame .sqimg{width:100%;height:100%;aspect-ratio:auto;object-position:center;transform-origin:center;transition:transform .45s cubic-bezier(.2,.8,.2,1),filter .35s}
+.moments-frame:hover .sqimg{filter:saturate(1.12)}
+.admin-moment-settings input[type=range]{accent-color:#4268ef;padding:0!important}
+.admin-moment-preview{width:min(260px,100%);aspect-ratio:1/1;overflow:hidden;position:relative;border-radius:12px;background:#111827;border:1px solid #dbe3f2;margin:12px 0;display:grid;place-items:center;color:#8491a8;font-size:12px}
+.admin-moment-preview img{width:100%;height:100%;object-position:center}
+.credit{display:flex;flex-direction:column;gap:5px;border-top:1px solid #d4af3733;background:linear-gradient(90deg,transparent,#2a090b66,transparent);padding:24px 12px 20px}
+.credit strong{font-size:.8rem;letter-spacing:.16em;color:#f0d78a;text-shadow:0 0 10px #d4af3755}
+.credit span{font-size:.62rem;letter-spacing:.12em;color:#c4b7a0}
+@media(prefers-reduced-motion:reduce){.sp-batsman,.sp-shot-ball,.sp-six,.stadium-ball span,.stadium-ball:after,.hero .shield,.duo .mc:after,.duo .mc h3,.duo .mc .team{animation:none!important}.sp-shot-ball{left:90%;top:12%}.sp-six{opacity:1;transform:none}}
+@media(max-width:520px){.sp-shot-scene{height:160px}.sp-batsman{width:130px;height:155px}.stadium-ball span{width:13px;height:13px}.duo .mc .team{font-size:1.3rem}}
