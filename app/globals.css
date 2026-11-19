@@ -1222,3 +1222,25 @@ body:has(.hdr) main .card :where(.warn){color:#87470b!important}
   .admin-shell .admin-analytics-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 12px !important; }
   .admin-shell .admin-panel { min-width: 0 !important; }
 }
+
+
+/* BJL PUBLIC RESTORE PATCH — prominent registration routes, legible information panels,
+   and a larger red cricket ball with a bat-swing hit on the homepage. */
+.bjl-ticker-track{gap:0}
+.bjl-ticker-register{display:inline-flex;align-items:center;justify-content:center;margin:0 18px;padding:7px 15px;border-radius:999px;background:linear-gradient(120deg,#e0242b,#9f1025);border:1px solid #ff9292;color:#fff!important;font-size:.72rem;font-weight:950;letter-spacing:.12em;text-decoration:none!important;box-shadow:0 0 18px #e0242b66;animation:bjlRegisterPulse 2.4s ease-in-out infinite}
+@keyframes bjlRegisterPulse{50%{box-shadow:0 0 25px #e0242b99;transform:translateY(-1px)}}
+.register-cta{background:linear-gradient(120deg,#e0242b,#a70e2b)!important;color:#fff!important;border:1px solid #ff9ca7!important;font-weight:950!important;box-shadow:0 7px 22px #c51d3b55!important}
+.home-registration-cta{margin-top:18px!important;padding:20px!important;border:1px solid #d4af3777!important;background:linear-gradient(145deg,#262832,#141720)!important;color:#fff!important}
+.home-registration-cta :where(.big,div,small){color:#f5f6fa!important}
+.home-registration-cta .big{font-size:1.35rem;font-weight:950;color:#ff6478!important}
+.home-register-actions{margin-top:14px;gap:10px;flex-wrap:wrap}
+.bjl-info-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.bjl-info-card{background:linear-gradient(145deg,#252a37,#151923)!important;border:1px solid #d4af3777!important;color:#fff!important;padding:20px!important;border-radius:16px!important;box-shadow:0 12px 28px #0003!important}
+.bjl-info-card h2{color:#f4d98d!important;font-size:1.2rem!important;font-weight:900!important}
+.bjl-info-copy{color:#fff!important;font-size:1rem!important;line-height:1.95!important;white-space:pre-wrap!important;overflow-wrap:anywhere}
+.stadium-ball span{width:27px!important;height:27px!important;background:radial-gradient(circle at 32% 25%,#ffb0b5 0 8%,#ff3548 25%,#d90020 68%,#760014 100%)!important;box-shadow:0 0 0 2px #ff9ba4,0 0 24px #ed102e,0 0 42px #ed102e88!important}
+.stadium-ball span:after{border-left:2px dashed #fff!important;height:21px!important;left:12px!important}
+.stadium-ball:before{content:"";position:absolute;z-index:2;left:75%;top:10%;width:9px;height:112px;border-radius:7px;background:linear-gradient(90deg,#9b642e,#f1d29a 35%,#9c612d 70%,#5c351d);box-shadow:0 0 12px #0009;transform-origin:50% 92%;animation:bjlBatSwing 11s cubic-bezier(.45,.05,.55,.95) infinite}
+@keyframes bjlBatSwing{0%,19%,100%{transform:rotate(-34deg)}22%{transform:rotate(-34deg)}25%{transform:rotate(72deg)}29%,70%{transform:rotate(12deg)}76%{transform:rotate(-34deg)}}
+@media(max-width:700px){.bjl-info-grid{grid-template-columns:1fr!important}.bjl-info-card{min-height:0!important}.home-register-actions .btn{flex:1 1 145px}.bjl-ticker-register{font-size:.66rem}}
+@media(prefers-reduced-motion:reduce){.bjl-ticker-register{animation:none}.stadium-ball:before{animation:none}}
