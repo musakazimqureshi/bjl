@@ -144,9 +144,9 @@ export default function Splash() {
     setFade(false);
     setVisible(true);
     if (playSound && soundOnRef.current) playIntro();
-    phaseTimer.current = window.setTimeout(() => setPhase(2), 4000);
-    fadeTimer.current = window.setTimeout(() => setFade(true), 5800);
-    hideTimer.current = window.setTimeout(() => setVisible(false), 6000);
+    phaseTimer.current = window.setTimeout(() => setPhase(2), 1800);
+    fadeTimer.current = window.setTimeout(() => setFade(true), 2600);
+    hideTimer.current = window.setTimeout(() => setVisible(false), 3000);
   }, [playIntro]);
 
   useEffect(() => {
@@ -163,8 +163,7 @@ export default function Splash() {
     const onVisibility = () => {
       if (document.visibilityState === 'hidden') {
         hiddenAt = Date.now();
-      } else if (document.visibilityState === 'visible' && hiddenAt && Date.now() - hiddenAt > 800) {
-        showWelcome(true);
+      } else if (document.visibilityState === 'visible') {
         hiddenAt = 0;
       }
     };
