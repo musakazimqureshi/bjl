@@ -9,10 +9,10 @@ const ROLE = { batter: 'Batsman', bowler: 'Bowler', all_rounder: 'All-Rounder', 
 export default function TeamLogin() {
   const { lang } = useLang(); const tx = (e, u) => (lang === 'ur' ? u : e);
   const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
-  const [user, setUser] = useState(null); const [teams, setTeams] = useState(null); const [objections, setObjections] = useState([]); const [opponents, setOpponents] = useState([]); const [opponentId, setOpponentId] = useState(''); const [playerId, setPlayerId] = useState(''); const [reason, setReason] = useState(''); const [details, setDetails] = useState(''); const [sending, setSending] = useState(false);
+  const [user, setUser] = useState(null); const [teams, setTeams] = useState(null); const [objections, setObjections] = useState([]); const [opponents, setOpponents] = useState([]); const [opponentId, setOpponentId] = useState(''); const [playerId, setPlayerId] = useState(''); const [reason, setReason] = useState(''); const [details, setDetails] = useState(''); const [sending, setSending] = useState(false); const [matches, setMatches] = useState([]);
   async function load(u) {
     const { data, error } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').eq('captain_email', (u.email || '').toLowerCase());
-    if (error) setMsg(error.message); setTeams(data || []);\n    const ownIds = (data || []).map(t => t.id);\n    const [otherResult, objectionResult] = await Promise.all([supabase.from('teams').select('id,name,players:players!players_team_id_fkey(id,name,age,position)').not('id','in', '(' + ownIds.join(',') + ')').order('name'), supabase.from('player_objections').select('*, players(name,age), teams(name)').order('created_at',{ascending:false})]);\n    setOpponents(otherResult.data || []); if (otherResult.error) setMsg(otherResult.error.message); setObjections(objectionResult.data || []); if (objectionResult.error) setMsg(objectionResult.error.message);
+    if (error) setMsg(error.message); setTeams(data || []);\n    const ownIds = (data || []).map(t => t.id);\n    const [otherResult, objectionResult] = await Promise.all([supabase.from('teams').select('id,name,players:players!players_team_id_fkey(id,name,age,position)').not('id','in', '(' + ownIds.join(',') + ')').order('name'), supabase.from('player_objections').select('*, players(name,age), teams(name)').order('created_at',{ascending:false})]);\n    setOpponents(otherResult.data || []); if (otherResult.error) setMsg(otherResult.error.message); setObjections(objectionResult.data || []); if (objectionResult.error) setMsg(objectionResult.error.message);\n    const ids = ownIds; if (ids.length) { const { data: matchRows, error: matchError } = await supabase.from('matches').select('id,team_a,team_b,winner_team,match_date,published').or('team_a.in.(' + ids.join(',') + '),team_b.in.(' + ids.join(',') + ')'); setMatches(matchRows || []); if (matchError) setMsg(matchError.message); }
   }
   useEffect(() => {
     let active = true;
@@ -66,10 +66,10 @@ export default function TeamLogin() {
       {msg && <div className="err">{msg}</div>}<button className="btn">{tx('Login', 'لاگ اِن')}</button></form>) : (<>
       <button className="btn alt" onClick={logout}>{tx('Logout', 'لاگ آؤٹ')}</button>
       {teams && teams.length === 0 && <div className="card">{tx('No team is linked to this email yet. Please contact the organizer.', 'اس ای میل سے کوئی ٹیم جڑی ہوئی نہیں۔ براہ کرم منتظم سے رابطہ کریں۔')}</div>}
-      {(teams || []).map(tm => { const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); return (
+      {(teams || []).map(tm => { const teamMatches = matches.filter(m => m.team_a === tm.id || m.team_b === tm.id); const wins = teamMatches.filter(m => m.winner_team === tm.id).length; const losses = teamMatches.filter(m => m.winner_team && m.winner_team !== tm.id).length; const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); return (
         <div className="card" key={tm.id}><h3>{tm.name} <small>{tm.reg_id}</small></h3>
           <span className={'badge ' + (tm.payment === 'verified' ? 'v' : 'n')}>{tm.payment === 'verified' ? '✓ VERIFIED' : 'NOT VERIFIED'}</span>
-          <p>{status(tm)}</p>
+          <p>{status(tm)}</p><div className="card"><h3>{tx('Team Statistics','ٹیم کے اعدادوشمار')}</h3><div className="row"><span>{tx('Matches','میچز')}: <b>{teamMatches.length}</b></span><span>{tx('Wins','جیت')}: <b>{wins}</b></span><span>{tx('Losses','ہار')}: <b>{losses}</b></span></div><small>{tx('Based on recorded match results.','درج شدہ میچ نتائج کی بنیاد پر۔')}</small></div>
           {tm.payment !== 'verified' && <Link className="btn" href={'/pay?ref=' + tm.reg_id}>{tx('Go to Payment', 'ادائیگی کے صفحے پر جائیں')}</Link>}
           <section className="card">
             <h3>{tx('Report an Objection / Appeal', 'اعتراض یا اپیل جمع کریں')}</h3>
