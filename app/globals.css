@@ -282,20 +282,15 @@ main{padding-bottom:84px}
 /* Cinematic hard-ball path in the homepage hero, four changing positions */
 .hero{overflow:hidden}
 .stadium-ball{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:.92}
-.stadium-ball span{position:absolute;left:8%;top:20%;width:17px;height:17px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#fff 0 15%,#e9e5db 30%,#b8b1a7 72%,#777 100%);box-shadow:0 0 0 2px #d62934,0 0 18px #fff9;animation:stadiumBallRoute 11s cubic-bezier(.45,.05,.55,.95) infinite}
-.stadium-ball span:after{content:"";position:absolute;left:7px;top:1px;height:15px;border-left:1.5px dashed #bd1828;transform:rotate(35deg)}
-.stadium-ball:after{content:"";position:absolute;width:70px;height:2px;left:8%;top:20%;background:linear-gradient(90deg,transparent,#fff9);filter:blur(1px);transform-origin:right center;animation:stadiumBallTrail 11s ease-in-out infinite}
-@keyframes stadiumBallRoute{
-  0%,8%{left:8%;top:20%;transform:rotate(0) scale(.8)}
-  24%{left:77%;top:13%;transform:rotate(260deg) scale(1.1)}
-  26%{left:77%;top:13%;transform:rotate(360deg) scale(1.1)}
-  49%{left:87%;top:76%;transform:rotate(720deg) scale(.92)}
-  51%{left:87%;top:76%;transform:rotate(800deg) scale(.92)}
-  75%{left:18%;top:82%;transform:rotate(1150deg) scale(1.08)}
-  77%{left:18%;top:82%;transform:rotate(1220deg) scale(1.08)}
-  100%{left:8%;top:20%;transform:rotate(1500deg) scale(.8)}
-}
-@keyframes stadiumBallTrail{0%,8%{left:8%;top:20%;opacity:0;transform:rotate(0)}24%,49%,75%{opacity:.7}100%{left:8%;top:20%;opacity:0;transform:rotate(0)}}
+.stadium-cricket-ball{position:absolute;left:9%;top:56%;width:21px;height:21px;border-radius:50%;background:radial-gradient(circle at 32% 27%,#ff8b8b 0 8%,#ed1728 28%,#b90016 72%,#65000b 100%);border:1px solid #ff7b82;box-shadow:0 0 0 1px #68000b,0 0 18px #f0182c99;animation:stadiumBallRoute 8s cubic-bezier(.35,.05,.55,.95) infinite;will-change:left,top,transform}
+.stadium-cricket-ball:after{content:"";position:absolute;left:9px;top:2px;width:3px;height:16px;border-left:1.5px dashed #ffe0e0;transform:rotate(35deg)}
+.stadium-cricket-bat{position:absolute;left:78%;top:53%;width:13px;height:92px;border-radius:8px 8px 5px 5px;background:linear-gradient(90deg,#7a3c18,#e3b36a 35%,#a96a2b 70%,#603014);border:1px solid #f3cf91;box-shadow:0 0 14px #e7b96b66;transform:rotate(28deg);transform-origin:50% 88%;animation:stadiumBatSwing 8s ease-in-out infinite}
+.stadium-cricket-bat:before{content:"";position:absolute;left:3px;top:-34px;width:6px;height:39px;border-radius:5px;background:linear-gradient(90deg,#20232b,#555d68,#161a21);border:1px solid #858b94}
+.stadium-cricket-bat:after{content:"";position:absolute;left:2px;right:2px;top:8px;height:2px;background:#f4d59b88}
+.stadium-ball:after{content:"";position:absolute;width:76px;height:3px;left:9%;top:56%;background:linear-gradient(90deg,transparent,#ff3344cc);filter:blur(1px);transform-origin:right center;animation:stadiumBallTrail 8s ease-in-out infinite}
+@keyframes stadiumBallRoute{0%,7%{left:9%;top:56%;transform:rotate(0) scale(.78)}25%{left:77%;top:53%;transform:rotate(440deg) scale(1.12)}28%{left:80%;top:49%;transform:rotate(540deg) scale(1.16)}53%{left:91%;top:18%;transform:rotate(1120deg) scale(.88)}76%{left:28%;top:27%;transform:rotate(1780deg) scale(1.04)}100%{left:9%;top:56%;transform:rotate(2160deg) scale(.78)}}
+@keyframes stadiumBatSwing{0%,19%,100%{transform:rotate(28deg)}24%{transform:rotate(-42deg)}31%{transform:rotate(18deg)}}
+@keyframes stadiumBallTrail{0%,7%,100%{left:9%;top:56%;opacity:0}20%,28%,53%,76%{opacity:.72}}
 
 /* Homepage tournament cards and BJL badge motion */
 .hero .shield{position:relative;animation:bjlBadgeFloat 3.8s ease-in-out infinite,bjlLogoGlow 2.8s ease-in-out infinite}
@@ -1254,3 +1249,17 @@ body:has(.hdr) main .card :where(.warn){color:#87470b!important}
   .admin-shell .admin-tabs .btn{min-height:46px!important;font-size:11px!important;overflow-wrap:anywhere}
   .admin-shell .admin-tabs .btn:nth-of-type(5){background:linear-gradient(110deg,#9f1239,#e11d48)!important;color:#fff!important;border-color:#f4d98d!important;font-weight:900!important}
 }
+
+
+/* BJL MOBILE ADMIN NAV FIX — keep the section controls in a single usable horizontal rail */
+@media(max-width:700px){
+ .admin-shell{width:100%;min-width:0;padding:14px 12px 32px!important;overflow-x:hidden}
+ .admin-shell nav.admin-tabs{position:sticky!important;top:0!important;left:auto!important;bottom:auto!important;z-index:60!important;width:calc(100% + 24px)!important;max-width:none!important;margin:0 -12px 16px!important;padding:9px 12px!important;display:flex!important;flex-direction:row!important;align-items:center!important;gap:7px!important;overflow-x:auto!important;overflow-y:hidden!important;white-space:nowrap!important;background:#13264b!important;border-radius:0!important;scrollbar-width:thin;box-shadow:0 8px 18px #15254a24!important}
+ .admin-shell nav.admin-tabs:before{display:none!important;content:none!important}
+ .admin-shell nav.admin-tabs .btn{display:inline-flex!important;flex:0 0 auto!important;width:auto!important;min-width:max-content!important;max-width:none!important;margin:0!important;white-space:nowrap!important;padding:10px 13px!important;background:#ffffff12!important;color:#e4ebff!important;border:1px solid #ffffff1c!important;border-radius:999px!important;font-size:12px!important;line-height:1.2!important}
+ .admin-shell nav.admin-tabs .btn.on{background:#4168ed!important;color:#fff!important;border-color:#6f8bff!important}
+ .admin-shell .admin-topbar{gap:12px!important}
+ .admin-shell .admin-workspace,.admin-shell .admin-overview{min-width:0;width:100%}
+ .admin-shell .admin-analytics-grid{grid-template-columns:minmax(0,1fr)!important;gap:12px!important}
+}
+@media(prefers-reduced-motion:reduce){.stadium-cricket-ball,.stadium-cricket-bat,.stadium-ball:after{animation:none!important}}
