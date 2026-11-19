@@ -10,8 +10,8 @@ export default function Teams() {
   useEffect(() => { supabase.rpc('public_teams').then(({ data }) => setList(data || [])); }, []);
   const [objections, setObjections] = useState([]);
   useEffect(() => { supabase.rpc('public_objections').then(({ data, error }) => { if (!error) setObjections(data || []); }); }, []);
-  const statusLabel = s => ({ open: 'Open', under_review: 'Under Review', resolved: 'Resolved' }[String(s || '').toLowerCase()] || String(s || 'Open').replaceAll('_', ' '));
-  const teamObjections = id => objections.filter(o => o.team_id === id);
+  const statusLabel = s => ({ open: 'Open', under_review: 'Under Review' }[String(s || '').toLowerCase()] || 'Open');
+  const teamObjections = id => objections.filter(o => o.team_id === id && ['open', 'under_review'].includes(String(o.status || 'open').toLowerCase()));
   const badge = v => <span className={'badge ' + (v ? 'v' : 'n')}>{v ? '✓ ' + t('verifiedBadge') : t('notVerifiedBadge')}</span>;
   return (<><h2>{t('teams')}</h2>
     <input placeholder={t('search')} value={q} onChange={e => setQ(e.target.value)} />
