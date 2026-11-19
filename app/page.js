@@ -17,7 +17,7 @@ export default function Home() {
   const [lb, setLb] = useState(null); const [gi, setGi] = useState(null); const [allAnn, setAllAnn] = useState(false);
   const [qs, setQs] = useState([]); const [qi, setQi] = useState(0); const [hold, setHold] = useState(false);
   const [mi, setMi] = useState(0); const [mh, setMh] = useState(false);
-  const [tms, setTms] = useState([]); const [tmSel, setTmSel] = useState(null); const [now, setNow] = useState(Date.now());
+  const [tms, setTms] = useState([]); const [tmSel, setTmSel] = useState(null); const [now, setNow] = useState(Date.now()); const [tutorialOpen, setTutorialOpen] = useState(false);
   useEffect(() => {
     supabase.rpc('public_stats').then(({ data }) => data && setS(data));
     supabase.rpc('public_content').then(({ data }) => data && setC(data));
@@ -52,6 +52,7 @@ export default function Home() {
         <Link href="/teams" className="btn alt">{t('viewBtn')}</Link>
         <a href="https://chat.whatsapp.com/D5RUqQB6XVIIwHkYJkz5vZ" className="btn alt" target="_blank" rel="noopener noreferrer">{lang === 'ur' ? 'آفیشل واٹس ایپ گروپ میں شامل ہوں' : 'Join Official WhatsApp Group'}</a>
         <Link href="/team" className="btn alt">🔑 {t('captainSignIn')}</Link>
+        <button type="button" className="btn alt" onClick={() => setTutorialOpen(true)}>▶ {lang === 'ur' ? 'ویڈیو ٹیوٹوریل' : 'Video Tutorial'}</button>
       </div>
     </section>
     <div className="duo">
@@ -118,6 +119,7 @@ export default function Home() {
         <button className="btn alt" onClick={() => setGi(null)}>✕</button><button className="btn alt" onClick={() => step(1)}>▶</button></div>
       <img src={img(moms[gi].image_path)} alt="" style={{ width: '100%', borderRadius: 10 }} />
       <p>{moms[gi].caption}</p><small>{formatDate(moms[gi].moment_date)}</small></div></div>}
+    {tutorialOpen && <div className="modal" onClick={() => setTutorialOpen(false)}><div className="mbox" onClick={e => e.stopPropagation()}><div className="row" style={{justifyContent:'space-between',alignItems:'center'}}><h3>{lang === 'ur' ? 'بی جے ایل ویڈیو ٹیوٹوریل' : 'BJL Video Tutorial'}</h3><button className="btn alt" onClick={() => setTutorialOpen(false)}>✕ {t('close')}</button></div>{c.tutorial_video_url ? <div style={{position:'relative',paddingTop:'56.25%',marginTop:12}}><iframe src={/^https?:\/\//i.test(c.tutorial_video_url) ? (c.tutorial_video_url.includes('youtube.com/watch?v=') ? 'https://www.youtube.com/embed/' + c.tutorial_video_url.split('v=')[1].split('&')[0] : c.tutorial_video_url.includes('youtu.be/') ? 'https://www.youtube.com/embed/' + c.tutorial_video_url.split('youtu.be/')[1].split('?')[0] : c.tutorial_video_url) : ''} title="BJL Video Tutorial" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen style={{position:'absolute',inset:0,width:'100%',height:'100%',border:0,borderRadius:12}} /></div> : <div className="empty" style={{marginTop:12}}>{lang === 'ur' ? 'ٹیوٹوریل ویڈیو جلد شامل کی جائے گی۔' : 'Tutorial video will be added soon.'}</div>}</div></div>}
     {tmSel && <div className="modal" onClick={() => setTmSel(null)}><div className="mbox" onClick={e => e.stopPropagation()}>
       <button className="btn alt" onClick={() => setTmSel(null)}>✕ {t('close')}</button>
       <h3>{tmSel.name} <small>{tmSel.reg_id}</small></h3>
