@@ -14,8 +14,14 @@ export default function TeamLogin() {
     if (error) setMsg(error.message); setTeams(data || []);
   }
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => { if (session) { setUser(session.user); load(session.user); } });
-    return () => subscription.unsubscribe();
+    let active = true;
+    supabase.auth.getSession().then(({ data: { session } }) => { if (active && session) { setUser(session.user); load(session.user); } });
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) return;
+      if (session && session.user) { setUser(session.user); load(session.user); }
+      else { setUser(null); setTeams(null); }
+    });
+    return () => { active = false; data.subscription.unsubscribe(); };
   }, []);
   async function login(e) {
     e.preventDefault(); setMsg('');
