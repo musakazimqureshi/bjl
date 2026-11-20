@@ -33,16 +33,17 @@ export async function POST(request) {
     if (!allowance?.allowed) return NextResponse.json({ error: 'You have used all 30 messages for this 30-day period. Please try again later.' }, { status: 429 });
 
     const systemPrompt = 'You are the Battagram Junior League (BJL) website help assistant. Answer clearly and politely. Help with team registration, player registration, payment submission, match information, announcements and website navigation. Do not invent schedules, rules, fees, results or team details that are not supplied. If you do not know a current tournament detail, direct the visitor to the official BJL WhatsApp contacts on the page. Reply in the language used by the visitor (Urdu, Roman Urdu, Pashto or English). Never request passwords, OTPs, payment card details or sensitive personal information.';
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(process.env.GEMINI_API_KEY), {
+    const conversation = cleaned.map(m => (m.role === 'assistant' ? 'BJL Assistant' : 'Visitor') + ':\n' + m.content).join('\n\n');
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'x-goog-api-key': process.env.GEMINI_API_KEY,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        contents: cleaned.map(m => ({
-          role: m.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: m.content }]
-        })),
-        generationConfig: { temperature: 0.4, maxOutputTokens: 1024 }
+        model: 'gemini-3.8-flash',
+        store: false,
+        input: systemPrompt + '\n\nConversation so far:\n' + conversation + '\n\nBJL Assistant:'
       }),
       cache: 'no-store'
     });
@@ -51,7 +52,13 @@ export async function POST(request) {
       const message = result.error?.message || 'Gemini AI service temporarily unavailable.';
       return NextResponse.json({ error: message }, { status: response.status === 429 ? 429 : 502 });
     }
-    const reply = result.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('').trim();
+    const reply = (result.steps || [])
+      .filter(step => step.type === 'model_output')
+      .flatMap(step => step.content || [])
+      .filter(part => part.type === 'text')
+      .map(part => part.text || '')
+      .join('')
+      .trim();
     if (!reply) throw new Error('No reply was returned. Please try again.');
     return NextResponse.json({ reply, remaining: allowance.remaining });
   } catch (error) {
