@@ -11,6 +11,7 @@ export default function Admin() {
   const [tab, setTab] = useState('overview'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
   const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
   const [captainCreds, setCaptainCreds] = useState({});
+  const [objections, setObjections] = useState([]); const [objectionBusy, setObjectionBusy] = useState(false);
   async function check() {
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -41,6 +42,32 @@ export default function Admin() {
     const { data, error } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').order('created_at', { ascending: false });
     if (error) { setMsg('Could not load teams: ' + error.message); return; }
     setTeams(data || []);
+  }
+  // Fetch objection rows first, then resolve related names with separate queries.
+  // This avoids PostgREST's ambiguous embedded relationship error for teams.
+  async function loadObjections() {
+    const { data, error } = await supabase.from('player_objections').select('*').order('created_at', { ascending: false });
+    if (error) { setMsg('Could not load player objections: ' + error.message); setObjections([]); return; }
+    const rows = data || [];
+    const teamIds = [...new Set(rows.flatMap(x => [x.source_team_id, x.team_id]).filter(Boolean))];
+    const playerIds = [...new Set(rows.map(x => x.player_id).filter(Boolean))];
+    const [{ data: teamRows, error: teamError }, { data: playerRows, error: playerError }] = await Promise.all([
+      teamIds.length ? supabase.from('teams').select('id,name,reg_id').in('id', teamIds) : Promise.resolve({ data: [], error: null }),
+      playerIds.length ? supabase.from('players').select('id,name,age,team_id').in('id', playerIds) : Promise.resolve({ data: [], error: null })
+    ]);
+    if (teamError || playerError) { setMsg((teamError || playerError).message); return; }
+    const teamMap = Object.fromEntries((teamRows || []).map(x => [x.id, x]));
+    const playerMap = Object.fromEntries((playerRows || []).map(x => [x.id, x]));
+    setObjections(rows.map(x => ({ ...x, source_team: teamMap[x.source_team_id] || null, target_team: teamMap[x.team_id] || null, player: playerMap[x.player_id] || null })));
+  }
+  async function updateObjection(row, status) {
+    let admin_note = row.admin_note || '';
+    if (status === 'rejected' || status === 'resolved') { const v = prompt('Admin note / decision (optional):', admin_note); if (v === null) return; admin_note = v; }
+    setObjectionBusy(true);
+    const { error } = await supabase.from('player_objections').update({ status, admin_note }).eq('id', row.id);
+    setMsg(error ? error.message : 'Objection status updated.');
+    if (!error) await loadObjections();
+    setObjectionBusy(false);
   }
   const pub = p => supabase.storage.from('player-photos').getPublicUrl(p).data.publicUrl;
   async function shot(pay) {
@@ -75,14 +102,21 @@ export default function Admin() {
     const email = (tm.captain_email || '').trim().toLowerCase();
     if (!email) return setMsg('اس ٹیم کا کپتان Gmail ریکارڈ میں موجود نہیں۔');
     const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
-    const bytes = new Uint8Array(14);
-    crypto.getRandomValues(bytes);
-    const password = Array.from(bytes, b => alphabet[b % alphabet.length]).join('');
+    let password = '';
+    const maxAcceptedByte = Math.floor(256 / alphabet.length) * alphabet.length;
+    while (password.length < 18) {
+      const randomBytes = new Uint8Array(24);
+      crypto.getRandomValues(randomBytes);
+      for (const byte of randomBytes) {
+        if (byte < maxAcceptedByte) password += alphabet[byte % alphabet.length];
+        if (password.length === 18) break;
+      }
+    }
     setMsg('کپتان کے لیے نیا پاس ورڈ بنایا جا رہا ہے...');
     const { data, error } = await supabase.functions.invoke('captain-login-provisioner', {
       body: { teamId: tm.id, email, password }
     });
-    if (error || !data?.ok) return setMsg(error?.message || data?.error || 'اکاؤنٹ نہیں بن سکا۔');
+    if (error || !data?.ok) { const detail = data?.error || error?.message || 'اکاؤنٹ نہیں بن سکا۔'; return setMsg('Captain account service failed: ' + detail + ' اگر function deploy نہیں ہے تو Supabase Edge Function captain-login-provisioner کو deploy کرنا ضروری ہے۔'); }
     setCaptainCreds(prev => ({ ...prev, [tm.id]: { email, password } }));
     setMsg('Captain login تیار ہے۔ یہ پاس ورڈ کپتان کو محفوظ طریقے سے دے دیں۔');
   }
@@ -90,7 +124,7 @@ export default function Admin() {
     const cred = captainCreds[tm.id];
     if (!cred) return;
     try {
-      await navigator.clipboard.writeText('BJL Team Login\\nGmail: ' + cred.email + '\\nPassword: ' + cred.password);
+      await navigator.clipboard.writeText('BJL Team Login\nGmail: ' + cred.email + '\nPassword: ' + cred.password);
       setMsg('Gmail اور Password کاپی ہو گئے ✔');
     } catch {
       setMsg('کاپی نہیں ہو سکا، پاس ورڈ کو دستی طور پر کاپی کریں۔');
@@ -101,7 +135,7 @@ export default function Admin() {
     const { error } = await supabase.from('teams').delete().eq('id', tm.id); setMsg(error ? error.message : 'ٹیم حذف ہو گئی'); loadTeams();
   }
   useEffect(() => { check(); }, []);
-  useEffect(() => { if (isAdmin) { load(); loadTeams(); } }, [isAdmin]);
+  useEffect(() => { if (isAdmin) { load(); loadTeams(); loadObjections(); } }, [isAdmin]);
   async function login(e) {
     e.preventDefault();
     setMsg('');
@@ -198,11 +232,11 @@ export default function Admin() {
   const tsel = (k, label) => (<><label>{label}</label><select value={c[k] || ''} onChange={e => set(k, e.target.value)}><option value="">— ٹیم منتخب کریں —</option>{c[k] && !teams.some(x => x.name === c[k]) && <option value={c[k]}>{c[k]}</option>}{teams.map(x => <option key={x.id} value={x.name}>{x.name}</option>)}</select></>);
   const show = (k, l) => (<label><input type="checkbox" checked={c[k] !== '0'} onChange={e => set(k, e.target.checked ? '1' : '0')} style={{ width: 'auto' }} /> {l}</label>);
   const pa = p => supabase.storage.from('announcements').getPublicUrl(p).data.publicUrl;
-  return (<div>
-    <h2>BJL Admin</h2>
+  return (<div className="admin-control-room">
+    <div className="admin-control-heading"><div><small>BATTAGRAM JUNIOR LEAGUE · SEASON 1</small><h2>BJL Admin Control Room</h2><p>Team operations, player review, payments and public website controls</p></div><span className="admin-secure-indicator">● ADMIN SESSION</span></div>
     <datalist id="tn">{teams.map(x => <option key={x.id} value={x.name} />)}</datalist>
-    <div className="tabs">
-      {[['overview', 'Overview'], ['teams', 'Teams'], ['match', 'Matches & Results'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['quotes', 'Quotes'], ['set', 'Settings']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
+    <div className="tabs admin-tabs-right">
+      {[['overview', 'Overview'], ['teams', 'Teams'], ['objections', 'Player Objections'], ['match', 'Matches & Results'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['quotes', 'Quotes'], ['set', 'Settings']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
       <button className="btn" onClick={logout}>Logout</button></div>
     {msg && <div className="good">{msg}</div>}
     {tab === 'overview' && (<>
@@ -214,10 +248,12 @@ export default function Admin() {
           <div className="card"><b>Mark Payment Pending</b><div className="big">{teams.filter(x => x.payment === 'submitted').length}</div></div>
           <div className="card"><b>کل کھلاڑی</b><div className="big">{teams.reduce((n, x) => n + (x.players || []).length, 0)}</div></div>
           <div className="card"><b>اعلانات</b><div className="big">{ann.length}</div></div>
+          <div className="card"><b>Player Objections</b><div className="big">{objections.length}</div><small>{objections.filter(x => !['resolved','rejected'].includes(x.status)).length} Open / Under Review</small></div>
         </div>
       </div>
       <div className="card"><h3>Quick Actions</h3><div className="row" style={{justifyContent:'flex-start'}}>
         <button className="btn" onClick={() => setTab('teams')}>Teams & Payments</button>
+        <button className="btn alt" onClick={() => setTab('objections')}>Player Objections ({objections.filter(x => !['resolved','rejected'].includes(x.status)).length})</button>
         <button className="btn alt" onClick={() => setTab('match')}>Matches & Results</button>
         <button className="btn alt" onClick={() => setTab('ann')}>Announcements & Photos</button>
         <button className="btn alt" onClick={() => setTab('set')}>Website Settings</button>
@@ -264,11 +300,18 @@ export default function Admin() {
         <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt" onClick={() => moveQuote(i, -1)}>▲</button><button className="btn alt" onClick={() => moveQuote(i, 1)}>▼</button>
           <button className="btn alt" onClick={() => editQuote(x)}>ایڈٹ</button><button className="btn alt" onClick={() => togQuote(x)}>{x.published ? 'چھپائیں' : 'دکھائیں'}</button><button className="btn alt" onClick={() => delQuote(x)}>Delete</button></div></div>))}</>)}
     {tab === 'set' && (<div className="card"><h3>WhatsApp & Website Settings</h3>
-      {inp('falak_whatsapp', 'WhatsApp Contact Number (international format, e.g. 923165738591)')}{inp('falak_btn', 'Floating WhatsApp Button Text')}{inp('falak_msg', 'Default WhatsApp Message')}
+      {inp('falak_whatsapp', 'WhatsApp Contact Number (international format, e.g. 923165738591)')}
+      <h3 style={{marginTop:22}}>Homepage Guide & Video Tutorial</h3>
+      <label>How to Register</label><textarea rows={4} value={c.how_to_register || ''} onChange={e => set('how_to_register', e.target.value)} placeholder={'1. Register your team with 15 players.\\n2. Submit the payment receipt.\\n3. Wait for admin verification.'} />
+      <label>Tournament Rules</label><textarea rows={5} value={c.rules || ''} onChange={e => set('rules', e.target.value)} placeholder="Enter the official BJL tournament rules" />
+      <label>Prize Details</label><textarea rows={4} value={c.prizes || ''} onChange={e => set('prizes', e.target.value)} placeholder="Enter confirmed prize amounts and positions" />
+      <label>Video Tutorial URL (YouTube link supported)</label><input value={c.tutorial_video_url || ''} onChange={e => set('tutorial_video_url', e.target.value)} dir="ltr" placeholder="https://www.youtube.com/watch?v=..." />
+      <div className="row"><a className="btn alt" href="/" target="_blank" rel="noreferrer">Preview Homepage</a><a className="btn alt" href="/help" target="_blank" rel="noreferrer">Help & Registration Guide</a></div>{inp('falak_btn', 'Floating WhatsApp Button Text')}{inp('falak_msg', 'Default WhatsApp Message')}
       <label>Official WhatsApp Group Invite Link</label><input value={c.official_whatsapp_group || 'https://chat.whatsapp.com/D5RUqQB6XVIIwHkYJkz5vZ'} onChange={e => set('official_whatsapp_group', e.target.value)} dir="ltr" />
       <label>Group Information Message</label><input value={c.official_group_text || 'All BJL Season 1 updates, schedules, results and announcements are available in the official WhatsApp group.'} onChange={e => set('official_group_text', e.target.value)} />
       <label><input type="checkbox" style={{ width: 'auto' }} checked={c.registration_open !== 'false'} onChange={e => set('registration_open', e.target.checked ? 'true' : 'false')} /> نئی ٹیموں کی رجسٹریشن کھلی ہے</label>
-      <button className="btn" onClick={() => save(['falak_whatsapp', 'falak_btn', 'falak_msg', 'official_whatsapp_group', 'official_group_text', 'registration_open'])}>Save Settings</button></div>)}
+      <button className="btn" onClick={() => save(['falak_whatsapp', 'falak_btn', 'falak_msg', 'official_whatsapp_group', 'official_group_text', 'registration_open', 'how_to_register', 'rules', 'prizes', 'tutorial_video_url'])}>Save Settings</button></div>)}
+    {tab === 'objections' && (<div className="card"><h3>Player Objections & BJL Operations</h3><p>Review each reported player separately. Team and player names are resolved with separate queries to avoid ambiguous database joins.</p>{objections.length ? objections.map(row => <article className="card" key={row.id}><div className="row" style={{justifyContent:'space-between',alignItems:'center'}}><b>{row.target_team?.name || 'Unknown team'} · {row.player?.name || 'Unknown player'}</b><span className="badge">{row.status || 'open'}</span></div><p><b>Submitted by:</b> {row.source_team?.name || 'Unknown team'} · <b>Reason:</b> {row.reason}</p><p style={{whiteSpace:'pre-wrap'}}>{row.details}</p>{row.admin_note && <p><b>Admin note:</b> {row.admin_note}</p>}<small>{dateFmt(row.created_at)}</small><div className="row"><button className="btn alt" disabled={objectionBusy} onClick={() => updateObjection(row,'under_review')}>Under Review</button><button className="btn" disabled={objectionBusy} onClick={() => updateObjection(row,'resolved')}>Resolve</button><button className="btn alt" disabled={objectionBusy} onClick={() => updateObjection(row,'rejected')}>Reject</button></div></article>) : <div className="empty">No player objections found.</div>}</div>)}
     {tab === 'teams' && (<><div className="card">Total Teams: {teams.length} · Verified: {teams.filter(x => x.payment === 'verified').length}</div>
       {teams.map(tm => { const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
         return (<div className="card" key={tm.id}><b>{tm.name}</b> <small>{tm.reg_id}</small>

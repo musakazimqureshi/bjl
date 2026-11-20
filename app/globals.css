@@ -1263,3 +1263,11 @@ body:has(.hdr) main .card :where(.warn){color:#87470b!important}
  .admin-shell .admin-analytics-grid{grid-template-columns:minmax(0,1fr)!important;gap:12px!important}
 }
 @media(prefers-reduced-motion:reduce){.stadium-cricket-ball,.stadium-cricket-bat,.stadium-ball:after{animation:none!important}}
+
+/* BJL homepage operations entry point */
+.bjl-operations-cta{display:flex;align-items:center;justify-content:space-between;gap:22px;margin:18px 0;padding:clamp(18px,3vw,28px);border:1px solid rgba(225,29,72,.28);background:linear-gradient(125deg,rgba(91,16,38,.35),rgba(14,22,38,.96));}
+.bjl-operations-cta small{color:#e6c77e;font-size:.65rem;font-weight:900;letter-spacing:.16em}
+.bjl-operations-cta h2{margin:7px 0;color:#f7e6bd;font-size:clamp(1.05rem,2vw,1.45rem)}
+.bjl-operations-cta p{max-width:760px;margin:0;color:#c8cbd4;font-size:.86rem;line-height:1.7}
+.bjl-operations-cta .row{justify-content:flex-end;flex-wrap:wrap}
+@media(max-width:720px){.bjl-operations-cta{align-items:flex-start;flex-direction:column}.bjl-operations-cta .row{justify-content:flex-start}}

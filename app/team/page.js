@@ -17,11 +17,23 @@ export default function TeamLogin() {
     if (ownIds.length) {
       const [otherResult, objectionResult, messageResult] = await Promise.all([
         supabase.from('teams').select('id,name,players:players!players_team_id_fkey(id,name,age,position)').not('id','in', '(' + ownIds.join(',') + ')').order('name'),
-        supabase.from('player_objections').select('*, players(name,age), teams(name)').order('created_at',{ascending:false}),
+        supabase.from('player_objections').select('*').order('created_at',{ascending:false}),
         supabase.from('team_messages').select('*').in('team_id',ownIds).order('created_at',{ascending:false})
       ]);
       setOpponents(otherResult.data || []); if (otherResult.error) setMsg(otherResult.error.message);
-      setObjections(objectionResult.data || []); if (objectionResult.error) setMsg(objectionResult.error.message);
+      if (objectionResult.error) setMsg(objectionResult.error.message);
+      else {
+        const objectionRows = objectionResult.data || [];
+        const relatedTeamIds = [...new Set(objectionRows.flatMap(o => [o.source_team_id, o.team_id]).filter(Boolean))];
+        const relatedPlayerIds = [...new Set(objectionRows.map(o => o.player_id).filter(Boolean))];
+        const [{ data: objectionTeams }, { data: objectionPlayers }] = await Promise.all([
+          relatedTeamIds.length ? supabase.from('teams').select('id,name').in('id', relatedTeamIds) : Promise.resolve({ data: [] }),
+          relatedPlayerIds.length ? supabase.from('players').select('id,name,age').in('id', relatedPlayerIds) : Promise.resolve({ data: [] })
+        ]);
+        const teamById = Object.fromEntries((objectionTeams || []).map(x => [x.id, x]));
+        const playerById = Object.fromEntries((objectionPlayers || []).map(x => [x.id, x]));
+        setObjections(objectionRows.map(o => ({ ...o, teams: teamById[o.team_id] || null, players: playerById[o.player_id] || null })));
+      }
       setTeamMessages(messageResult.data || []); if (messageResult.error) setMsg(messageResult.error.message);
       const { data: matchRows, error: matchError } = await supabase.from('matches').select('id,team_a,team_b,winner_team,match_date,published').or('team_a.in.(' + ownIds.join(',') + '),team_b.in.(' + ownIds.join(',') + ')');
       setMatches(matchRows || []); if (matchError) setMsg(matchError.message);
@@ -57,8 +69,19 @@ export default function TeamLogin() {
       if (error) throw error;
       setMsg(tx('Your objection has been submitted for admin review.', 'آپ کا اعتراض ایڈمن کے جائزے کے لیے جمع ہو گیا ہے۔'));
       setReason(''); setDetails(''); setOpponentId(''); setPlayerId('');
-      const { data } = await supabase.from('player_objections').select('*, players(name,age), teams(name)').order('created_at',{ascending:false});
-      setObjections(data || []);
+      const { data, error: refreshError } = await supabase.from('player_objections').select('*').order('created_at',{ascending:false});
+      if (refreshError) setMsg(refreshError.message);
+      else {
+        const relatedTeamIds = [...new Set((data || []).flatMap(o => [o.source_team_id, o.team_id]).filter(Boolean))];
+        const relatedPlayerIds = [...new Set((data || []).map(o => o.player_id).filter(Boolean))];
+        const [{ data: objectionTeams }, { data: objectionPlayers }] = await Promise.all([
+          relatedTeamIds.length ? supabase.from('teams').select('id,name').in('id', relatedTeamIds) : Promise.resolve({ data: [] }),
+          relatedPlayerIds.length ? supabase.from('players').select('id,name,age').in('id', relatedPlayerIds) : Promise.resolve({ data: [] })
+        ]);
+        const teamById = Object.fromEntries((objectionTeams || []).map(x => [x.id, x]));
+        const playerById = Object.fromEntries((objectionPlayers || []).map(x => [x.id, x]));
+        setObjections((data || []).map(o => ({ ...o, teams: teamById[o.team_id] || null, players: playerById[o.player_id] || null })));
+      }
     } catch (err) { setMsg(err.message || 'Could not submit objection.'); }
     finally { setSending(false); }
   }
