@@ -11,6 +11,7 @@ export default function Admin() {
   const [tab, setTab] = useState('teams'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
   const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
   const [objections, setObjections] = useState([]); const [objectionPlayer, setObjectionPlayer] = useState(null); const [objectionDraft, setObjectionDraft] = useState({ reason: '', raised_by: '', details: '' });
+  const [captainPasswords, setCaptainPasswords] = useState({}); const [tutorialFile, setTutorialFile] = useState(null); const [busyTeam, setBusyTeam] = useState('');
   async function check() {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -48,9 +49,16 @@ export default function Admin() {
     setTeams(data || []);
   }
   async function loadObjections() {
-    const { data, error } = await supabase.from('player_objections').select('*, players(name, age), teams(name)').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('player_objections').select('*').order('created_at', { ascending: false });
     if (error) { setMsg(error.message); return; }
-    setObjections(data || []);
+    const playerIds = [...new Set((data || []).map(x => x.player_id).filter(Boolean))];
+    const teamIds = [...new Set((data || []).map(x => x.team_id).filter(Boolean))];
+    const [{ data: players }, { data: teamsById }] = await Promise.all([
+      playerIds.length ? supabase.from('players').select('id,name,age,team_id').in('id', playerIds) : Promise.resolve({ data: [] }),
+      teamIds.length ? supabase.from('teams').select('id,name').in('id', teamIds) : Promise.resolve({ data: [] })
+    ]);
+    const pm = Object.fromEntries((players || []).map(x => [x.id, x])); const tm = Object.fromEntries((teamsById || []).map(x => [x.id, x]));
+    setObjections((data || []).map(x => ({ ...x, players: pm[x.player_id] || null, teams: tm[x.team_id] || null })));
   }
   async function raiseObjection(e, player, team) {
     e.preventDefault();
@@ -63,6 +71,36 @@ export default function Admin() {
     setObjectionPlayer(null);
     setObjectionDraft({ reason: '', raised_by: '', details: '' });
     loadObjections();
+  }
+  function generateCaptainPassword(teamId) {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
+    const bytes = new Uint8Array(16); window.crypto.getRandomValues(bytes);
+    const value = Array.from(bytes, b => alphabet[b % alphabet.length]).join('');
+    setCaptainPasswords(v => ({ ...v, [teamId]: value }));
+  }
+  async function saveCaptainPassword(team) {
+    const password = captainPasswords[team.id] || '';
+    if (password.length < 12) return setMsg('Password must be at least 12 characters.');
+    setBusyTeam(team.id); setMsg('Saving captain login...');
+    try {
+      const { data, error } = await supabase.functions.invoke('captain-login-provisioner', { body: { team_id: team.id, password } });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setMsg('Captain login password saved. Share it securely with the captain.');
+      setCaptainPasswords(v => ({ ...v, [team.id]: '' }));
+    } catch (error) { setMsg(error?.message || 'Captain login could not be saved.'); }
+    finally { setBusyTeam(''); }
+  }
+  async function uploadTutorial(e) {
+    e.preventDefault(); if (!tutorialFile) return setMsg('Choose an MP4 or WebM video first.');
+    if (!['video/mp4','video/webm'].includes(tutorialFile.type) || tutorialFile.size > 100 * 1024 * 1024) return setMsg('Video must be MP4/WebM and no larger than 100 MB.');
+    setMsg('Uploading tutorial video...');
+    const path = 'tutorials/bjl-registration-' + Date.now() + (tutorialFile.type === 'video/webm' ? '.webm' : '.mp4');
+    const { error } = await supabase.storage.from('announcements').upload(path, tutorialFile, { contentType: tutorialFile.type, upsert: true, cacheControl: '31536000' });
+    if (error) return setMsg(error.message);
+    const { error: saveError } = await supabase.from('settings').upsert({ key: 'tutorial_video_path', value: path });
+    if (saveError) return setMsg(saveError.message);
+    setTutorialFile(null); e.target.reset(); setMsg('Tutorial uploaded and saved.'); load();
   }
   async function setObjectionStatus(item, status) {
     const { error } = await supabase.from('player_objections').update({
@@ -284,6 +322,20 @@ export default function Admin() {
         <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt admin-reorder" onClick={() => moveQuote(i, -1)} disabled={i === 0} aria-label="Move quote up" title="Move up"><span aria-hidden="true">↑</span><small>UP</small></button><button className="btn alt admin-reorder" onClick={() => moveQuote(i, 1)} disabled={i === qs.length - 1} aria-label="Move quote down" title="Move down"><span aria-hidden="true">↓</span><small>DOWN</small></button>
           <button className="btn alt" onClick={() => editQuote(x)}>Edit</button><button className="btn alt" onClick={() => togQuote(x)}>{x.published ? 'Hide' : 'Publish'}</button><button className="btn alt" onClick={() => delQuote(x)}>Delete Team</button></div></div>))}</>)}
     {tab === 'set' && (<>
+      <div className="card"><h3>Homepage Guides · Edit Content</h3>
+        <label>How to Register</label><textarea rows="5" value={c.how_to_register || ''} onChange={e => set('how_to_register', e.target.value)} placeholder="Write registration steps. Use a new line for each step." />
+        <button className="btn" onClick={() => save(['how_to_register'])}>Save Registration Guide</button>
+        <label>Tournament Rules</label><textarea rows="6" value={c.tournament_rules || ''} onChange={e => set('tournament_rules', e.target.value)} placeholder="Edit tournament rules here." />
+        <button className="btn" onClick={() => save(['tournament_rules'])}>Save Rules</button>
+        <label>Prize Details</label><textarea rows="4" value={c.prize_details || ''} onChange={e => set('prize_details', e.target.value)} placeholder="Enter prize amounts and details." />
+        <button className="btn" onClick={() => save(['prize_details'])}>Save Prizes</button>
+      </div>
+      <form className="card" onSubmit={uploadTutorial}><h3>Video Tutorial Upload</h3>
+        <p>MP4/WebM, maximum 100 MB. Homepage video uses metadata-only preload to reduce initial loading.</p>
+        <label>Select tutorial video</label><input type="file" accept="video/mp4,video/webm" onChange={e => setTutorialFile(e.target.files?.[0] || null)} />
+        <button className="btn" disabled={!tutorialFile}>Upload and Publish Video</button>
+        {c.tutorial_video_path && <p>Current video: <a href={supabase.storage.from('announcements').getPublicUrl(c.tutorial_video_path).data.publicUrl} target="_blank" rel="noreferrer">Preview tutorial</a></p>}
+      </form>
       <div className="card"><h3>WhatsApp Contact Button</h3>
       {inp('falak_whatsapp', 'WhatsApp Number (international format, e.g. 923001234567)')}{inp('falak_btn', 'Button Text')}{inp('falak_msg', 'Default WhatsApp Message')}
       <label><input type="checkbox" style={{ width: 'auto' }} checked={c.registration_open !== 'false'} onChange={e => set('registration_open', e.target.checked ? 'true' : 'false')} /> Team registration is open</label>
@@ -299,7 +351,16 @@ export default function Admin() {
     {tab === 'teams' && (<><div className="card">Total teams: {teams.length} · Verified payments: {teams.filter(x => x.payment === 'verified').length}</div>
       {teams.map(tm => { const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
         return (<div className="card" key={tm.id}><b>{tm.name}</b> <small>{tm.reg_id}</small> {tm.payment === 'verified' ? '✅ VERIFIED' : '❌ NOT VERIFIED'}
-          <div dir="ltr">{tm.captain_email}</div><div dir="ltr">C1: {ps[0] && ps[0].name} {ps[0] && ps[0].mobile} | C2: {ps[1] && ps[1].name} {ps[1] && ps[1].mobile}</div>
+          <div dir="ltr">{tm.captain_email}</div>
+          <div className="admin-captain-password">
+            <label>Captain Login Password (minimum 12 characters)</label>
+            <div className="admin-password-row">
+              <input type="text" autoComplete="new-password" value={captainPasswords[tm.id] || ''} onChange={e => setCaptainPasswords(v => ({ ...v, [tm.id]: e.target.value }))} placeholder="Enter or generate a password" />
+              <button type="button" className="btn alt" onClick={() => generateCaptainPassword(tm.id)}>Generate Password</button>
+              <button type="button" className="btn" disabled={busyTeam === tm.id || (captainPasswords[tm.id] || '').length < 12} onClick={() => saveCaptainPassword(tm)}>{busyTeam === tm.id ? 'Saving...' : 'Save Captain Password'}</button>
+            </div>
+          </div>
+          <div dir="ltr">C1: {ps[0] && ps[0].name} {ps[0] && ps[0].mobile} | C2: {ps[1] && ps[1].name} {ps[1] && ps[1].mobile}</div>
           {last && <div dir="ltr">Txn: {last.transaction_id || '-'} <button className="btn alt" onClick={() => shot(last)}>Screenshot</button></div>}
           {tm.payment_rejection_reason && <small>Payment rejection reason: {tm.payment_rejection_reason}</small>}
           <details><summary>View Players</summary>{ps.map(pp => (<div key={pp.id} className="admin-player-row">
