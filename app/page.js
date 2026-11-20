@@ -50,13 +50,14 @@ export default function Home() {
         <Link href="/register" className="btn">{t('regBtn')}</Link>
         <Link href="/teams" className="btn alt">{t('viewBtn')}</Link>
         <Link href="/team" className="btn alt">🔑 {t('captainSignIn')}</Link>
+        {c.tutorial_video_path && <a href="#bjl-video-tutorial" className="btn alt">▶ Video Tutorial</a>}
       </div>
     </section>
     {(c.how_to_register || c.tournament_rules || c.prize_details || c.tutorial_video_path) && <section className="bjl-public-guides">
       {c.how_to_register && <article className="card"><h2>How to Register</h2><p className="bjl-guide-copy">{c.how_to_register}</p></article>}
       {c.tournament_rules && <article className="card"><h2>Tournament Rules</h2><p className="bjl-guide-copy">{c.tournament_rules}</p></article>}
       {c.prize_details && <article className="card"><h2>Prize Details</h2><p className="bjl-guide-copy">{c.prize_details}</p></article>}
-      {c.tutorial_video_path && <article className="card bjl-tutorial"><h2>Video Tutorial</h2><video controls preload="metadata" playsInline width="100%" poster={c.tutorial_poster_path ? img(c.tutorial_poster_path) : undefined}><source src={img(c.tutorial_video_path)} type={c.tutorial_video_path.endsWith('.webm') ? 'video/webm' : 'video/mp4'}/></video></article>}
+      {c.tutorial_video_path && <article id="bjl-video-tutorial" className="card bjl-tutorial"><h2>Video Tutorial</h2><video controls preload="auto" playsInline width="100%" poster={c.tutorial_poster_path ? img(c.tutorial_poster_path) : undefined}><source src={img(c.tutorial_video_path)} type={c.tutorial_video_path.endsWith('.webm') ? 'video/webm' : 'video/mp4'}/></video></article>}
     </section>}
     <div className="duo">
       <div className="card mc"><h3>{t('todayWinner')}</h3>
@@ -86,8 +87,8 @@ export default function Home() {
     <div className="card"><div className="big">{s.total} {t('teamsRegistered')}</div>
       <div>✓ {t('verifiedT')}: {s.verified}</div><div>{t('notVerifiedT')}: {s.not_verified}</div><small>{t('fee')}</small></div>
     <h2>{t('contactTitle')}</h2>
-    {CONTACTS.map((x, i) => (<div className="card" key={x.num}><b>{x.name}</b> · {t(x.role)}{i !== 0 && <div dir="ltr">{x.disp}</div>}
-      <div style={{ marginTop: 8 }}><a className="btn" href={`https://wa.me/${i === 0 && c.falak_whatsapp ? c.falak_whatsapp : x.num}?text=${encodeURIComponent((i === 0 && c.falak_msg) || t(x.msg))}`} target="_blank" rel="noopener noreferrer">{i === 0 ? (c.falak_btn || t('askFalak')) : t('wa')}</a></div></div>))}
+    {CONTACTS.map((x, i) => (<div className="card" key={x.num}><b>{x.name}</b> · {t(x.role)}<div dir="ltr">{x.disp}</div>
+      <div style={{ marginTop: 8 }}><a className="btn" href={`https://wa.me/${x.num}?text=${encodeURIComponent((i === 0 && c.falak_msg) || t(x.msg))}`} target="_blank" rel="noopener noreferrer">{i === 0 ? (c.falak_btn || t('askFalak')) : t('wa')}</a></div></div>))}
     {qs.length > 0 && qs[qi] && <section className="quotes" onMouseEnter={pauseQ} onTouchStart={pauseQ}>
       <h2>اقوالِ امام علیؑ و تعلیماتِ اہلِ بیتؑ</h2>
       <div className="qt" key={qs[qi].id} dir="rtl" lang="ur">
