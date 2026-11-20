@@ -6,7 +6,7 @@ const hash = value => createHash('sha256').update(value).digest('hex');
 
 export async function POST(request) {
   try {
-    if (!process.env.OPENAI_API_KEY || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    if (!process.env.OPENAI_API_KEY || !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
       return NextResponse.json({ error: 'AI Help Center is not configured yet.' }, { status: 503 });
     }
     const body = await request.json();
@@ -23,7 +23,7 @@ export async function POST(request) {
     const visitorKey = hash(visitor + ':' + ip);
     const rpc = await fetch(process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1/rpc/consume_ai_chat_quota', {
       method: 'POST',
-      headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, Authorization: 'Bearer ' + process.env.SUPABASE_SERVICE_ROLE_KEY, 'Content-Type': 'application/json' },
+      headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, Authorization: 'Bearer ' + process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_visitor_key: visitorKey }),
       cache: 'no-store'
     });
