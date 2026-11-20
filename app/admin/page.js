@@ -370,9 +370,9 @@ export default function Admin() {
           <button className="btn alt" onClick={() => editQuote(x)}>Edit</button><button className="btn alt" onClick={() => togQuote(x)}>{x.published ? 'Hide' : 'Publish'}</button><button className="btn alt" onClick={() => delQuote(x)}>Delete Team</button></div></div>))}</>)}
     {tab === 'video' && (<>
       <form className="card" onSubmit={uploadTutorial}><h3>Homepage Video Tutorial Upload</h3>
-        <p>Upload an MP4 or WebM video (maximum 100 MB). The video is published to the homepage after upload. The homepage player is configured to preload video data for faster playback; actual startup speed also depends on video size and the visitor's internet connection.</p>
+        <p>Upload the complete MP4 or WebM tutorial video up to 1 GB (about 15 minutes or longer, depending on video quality and bitrate). Large files upload in resumable chunks. The homepage loads the video only after a visitor opens Video Tutorial.</p>
         <label>Select tutorial video</label><input type="file" accept="video/mp4,video/webm" onChange={e => setTutorialFile(e.target.files?.[0] || null)} />
-        <button className="btn" disabled={!tutorialFile}>Upload and Publish Video</button>
+        <button className="btn" disabled={!tutorialFile || (tutorialProgress > 0 && tutorialProgress < 100)}>Upload and Publish Video</button>{tutorialProgress > 0 && <div className="admin-upload-progress"><progress value={tutorialProgress} max="100" /><small>{tutorialProgress}% uploaded</small></div>}{tutorialFile && <small>Selected: {tutorialFile.name} · {(tutorialFile.size / (1024 * 1024)).toFixed(1)} MB</small>}
         {c.tutorial_video_path && <p>Current video: <a href={supabase.storage.from('announcements').getPublicUrl(c.tutorial_video_path).data.publicUrl} target="_blank" rel="noreferrer">Preview tutorial</a></p>}
       </form>
     </>)}
@@ -425,7 +425,7 @@ export default function Admin() {
                 <label>Description / Evidence</label><textarea required rows="2" value={objectionDraft.details} onChange={e => setObjectionDraft(v => ({ ...v, details: e.target.value }))} placeholder="Write the objection details..." />
                 <div className="row"><button className="btn">Submit Objection</button><button type="button" className="btn alt" onClick={() => setObjectionPlayer(null)}>Cancel</button></div>
               </form>}
-              {objections.filter(o => o.player_id === pp.id).map(o => <div className="admin-objection-mini" key={o.id}><b>{o.reason}</b> · {o.status.toUpperCase()}<br/><small>Raised by {o.raised_by || 'Not provided'} · {new Date(o.created_at).toLocaleString()}</small><div>{o.details}</div></div>)}
+              {objections.filter(o => o.player_id === pp.id).map(o => <div className="admin-objection-mini" key={o.id}><b>{o.reason}</b> · {o.status.toUpperCase()}<br/><small>Raised by {o.raised_by || 'Not provided'} · {new Date(o.created_at).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</small><div>{o.details}</div></div>)}
             </div></div>))}</details>
           <div className="row" style={{ justifyContent: 'flex-start' }}>
             <button className="btn" onClick={() => setPay(tm, 'verified')}>✓ Verify Payment</button>
