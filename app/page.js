@@ -60,7 +60,6 @@ export default function Home() {
       {c.how_to_register && <article className="card"><h2>How to Register</h2><p className="bjl-guide-copy">{c.how_to_register}</p></article>}
       {c.tournament_rules && <article className="card"><h2>Tournament Rules</h2><p className="bjl-guide-copy">{c.tournament_rules}</p></article>}
       {c.prize_details && <article className="card"><h2>Prize Details</h2><p className="bjl-guide-copy">{c.prize_details}</p></article>}
-}
     </section>}
     <div className="duo">
       <div className="card mc"><h3>{t('todayWinner')}</h3>
