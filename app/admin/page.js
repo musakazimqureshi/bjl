@@ -102,14 +102,14 @@ export default function Admin() {
     const email = (tm.captain_email || '').trim().toLowerCase();
     if (!email) return setMsg('اس ٹیم کا کپتان Gmail ریکارڈ میں موجود نہیں۔');
     const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
-    const bytes = new Uint8Array(14);
-    crypto.getRandomValues(bytes);
-    const password = Array.from(bytes, b => alphabet[b % alphabet.length]).join('');
+    const passwordBytes = new Uint8Array(18);
+    crypto.getRandomValues(passwordBytes);
+    const password = Array.from(passwordBytes, b => alphabet[b % alphabet.length]).join('');
     setMsg('کپتان کے لیے نیا پاس ورڈ بنایا جا رہا ہے...');
     const { data, error } = await supabase.functions.invoke('captain-login-provisioner', {
       body: { teamId: tm.id, email, password }
     });
-    if (error || !data?.ok) return setMsg(error?.message || data?.error || 'اکاؤنٹ نہیں بن سکا۔');
+    if (error || !data?.ok) { const detail = data?.error || error?.message || 'اکاؤنٹ نہیں بن سکا۔'; return setMsg('Captain account service failed: ' + detail + ' اگر function deploy نہیں ہے تو Supabase Edge Function captain-login-provisioner کو deploy کرنا ضروری ہے۔'); }
     setCaptainCreds(prev => ({ ...prev, [tm.id]: { email, password } }));
     setMsg('Captain login تیار ہے۔ یہ پاس ورڈ کپتان کو محفوظ طریقے سے دے دیں۔');
   }
