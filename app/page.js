@@ -85,7 +85,8 @@ export default function Home() {
     </div>
     <People inline />
     <div className="card"><div className="big">{s.total} {t('teamsRegistered')}</div>
-      <div>✓ {t('verifiedT')}: {s.verified}</div><div>{t('notVerifiedT')}: {s.not_verified}</div><small>{t('fee')}</small></div>
+      <div>✓ {t('verifiedT')}: {s.verified}</div><div>{t('notVerifiedT')}: {s.not_verified}</div><small>Admission fee: PKR 5,000 per team. A slot is confirmed only after the admin verifies your payment.</small></div>
+    <section className="card bjl-group-invite"><h2>BJL Official WhatsApp Group</h2><p>Join the official Battagram Junior League WhatsApp group for tournament updates and announcements.</p><a className="btn" href="https://chat.whatsapp.com/D5RUqQB6XVIIwHkYJkz5vZ" target="_blank" rel="noopener noreferrer">Join BJL WhatsApp Group</a></section>
     <h2>{t('contactTitle')}</h2>
     {CONTACTS.map((x, i) => (<div className="card" key={x.num}><b>{x.name}</b> · {t(x.role)}<div dir="ltr">{x.disp}</div>
       <div style={{ marginTop: 8 }}><a className="btn" href={`https://wa.me/${x.num}?text=${encodeURIComponent((i === 0 && c.falak_msg) || t(x.msg))}`} target="_blank" rel="noopener noreferrer">{i === 0 ? (c.falak_btn || t('askFalak')) : t('wa')}</a></div></div>))}
