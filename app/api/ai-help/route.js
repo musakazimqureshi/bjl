@@ -6,7 +6,7 @@ const hash = value => createHash('sha256').update(value).digest('hex');
 
 export async function POST(request) {
   try {
-    if (!process.env.OPENAI_API_KEY || !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    if (!process.env.GEMINI_API_KEY || !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
       return NextResponse.json({ error: 'AI Help Center is not configured yet.' }, { status: 503 });
     }
     const body = await request.json();
@@ -31,22 +31,28 @@ export async function POST(request) {
     const quota = await rpc.json();
     const allowance = Array.isArray(quota) ? quota[0] : quota;
     if (!allowance?.allowed) return NextResponse.json({ error: 'You have used all 30 messages for this 30-day period. Please try again later.' }, { status: 429 });
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+
+    const systemPrompt = 'You are the Battagram Junior League (BJL) website help assistant. Answer clearly and politely. Help with team registration, player registration, payment submission, match information, announcements and website navigation. Do not invent schedules, rules, fees, results or team details that are not supplied. If you do not know a current tournament detail, direct the visitor to the official BJL WhatsApp contacts on the page. Reply in the language used by the visitor (Urdu, Roman Urdu, Pashto or English). Never request passwords, OTPs, payment card details or sensitive personal information.';
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(process.env.GEMINI_API_KEY), {
       method: 'POST',
-      headers: { Authorization: 'Bearer ' + process.env.OPENAI_API_KEY, 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        temperature: 0.4,
-        messages: [
-          { role: 'system', content: 'You are the Battagram Junior League (BJL) website help assistant. Answer clearly and politely. Help with team registration, player registration, payment submission, match information, announcements and website navigation. Do not invent schedules, rules, fees, results or team details that are not supplied. If you do not know a current tournament detail, direct the visitor to the official BJL WhatsApp contacts on the page. Reply in the language used by the visitor (Urdu, Roman Urdu, Pashto or English). Never request passwords, OTPs, payment card details or sensitive personal information.' },
-          ...cleaned
-        ]
-      })
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: cleaned.map(m => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }]
+        })),
+        generationConfig: { temperature: 0.4, maxOutputTokens: 1024 }
+      }),
+      cache: 'no-store'
     });
     const result = await response.json();
-    if (!response.ok) throw new Error(result.error?.message || 'AI service temporarily unavailable.');
-    const reply = result.choices?.[0]?.message?.content?.trim();
-    if (!reply) throw new Error('No reply was returned.');
+    if (!response.ok) {
+      const message = result.error?.message || 'Gemini AI service temporarily unavailable.';
+      return NextResponse.json({ error: message }, { status: response.status === 429 ? 429 : 502 });
+    }
+    const reply = result.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('').trim();
+    if (!reply) throw new Error('No reply was returned. Please try again.');
     return NextResponse.json({ reply, remaining: allowance.remaining });
   } catch (error) {
     return NextResponse.json({ error: error.message || 'Something went wrong.' }, { status: 500 });
