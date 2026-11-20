@@ -52,6 +52,12 @@ export default function Home() {
         <Link href="/team" className="btn alt">🔑 {t('captainSignIn')}</Link>
       </div>
     </section>
+    {(c.how_to_register || c.tournament_rules || c.prize_details || c.tutorial_video_path) && <section className="bjl-public-guides">
+      {c.how_to_register && <article className="card"><h2>How to Register</h2><p className="bjl-guide-copy">{c.how_to_register}</p></article>}
+      {c.tournament_rules && <article className="card"><h2>Tournament Rules</h2><p className="bjl-guide-copy">{c.tournament_rules}</p></article>}
+      {c.prize_details && <article className="card"><h2>Prize Details</h2><p className="bjl-guide-copy">{c.prize_details}</p></article>}
+      {c.tutorial_video_path && <article className="card bjl-tutorial"><h2>Video Tutorial</h2><video controls preload="metadata" playsInline width="100%" poster={c.tutorial_poster_path ? img(c.tutorial_poster_path) : undefined}><source src={img(c.tutorial_video_path)} type={c.tutorial_video_path.endsWith('.webm') ? 'video/webm' : 'video/mp4'}/></video></article>}
+    </section>}
     <div className="duo">
       <div className="card mc"><h3>{t('todayWinner')}</h3>
         {showWin ? (<><div className="team">🏆 {nm(c.winner_team)}</div>

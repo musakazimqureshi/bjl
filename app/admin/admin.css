@@ -76,3 +76,25 @@
  .admin-live{display:none!important}
 }
 @media(max-width:430px){.admin-shell>.admin-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}.admin-topbar h1{font-size:1.35rem!important}.admin-topbar p{font-size:.78rem!important}}
+
+/* Admin control-room layout: compact left navigation, wide live workspace */
+@media(min-width:761px){
+ .admin-shell{grid-template-columns:258px minmax(0,1fr)!important;grid-template-rows:auto auto auto auto 1fr!important}
+ .admin-brand{grid-column:1!important;grid-row:1!important;position:relative!important;height:auto!important;min-height:92px!important;align-items:center!important}
+ .admin-topbar{grid-column:2!important;grid-row:1!important}
+ .admin-shell>.admin-tabs{grid-column:1!important;grid-row:2/6!important;position:sticky!important;top:0!important;height:calc(100vh - 92px)!important;align-self:start!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;overflow-y:auto!important;overflow-x:hidden!important;padding:18px 13px!important;background:linear-gradient(180deg,#10223e,#0c172b)!important}
+ .admin-shell nav button{width:100%!important;justify-content:flex-start!important;text-align:left!important;background:transparent!important;border:1px solid #ffffff14!important;color:#c8d7ed!important}
+ .admin-shell nav button.on{background:linear-gradient(120deg,#326fc0,#2457a6)!important;color:#fff!important}
+ .admin-shell>.admin-stats{grid-column:2!important;grid-row:2!important}
+ .admin-message{grid-column:2!important;grid-row:3!important}
+ .admin-content-label{grid-column:2!important;grid-row:4!important}
+ .admin-workspace{grid-column:2!important;grid-row:5!important}
+}
+.admin-captain-password{margin:14px 0;padding:14px;border:1px solid #dce7f5;border-radius:13px;background:#f7faff}
+.admin-password-row{display:grid;grid-template-columns:minmax(140px,1fr) auto auto;gap:8px;align-items:center}
+.admin-password-row input{margin:0!important}
+.admin-player-row{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid #e8edf5}
+.admin-player-main{min-width:0;flex:1}
+.admin-objection-form{margin:12px 0;padding:14px;border:1px solid #e5c2c8;border-radius:12px;background:#fff9fa}
+.admin-objection-mini{margin:10px 0;padding:10px;border-left:3px solid #c7354c;background:#fff7f8;border-radius:8px;font-size:.82rem}
+@media(max-width:760px){.admin-password-row{grid-template-columns:1fr}.admin-shell>.admin-tabs{height:auto!important;position:relative!important}}

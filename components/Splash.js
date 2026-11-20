@@ -204,16 +204,9 @@ export default function Splash() {
         <div className="sp-line" />
         <div className="sp-s">{phase === 0 ? 'BATTAGRAM JUNIOR LEAGUE' : phase === 1 ? 'THE GAME BEGINS HERE' : 'SIXER! · BATTAGRAM JUNIOR LEAGUE'}</div>
       </div>
-      {phase === 2 && <div className="sp-shot-scene" aria-label="A batsman hits a six">
+      {phase === 2 && <div className="sp-shot-scene" aria-label="A cricket ball spins across the stadium">
         <div className="sp-shot-stumps"><i/><i/><i/></div>
-        <svg className="sp-batsman" viewBox="0 0 180 190" aria-hidden="true">
-          <circle cx="89" cy="28" r="15" fill="#f4c9a5"/><path d="M76 19 Q88 1 103 18 L105 28 Q89 20 74 29Z" fill="#171717"/>
-          <path d="M75 48 Q90 40 105 49 L116 99 L65 99Z" fill="#c91525" stroke="#f5d27c" strokeWidth="2"/>
-          <path d="M72 56 L46 91 L61 101 L83 75 M106 55 L130 75 L120 87 L98 77" fill="none" stroke="#f4c9a5" strokeWidth="12" strokeLinecap="round"/>
-          <path d="M78 98 L72 145 L53 178 M103 98 L110 145 L132 177" fill="none" stroke="#f4c9a5" strokeWidth="15" strokeLinecap="round"/>
-          <path d="M45 179 L63 179 M126 179 L141 179" stroke="#f4c9a5" strokeWidth="9" strokeLinecap="round"/>
-          <path d="M123 76 L158 18" stroke="#d8b36a" strokeWidth="8" strokeLinecap="round"/>
-        </svg>
+        
         <span className="sp-shot-ball"/>
         <div className="sp-six">SIX!</div>
       </div>}
