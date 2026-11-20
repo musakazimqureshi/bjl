@@ -4,7 +4,6 @@ import Header from './Header';
 import People from './People';
 import FloatingWA from './FloatingWA';
 import Splash from './Splash';
-import InfoTicker from './InfoTicker';
 import MotionObserver from './MotionObserver';
 import ScrollProgress from './ScrollProgress';
 
@@ -17,7 +16,6 @@ export default function SiteChrome({ children }) {
       <ScrollProgress />
       <MotionObserver />
       <Header />
-      <InfoTicker />
       <main>{children}<People /></main>
       <FloatingWA />
       <footer className="credit"><strong>OFFICIAL WEBSITE · BATTAGRAM JUNIOR LEAGUE</strong><span> BJL SEASON 1 · ORGANIZED FOR THE CRICKET COMMUNITY OF BATTAGRAM</span></footer>
