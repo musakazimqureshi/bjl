@@ -126,7 +126,8 @@ export default function Admin() {
     setMsg(error ? error.message : 'Objection status updated.');
     loadObjections();
   }
-  async function loadPageVisits() { const {data,error}=await supabase.from('page_visits').select('*').order('created_at',{ascending:false}).limit(1000); if(error) setMsg(error.message); setPageVisits(data||[]); }\n  async function loadTeamMessages() { const {data,error}=await supabase.from('team_messages').select('*, teams(name)').order('created_at',{ascending:false}).limit(200); if(error) setMsg(error.message); setTeamMessages(data||[]); }
+  async function loadPageVisits() { const {data,error}=await supabase.from('page_visits').select('*').order('created_at',{ascending:false}).limit(1000); if(error) setMsg(error.message); setPageVisits(data||[]); }
+  async function loadTeamMessages() { const {data,error}=await supabase.from('team_messages').select('*, teams(name)').order('created_at',{ascending:false}).limit(200); if(error) setMsg(error.message); setTeamMessages(data||[]); }
   async function sendAdminMessage(e) { e.preventDefault(); if(!messageTeam||!messageBody.trim()) return setMsg('Select a team and enter a message.'); const {error}=await supabase.from('team_messages').insert({team_id:messageTeam,sender_role:'admin',message:messageBody.trim()}); setMsg(error?error.message:'Private message sent to team.'); if(!error){setMessageBody('');loadTeamMessages();} }
   async function createCaptainAccount(e) {
     e.preventDefault(); setCaptainBusy(true); setMsg('Creating captain account...');
