@@ -117,7 +117,7 @@ export default function Admin() {
     const cred = captainCreds[tm.id];
     if (!cred) return;
     try {
-      await navigator.clipboard.writeText('BJL Team Login\\nGmail: ' + cred.email + '\\nPassword: ' + cred.password);
+      await navigator.clipboard.writeText('BJL Team Login\nGmail: ' + cred.email + '\nPassword: ' + cred.password);
       setMsg('Gmail اور Password کاپی ہو گئے ✔');
     } catch {
       setMsg('کاپی نہیں ہو سکا، پاس ورڈ کو دستی طور پر کاپی کریں۔');
