@@ -516,3 +516,91 @@ body:has(.hdr):before{
 /* BJL homepage tutorial quick link */
 .hero .tutorial-cta{font-size:.82rem;padding:8px 11px;white-space:nowrap;align-self:center}
 .bjl-tutorial video{display:block;max-height:70vh;background:#000;border-radius:10px}
+
+
+/* BJL 2026 PROFESSIONAL REFRESH — visual-only layer; existing routes and components preserved */
+:root{
+ --red:#e3293b;--red2:#f04455;--bg:#f2f6ff;--card:#ffffff;--txt:#17233f;
+ --bjl-blue:#1f4ed8;--bjl-blue2:#3478f6;--bjl-yellow:#f4c542;
+ --bjl-green:#16a36a;--bjl-purple:#7854d8;--gold:#d9a92e;
+ color-scheme:light;
+}
+html{scroll-behavior:smooth;scroll-padding-top:82px}
+body{background:linear-gradient(180deg,#edf3ff 0%,#f7f9ff 42%,#eef3fb 100%);color:#17233f;font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+main{max-width:1180px;padding:22px 18px 96px}
+.hdr{position:sticky;top:0;z-index:45;background:rgba(14,27,57,.96);backdrop-filter:blur(14px);border-bottom:3px solid transparent;border-image:linear-gradient(90deg,var(--bjl-blue),var(--red),var(--bjl-yellow),var(--bjl-green),var(--bjl-purple)) 1;box-shadow:0 8px 26px #15264a20}
+.hdr nav{align-items:center;gap:clamp(8px,1.5vw,18px)}
+.hdr nav a{color:#edf3ff;font-size:.9rem;font-weight:650;transition:color .18s ease,opacity .18s ease}
+.hdr nav a:hover{color:#ffd85d}
+.shield{background:linear-gradient(140deg,#ff5262,#d71938 65%,#a70d31);box-shadow:0 5px 18px #e3293b55;border-color:#ffffffaa}
+.lang,.btn{background:linear-gradient(135deg,var(--bjl-blue),#3478f6);color:#fff;border:1px solid #ffffff45;border-radius:11px;padding:10px 17px;font-weight:750;box-shadow:0 6px 16px #2455ce26;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+.btn:hover,.lang:hover{filter:brightness(1.06);transform:translateY(-2px);box-shadow:0 10px 22px #2455ce30}
+.btn.alt{background:#fff;color:#24416f;border:1px solid #cbd8f0;box-shadow:0 3px 10px #1b376510}
+.hero{position:relative;isolation:isolate;overflow:hidden;text-align:center;padding:clamp(32px,6vw,66px) 18px;background:radial-gradient(ellipse at 12% 8%,#ffffff40,transparent 34%),linear-gradient(132deg,#173b91 0%,#245dd5 43%,#7a244e 78%,#b91f3c 100%);color:#fff;border:1px solid #ffffff90;border-radius:24px;box-shadow:0 18px 48px #183e8b25}
+.hero:before{content:"";position:absolute;inset:0;z-index:-1;opacity:.18;background:linear-gradient(120deg,transparent 35%,#fff 50%,transparent 65%);transform:translateX(-110%)}
+.hero h1{color:#fff;text-shadow:0 3px 18px #0a1b4b55;letter-spacing:-.035em}
+.hero p,.hero small{color:#edf4ff}
+.hero .btn{background:linear-gradient(135deg,#fff,#e8efff);color:#183b8d;border:1px solid #fff}
+.hero .btn.alt{background:#0d245b55;color:#fff;border:1px solid #ffffff8a;backdrop-filter:blur(8px)}
+.hero .shield{background:linear-gradient(145deg,#ff4e61,#c91036);color:#fff}
+.calli{background:linear-gradient(135deg,#111b37,#263d70 52%,#131d38);border:1px solid #f4cf67;box-shadow:inset 0 0 25px #fff1,0 10px 28px #07163835}
+.calli .ar{font-family:"Amiri","Noto Naskh Arabic","Noto Nastaliq Urdu",serif;color:#fff5d6;text-shadow:0 2px 14px #f2c75a66}
+.card{background:rgba(255,255,255,.96);color:#263653;border:1px solid #dce5f4;border-radius:17px;padding:17px;box-shadow:0 8px 24px #1c376010;transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+.card h2,.card h3{color:#234b9e}
+.big{color:var(--bjl-blue);font-weight:900}
+.warn{background:#fff4d9;color:#79530b;border:1px solid #f1d58b}
+input,select,textarea{background:#fff;color:#1c2c49;border:1px solid #cbd7ea;border-radius:10px}
+label{color:#52627f}
+.err{background:#fff0f0;color:#a91f35;border:1px solid #ffd1d8}
+.good{background:#e8f8ef;color:#176b49;border:1px solid #c5efd9}
+.duo .card,.bjl-public-guides .card{min-width:0}
+.duo h3,.mc h3{color:var(--red);letter-spacing:.035em}
+.team{color:#1b3979}
+.vsx{color:var(--red)}
+.res{color:#8b6500}
+.ann{border-color:#e7a8b1;box-shadow:0 8px 24px #1c376012}
+.gal img,.sqimg,.msi{border:1px solid #d7e1f1}
+.pp{background:#fff;border-color:#dce5f4;box-shadow:0 8px 20px #18345c12}
+.pp.org{border-color:var(--bjl-yellow);box-shadow:0 8px 28px #d6a92c30}
+.pp .role{color:#b47b09}
+.badge.v{background:#e3f8ed;color:#087a4b}.badge.n{background:#fff0f0;color:#bd263b}
+.bjl-group-invite{background:linear-gradient(115deg,#eaf2ff,#fff 58%,#e8fbf3);border-color:#c9d9f4}
+.bjl-group-invite h2{color:#1d4db4}
+.bjl-group-invite .btn{background:linear-gradient(135deg,#128a59,#20bd79);box-shadow:0 6px 18px #16a36a30}
+.bjl-tutorial video{max-height:70vh;background:#0b1428;border-radius:14px}
+.quotes{margin:32px 0 10px;padding:24px 16px;border:1px solid #e4d5a5;border-radius:20px;background:linear-gradient(145deg,#fffdf6,#f5f0df);box-shadow:0 10px 28px #7c622018}
+.qt{font-family:"Noto Naskh Arabic","Amiri","Noto Nastaliq Urdu",serif;max-width:800px;min-height:160px;color:#263653;line-height:2.2}
+.qn{color:#a77817;font-weight:800}
+.qb{font-family:"Noto Naskh Arabic","Amiri","Noto Nastaliq Urdu",serif;color:#263653;font-size:clamp(1.2rem,4.2vw,1.75rem);line-height:2.15}
+.qr{color:#65728a}
+.quote-controls .btn.alt{background:#fff;border-color:#d8c58a;color:#785b16}
+.fwa{box-shadow:0 8px 24px #0d6b4540;border:2px solid #ffffff}
+.modal{backdrop-filter:blur(8px)}
+.mbox{background:#fff;color:#243653;border:1px solid #d8e3f4;box-shadow:0 24px 70px #061b3d40}
+.tlink{color:#2457c6;text-decoration-color:#e3b33d}
+@media(prefers-reduced-motion:no-preference){
+ .hero:hover:before{animation:bjl-sheen 1.1s ease}
+ .card:hover{transform:translateY(-3px);box-shadow:0 14px 32px #1c376018;border-color:#c5d5f0}
+ .hdr nav a:hover{transform:translateY(-1px)}
+ .hero,.duo>.card,.bjl-public-guides>.card,.quotes{animation:bjl-rise .55s both}
+ .duo>.card:nth-child(2){animation-delay:.08s}
+ @keyframes bjl-rise{from{opacity:.82;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+ @keyframes bjl-sheen{to{transform:translateX(110%)}}
+}
+@media(max-width:700px){
+ main{padding:14px 12px 90px}
+ .hdr{gap:8px;padding:9px 10px}
+ .hdr nav{gap:7px 10px}
+ .hdr nav a{font-size:.75rem}
+ .hero{border-radius:18px;padding:34px 12px}
+ .row{gap:8px}
+ .hero .row .btn{padding:9px 11px;font-size:.86rem}
+ .card{padding:14px;border-radius:15px}
+ .quotes{padding:18px 12px}
+ .qt{min-height:130px}
+}
+@media(prefers-reduced-motion:reduce){
+ html{scroll-behavior:auto}
+ .hero:before{display:none}
+ .card,.btn,.lang{transition:none}
+}
