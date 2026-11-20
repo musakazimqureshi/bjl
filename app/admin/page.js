@@ -225,10 +225,10 @@ export default function Admin() {
   const tsel = (k, label) => (<><label>{label}</label><select value={c[k] || ''} onChange={e => set(k, e.target.value)}><option value="">— ٹیم منتخب کریں —</option>{c[k] && !teams.some(x => x.name === c[k]) && <option value={c[k]}>{c[k]}</option>}{teams.map(x => <option key={x.id} value={x.name}>{x.name}</option>)}</select></>);
   const show = (k, l) => (<label><input type="checkbox" checked={c[k] !== '0'} onChange={e => set(k, e.target.checked ? '1' : '0')} style={{ width: 'auto' }} /> {l}</label>);
   const pa = p => supabase.storage.from('announcements').getPublicUrl(p).data.publicUrl;
-  return (<div>
-    <h2>BJL Admin</h2>
+  return (<div className="admin-control-room">
+    <div className="admin-control-heading"><div><small>BATTAGRAM JUNIOR LEAGUE · SEASON 1</small><h2>BJL Admin Control Room</h2><p>Team operations, player review, payments and public website controls</p></div><span className="admin-secure-indicator">● ADMIN SESSION</span></div>
     <datalist id="tn">{teams.map(x => <option key={x.id} value={x.name} />)}</datalist>
-    <div className="tabs">
+    <div className="tabs admin-tabs-right">
       {[['overview', 'Overview'], ['teams', 'Teams'], ['objections', 'Player Objections'], ['match', 'Matches & Results'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['quotes', 'Quotes'], ['set', 'Settings']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
       <button className="btn" onClick={logout}>Logout</button></div>
     {msg && <div className="good">{msg}</div>}
@@ -241,6 +241,7 @@ export default function Admin() {
           <div className="card"><b>Mark Payment Pending</b><div className="big">{teams.filter(x => x.payment === 'submitted').length}</div></div>
           <div className="card"><b>کل کھلاڑی</b><div className="big">{teams.reduce((n, x) => n + (x.players || []).length, 0)}</div></div>
           <div className="card"><b>اعلانات</b><div className="big">{ann.length}</div></div>
+          <div className="card"><b>Player Objections</b><div className="big">{objections.length}</div><small>{objections.filter(x => !['resolved','rejected'].includes(x.status)).length} Open / Under Review</small></div>
         </div>
       </div>
       <div className="card"><h3>Quick Actions</h3><div className="row" style={{justifyContent:'flex-start'}}>
