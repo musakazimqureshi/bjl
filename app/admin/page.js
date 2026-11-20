@@ -260,7 +260,7 @@ export default function Admin() {
     <header className="admin-topbar"><div><span className="admin-eyebrow">MANAGEMENT CONSOLE</span><h1>BJL Admin Dashboard</h1><p>Manage your tournament, teams, matches and player reviews in one place.</p></div><div className="admin-top-actions"><span className="admin-live"><i /> SYSTEM ONLINE</span><button className="btn admin-logout" onClick={logout}>Logout ↗</button></div></header>
     <datalist id="tn">{teams.map(x => <option key={x.id} value={x.name} />)}</datalist>
     <nav className="tabs admin-tabs" aria-label="Admin sections">
-      {[['teams', 'Teams'], ['match', 'Match Center'], ['objections', 'Player Objections'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['quotes', 'Quotes'], ['set', 'Settings']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
+      {[['teams', 'Teams'], ['match', 'Match Center'], ['objections', 'Player Objections'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['quotes', 'Quotes'], ['video', 'Video Tutorial'], ['set', 'Settings']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
       </nav>
     {msg && <div className="good admin-message">{msg}</div>}
     <section className="admin-stats" aria-label="Quick statistics">
@@ -269,7 +269,7 @@ export default function Admin() {
       <article className="admin-stat"><span className="admin-stat-icon amber">◷</span><div><small>Pending Payments</small><strong>{teams.filter(x => x.payment !== 'verified' && x.payment !== 'rejected').length}</strong><em>Awaiting review</em></div></article>
       <article className="admin-stat"><span className="admin-stat-icon violet">▣</span><div><small>Announcements</small><strong>{ann.length}</strong><em>Announcements</em></div></article>
     </section>
-    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',quotes:'Quotes & Content',set:'Website Settings'})[tab]}</strong></div>
+    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',quotes:'Quotes & Content',video:'Homepage Video Tutorial',set:'Website Settings'})[tab]}</strong></div>
     <main className="admin-workspace">
     {tab === 'match' && (<><div className="card"><h3>Match Result</h3>
       {tsel('winner_team', 'Winning Team')}{tsel('loser_team', 'Opposition Team')}{inp('winner_result', 'Result / Short Note (Optional)')}{inp('winner_date', 'Match Date', 'date')}{show('winner_show', 'Show on Homepage')}
@@ -321,6 +321,14 @@ export default function Admin() {
       {qs.map((x, i) => (<div className="card" key={x.id} dir="rtl"><small>{i + 1}</small> {x.published ? '✅' : '⛔'}<p>{x.body}</p><small>{x.book} · {x.ref}</small>
         <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt admin-reorder" onClick={() => moveQuote(i, -1)} disabled={i === 0} aria-label="Move quote up" title="Move up"><span aria-hidden="true">↑</span><small>UP</small></button><button className="btn alt admin-reorder" onClick={() => moveQuote(i, 1)} disabled={i === qs.length - 1} aria-label="Move quote down" title="Move down"><span aria-hidden="true">↓</span><small>DOWN</small></button>
           <button className="btn alt" onClick={() => editQuote(x)}>Edit</button><button className="btn alt" onClick={() => togQuote(x)}>{x.published ? 'Hide' : 'Publish'}</button><button className="btn alt" onClick={() => delQuote(x)}>Delete Team</button></div></div>))}</>)}
+    {tab === 'video' && (<>
+      <form className="card" onSubmit={uploadTutorial}><h3>Homepage Video Tutorial Upload</h3>
+        <p>Upload an MP4 or WebM video (maximum 100 MB). The video is published to the homepage after upload. The homepage player is configured to preload video data for faster playback; actual startup speed also depends on video size and the visitor's internet connection.</p>
+        <label>Select tutorial video</label><input type="file" accept="video/mp4,video/webm" onChange={e => setTutorialFile(e.target.files?.[0] || null)} />
+        <button className="btn" disabled={!tutorialFile}>Upload and Publish Video</button>
+        {c.tutorial_video_path && <p>Current video: <a href={supabase.storage.from('announcements').getPublicUrl(c.tutorial_video_path).data.publicUrl} target="_blank" rel="noreferrer">Preview tutorial</a></p>}
+      </form>
+    </>)}
     {tab === 'set' && (<>
       <div className="card"><h3>Homepage Guides · Edit Content</h3>
         <label>How to Register</label><textarea rows="5" value={c.how_to_register || ''} onChange={e => set('how_to_register', e.target.value)} placeholder="Write registration steps. Use a new line for each step." />
@@ -330,12 +338,6 @@ export default function Admin() {
         <label>Prize Details</label><textarea rows="4" value={c.prize_details || ''} onChange={e => set('prize_details', e.target.value)} placeholder="Enter prize amounts and details." />
         <button className="btn" onClick={() => save(['prize_details'])}>Save Prizes</button>
       </div>
-      <form className="card" onSubmit={uploadTutorial}><h3>Video Tutorial Upload</h3>
-        <p>MP4/WebM, maximum 100 MB. Homepage video uses metadata-only preload to reduce initial loading.</p>
-        <label>Select tutorial video</label><input type="file" accept="video/mp4,video/webm" onChange={e => setTutorialFile(e.target.files?.[0] || null)} />
-        <button className="btn" disabled={!tutorialFile}>Upload and Publish Video</button>
-        {c.tutorial_video_path && <p>Current video: <a href={supabase.storage.from('announcements').getPublicUrl(c.tutorial_video_path).data.publicUrl} target="_blank" rel="noreferrer">Preview tutorial</a></p>}
-      </form>
       <div className="card"><h3>WhatsApp Contact Button</h3>
       {inp('falak_whatsapp', 'WhatsApp Number (international format, e.g. 923001234567)')}{inp('falak_btn', 'Button Text')}{inp('falak_msg', 'Default WhatsApp Message')}
       <label><input type="checkbox" style={{ width: 'auto' }} checked={c.registration_open !== 'false'} onChange={e => set('registration_open', e.target.checked ? 'true' : 'false')} /> Team registration is open</label>
