@@ -2,35 +2,26 @@
 import { useEffect, useState } from 'react';
 import { adminSupabase as supabase } from '../../lib/adminSupabase';
 import { shrink } from '../../lib/img';
-import { formatDate, formatDateTime } from '../../lib/date';
-const ADMIN_EMAIL = 'musakazim373@gmail.com';
 const ext = f => (f.type === 'image/png' ? 'png' : f.type === 'image/webp' ? 'webp' : 'jpg');
+const dateFmt = v => { if (!v) return ''; const [y, m, d] = String(v).slice(0, 10).split('-'); return y && m && d ? `${d}/${m}/${y}` : v; };
 const okImg = f => f && ['image/jpeg', 'image/png', 'image/webp'].includes(f.type) && f.size <= 15 * 1024 * 1024;
 export default function Admin() {
   const [ready, setReady] = useState(false); const [isAdmin, setIsAdmin] = useState(false); const [logged, setLogged] = useState(false);
   const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
   const [tab, setTab] = useState('overview'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
   const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
-  const [objections, setObjections] = useState([]); const [objectionPlayer, setObjectionPlayer] = useState(null); const [objectionDraft, setObjectionDraft] = useState({ reason: '', raised_by: '', details: '' });
-  const [profile, setProfile] = useState({ name: 'Musa Kazim Qureshi', role: 'Founder & Organizer · Battagram Junior League', bio: 'Building a strong cricket community in Battagram.', photo_path: '/demo-admin-avatar.svg' });
-  const [profileFile, setProfileFile] = useState(null); const [profileSaving, setProfileSaving] = useState(false); const [captainTeam, setCaptainTeam] = useState(''); const [captainEmail, setCaptainEmail] = useState(''); const [captainPassword, setCaptainPassword] = useState(''); const [captainBusy, setCaptainBusy] = useState(false); const [messageTeam,setMessageTeam]=useState(''); const [messageBody,setMessageBody]=useState(''); const [teamMessages,setTeamMessages]=useState([]); const [pageVisits,setPageVisits]=useState([]);
+  const [captainCreds, setCaptainCreds] = useState({});
   async function check() {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
-      const allowed = !!user && user.email?.toLowerCase() === ADMIN_EMAIL;
-      setLogged(allowed);
-      if (!allowed) {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      setLogged(!!session);
+      if (!session) {
         setIsAdmin(false);
-        if (user) await supabase.auth.signOut({ scope: 'local' });
       } else {
-        const { data, error } = await supabase.from('admins').select('id').eq('id', user.id).maybeSingle();
+        const { data, error } = await supabase.from('admins').select('id').eq('id', session.user.id).maybeSingle();
         if (error) throw error;
         setIsAdmin(!!data);
-        if (!data) {
-          await supabase.auth.signOut({ scope: 'local' });
-          setLogged(false);
-        }
       }
     } catch (error) {
       setLogged(false);
@@ -41,109 +32,15 @@ export default function Admin() {
     }
   }
   async function load() {
-    const [contentResult, announcementsResult, momentsResult, quotesResult] = await Promise.all([
-      supabase.rpc('public_content'),
-      supabase.from('announcements').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: false }),
-      supabase.from('moments').select('*').order('moment_date', { ascending: false }).order('created_at', { ascending: false }),
-      supabase.from('quotes').select('*').order('sort_order', { ascending: true })
-    ]);
-    setC(contentResult.data || {});
-    setAnn(announcementsResult.data || []);
-    setMoms(momentsResult.data || []);
-    setQs(quotesResult.data || []);
-    const firstError = contentResult.error || announcementsResult.error || momentsResult.error || quotesResult.error;
-    if (firstError) setMsg(firstError.message || 'Some dashboard data could not be loaded.');
-  }
-  async function loadProfile() {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) { setMsg('Could not identify the signed-in administrator.'); return; }
-    const { data, error } = await supabase.from('admin_profiles')
-      .select('display_name,role,bio,photo_path').eq('id', user.id).maybeSingle();
-    if (error) { setMsg('Could not load your profile: ' + error.message); return; }
-    setProfile({
-      name: data?.display_name || 'Musa Kazim Qureshi',
-      role: data?.role || 'Founder & Organizer · Battagram Junior League',
-      bio: data?.bio || '',
-      photo_path: data?.photo_path || '/demo-admin-avatar.svg'
-    });
-  }
-  async function saveProfile(e) {
-    e.preventDefault(); setProfileSaving(true); setMsg('Saving your profile...');
-    try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw new Error('Your admin session has expired. Please sign in again.');
-      let photoPath = profile.photo_path;
-      if (profileFile) {
-        if (!okImg(profileFile)) throw new Error('Choose a JPG, PNG or WEBP image up to 15 MB.');
-        const path = `profiles/admin-${Date.now()}.jpg`;
-        const blob = await shrink(profileFile, 1100);
-        const { error: uploadError } = await supabase.storage.from('announcements').upload(path, blob, { contentType: 'image/jpeg', upsert: false });
-        if (uploadError) throw uploadError;
-        photoPath = path;
-      }
-      const { error } = await supabase.from('admin_profiles').upsert({
-        id: user.id,
-        display_name: profile.name.trim(),
-        role: profile.role.trim(),
-        bio: profile.bio.trim(),
-        photo_path: photoPath || '',
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'id' });
-      if (error) throw error;
-      if (profile.photo_path && photoPath !== profile.photo_path && profile.photo_path.startsWith('profiles/')) {
-        await supabase.storage.from('announcements').remove([profile.photo_path]);
-      }
-      setProfile(v => ({ ...v, photo_path: photoPath })); setProfileFile(null);
-      setMsg('Your admin profile has been saved successfully.');
-    } catch (error) { setMsg(error?.message || 'Could not save your profile.'); }
-    finally { setProfileSaving(false); }
+    const { data } = await supabase.rpc('public_content'); setC(data || {});
+    const { data: a } = await supabase.from('announcements').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: false }); setAnn(a || []);
+    const { data: m } = await supabase.from('moments').select('*').order('moment_date', { ascending: false }).order('created_at', { ascending: false }); setMoms(m || []);
+    const { data: q } = await supabase.from('quotes').select('*').order('sort_order', { ascending: true }); setQs(q || []);
   }
   async function loadTeams() {
-    const { data } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').order('created_at', { ascending: false });
+    if (error) { setMsg('Could not load teams: ' + error.message); return; }
     setTeams(data || []);
-  }
-  async function loadObjections() {
-    const { data, error } = await supabase.from('player_objections').select('*, players(name, age), teams(name), source_team:teams!player_objections_source_team_id_fkey(name)').order('created_at', { ascending: false });
-    if (error) { setMsg(error.message); return; }
-    setObjections(data || []);
-  }
-  async function raiseObjection(e, player, team) {
-    e.preventDefault();
-    const { error } = await supabase.from('player_objections').insert({
-      player_id: player.id, team_id: team.id, reason: objectionDraft.reason,
-      raised_by: objectionDraft.raised_by.trim(), details: objectionDraft.details.trim()
-    });
-    if (error) return setMsg(error.message);
-    setMsg('Player objection recorded successfully.');
-    setObjectionPlayer(null);
-    setObjectionDraft({ reason: '', raised_by: '', details: '' });
-    loadObjections();
-  }
-  async function setObjectionStatus(item, status) {
-    const { error } = await supabase.from('player_objections').update({
-      status, resolved_at: status === 'open' ? null : new Date().toISOString()
-    }).eq('id', item.id);
-    setMsg(error ? error.message : 'Objection status updated.');
-    loadObjections();
-  }
-  async function loadPageVisits() { const {data,error}=await supabase.from('page_visits').select('*').order('created_at',{ascending:false}).limit(1000); if(error) setMsg(error.message); setPageVisits(data||[]); }
-  async function loadTeamMessages() { const {data,error}=await supabase.from('team_messages').select('*, teams(name)').order('created_at',{ascending:false}).limit(200); if(error) setMsg(error.message); setTeamMessages(data||[]); }
-  async function sendAdminMessage(e) { e.preventDefault(); if(!messageTeam||!messageBody.trim()) return setMsg('Select a team and enter a message.'); const {error}=await supabase.from('team_messages').insert({team_id:messageTeam,sender_role:'admin',message:messageBody.trim()}); setMsg(error?error.message:'Private message sent to team.'); if(!error){setMessageBody('');loadTeamMessages();} }
-  async function createCaptainAccount(e) {
-    e.preventDefault(); setCaptainBusy(true); setMsg('Creating captain account...');
-    try {
-      if (!captainTeam) throw new Error('Select a registered team first.');
-      if (captainPassword.length < 8) throw new Error('Password must contain at least 8 characters.');
-      const { data, error } = await supabase.functions.invoke('create-captain-account', {
-        body: { team_id: captainTeam, email: captainEmail.trim().toLowerCase(), password: captainPassword }
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      setMsg('Captain account created for ' + data.team_name + '. Login email: ' + data.email + '. Share the password with the captain securely.');
-      setTeams(rows => rows.map(team => team.id === captainTeam ? { ...team, captain_email: data.email } : team));
-      setCaptainPassword('');
-    } catch (error) { setMsg(error?.message || 'Could not create captain account.'); }
-    finally { setCaptainBusy(false); }
   }
   const pub = p => supabase.storage.from('player-photos').getPublicUrl(p).data.publicUrl;
   async function shot(pay) {
@@ -152,260 +49,186 @@ export default function Admin() {
   }
   async function setPay(tm, status) {
     let reason = null;
-    if (status === 'rejected') { reason = prompt('Enter the rejection reason'); if (!reason) return; }
+    if (status === 'rejected') { reason = prompt('مسترد کرنے کی وجہ لکھیں'); if (!reason) return; }
     const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
     const val = status === 'verified' ? 'verified' : status === 'rejected' ? 'rejected' : (last ? 'submitted' : 'pending');
     const { error } = await supabase.from('teams').update({ payment: val, payment_rejection_reason: reason }).eq('id', tm.id);
     if (!error && last) await supabase.from('payments').update({ status: val === 'verified' ? 'verified' : val === 'rejected' ? 'rejected' : 'submitted', rejection_reason: reason }).eq('id', last.id);
-    setMsg(error ? error.message : 'Done ✔'); loadTeams();
+    setMsg(error ? error.message : 'ہو گیا ✔'); loadTeams();
+  }
+  async function setTeamStatus(tm, status) {
+    let reason = null;
+    if (status === 'rejected') { reason = prompt('Reject Team کرنے کی وجہ لکھیں'); if (!reason) return; }
+    const { error } = await supabase.from('teams').update({ status, rejection_reason: reason }).eq('id', tm.id);
+    setMsg(error ? error.message : 'Team status saved ✔'); loadTeams();
+  }
+  async function updateCaptainEmail(tm) {
+    const value = prompt('کپتان کی درست Gmail درج کریں:', tm.captain_email || '');
+    if (value === null) return;
+    const email = value.trim().toLowerCase();
+    if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) return setMsg('درست Gmail درج کریں۔');
+    const { error } = await supabase.from('teams').update({ captain_email: email }).eq('id', tm.id);
+    setMsg(error ? error.message : 'Captain email saved. You can now create the login account.');
+    loadTeams();
+  }
+  async function createCaptainAccount(tm) {
+    const email = (tm.captain_email || '').trim().toLowerCase();
+    if (!email) return setMsg('اس ٹیم کا کپتان Gmail ریکارڈ میں موجود نہیں۔');
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
+    const bytes = new Uint8Array(14);
+    crypto.getRandomValues(bytes);
+    const password = Array.from(bytes, b => alphabet[b % alphabet.length]).join('');
+    setMsg('کپتان کے لیے نیا پاس ورڈ بنایا جا رہا ہے...');
+    const { data, error } = await supabase.functions.invoke('captain-login-provisioner', {
+      body: { teamId: tm.id, email, password }
+    });
+    if (error || !data?.ok) return setMsg(error?.message || data?.error || 'اکاؤنٹ نہیں بن سکا۔');
+    setCaptainCreds(prev => ({ ...prev, [tm.id]: { email, password } }));
+    setMsg('Captain login تیار ہے۔ یہ پاس ورڈ کپتان کو محفوظ طریقے سے دے دیں۔');
+  }
+  async function copyCaptainCredentials(tm) {
+    const cred = captainCreds[tm.id];
+    if (!cred) return;
+    try {
+      await navigator.clipboard.writeText('BJL Team Login\\nGmail: ' + cred.email + '\\nPassword: ' + cred.password);
+      setMsg('Gmail اور Password کاپی ہو گئے ✔');
+    } catch {
+      setMsg('کاپی نہیں ہو سکا، پاس ورڈ کو دستی طور پر کاپی کریں۔');
+    }
   }
   async function delTeam(tm) {
-    if (!confirm('Permanently delete this entire team?')) return;
-    const { error } = await supabase.from('teams').delete().eq('id', tm.id); setMsg(error ? error.message : 'Team deleted'); loadTeams();
+    if (!confirm('پوری ٹیم ہمیشہ کے لیے حذف کریں؟')) return;
+    const { error } = await supabase.from('teams').delete().eq('id', tm.id); setMsg(error ? error.message : 'ٹیم حذف ہو گئی'); loadTeams();
   }
   useEffect(() => { check(); }, []);
-  useEffect(() => {
-    if (!isAdmin) return;
-    load(); loadTeams(); loadObjections(); loadProfile(); loadTeamMessages(); loadPageVisits();
-    let checking = false;
-    const verifyActiveSession = async () => {
-      if (checking) return;
-      checking = true;
-      try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user || user.email?.toLowerCase() !== ADMIN_EMAIL) {
-          await supabase.auth.signOut({ scope: 'local' });
-          setLogged(false); setIsAdmin(false);
-          setMsg('Your admin session has expired. Please sign in again.');
-          return;
-        }
-        const { data, error } = await supabase.from('admins').select('id').eq('id', user.id).maybeSingle();
-        if (error) { setMsg('Could not verify the admin session. Check your connection and try again.'); return; }
-        if (!data) {
-          await supabase.auth.signOut({ scope: 'local' });
-          setLogged(false); setIsAdmin(false);
-          setMsg('This admin session has ended because a new login was detected. Please sign in again.');
-        }
-      } catch (error) {
-        setMsg('Could not verify the admin session. Check your connection and try again.');
-      } finally { checking = false; }
-    };
-    const id = window.setInterval(verifyActiveSession, 15000);
-    return () => window.clearInterval(id);
-  }, [isAdmin]);
+  useEffect(() => { if (isAdmin) { load(); loadTeams(); } }, [isAdmin]);
   async function login(e) {
     e.preventDefault();
     setMsg('');
-    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: pw });
+    const normalizedEmail = email.trim().toLowerCase();
+    if (normalizedEmail !== 'musakazim373@gmail.com') return setMsg('This Gmail is not authorized for BJL Admin.');
+    const { data: signed, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password: pw });
     if (error) return setMsg(error.message);
-    if (data.user?.email?.toLowerCase() !== ADMIN_EMAIL) {
-      await supabase.auth.signOut({ scope: 'local' });
-      return setMsg('Access denied. Only the authorized administrator account can sign in.');
-    }
-    const { error: revokeError } = await supabase.auth.signOut({ scope: 'others' });
-    if (revokeError) {
-      await supabase.auth.signOut({ scope: 'local' });
-      return setMsg('Could not safely replace the previous admin session. Please try again.');
-    }
+    const { data: adminRow, error: adminError } = await supabase.from('admins').select('id').eq('id', signed.user.id).maybeSingle();
+    if (adminError || !adminRow) { await supabase.auth.signOut(); return setMsg('This account is not the authorized BJL administrator.'); }
+    // Revoke all older sessions on other browsers/devices, then create this one fresh session.
+    const { error: revokeError } = await supabase.auth.signOut({ scope: 'global' });
+    if (revokeError) return setMsg('Could not secure previous sessions. Please try again.');
+    const { error: freshError } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password: pw });
+    if (freshError) return setMsg(freshError.message);
     setPw('');
     await check();
   }
-  async function logout() {
-    await supabase.auth.signOut({ scope: 'global' });
-    setLogged(false); setIsAdmin(false);
-  }
+  async function logout() { await supabase.auth.signOut({ scope: 'global' }); setLogged(false); setIsAdmin(false); }
   const set = (k, v) => setC(x => ({ ...x, [k]: v }));
   async function save(keys) {
     setMsg('');
     const { error } = await supabase.from('settings').upsert(keys.map(k => ({ key: k, value: c[k] || '' })));
-    setMsg(error ? error.message : 'محفوظ Done ✔');
+    setMsg(error ? error.message : 'محفوظ ہو گیا ✔');
   }
   async function uploadKey(key, file) {
-    setMsg(''); if (!okImg(file)) return setMsg('Image must be JPG, PNG, or WEBP.');
+    setMsg(''); if (!okImg(file)) return setMsg('تصویر JPG/PNG/WEBP ہو۔');
     const path = `site/${key}-${Date.now()}.jpg`; const blob = await shrink(file, 1100);
     const { error } = await supabase.storage.from('announcements').upload(path, blob, { contentType: 'image/jpeg' }); if (error) return setMsg(error.message);
     const { error: e2 } = await supabase.from('settings').upsert({ key: key + '_path', value: path });
-    setMsg(e2 ? e2.message : 'Image uploaded ✔'); load();
+    setMsg(e2 ? e2.message : 'تصویر لگ گئی ✔'); load();
   }
-  async function clearKey(key) { await supabase.from('settings').upsert({ key: key + '_path', value: '' }); setMsg('Removed'); load(); }
+  async function clearKey(key) { await supabase.from('settings').upsert({ key: key + '_path', value: '' }); setMsg('ہٹا دی گئی'); load(); }
   async function move(i, d) {
     const arr = ann.slice(); const j = i + d; if (j < 0 || j >= arr.length) return;
     [arr[i], arr[j]] = [arr[j], arr[i]];
     await Promise.all(arr.map((x, k) => supabase.from('announcements').update({ sort_order: k }).eq('id', x.id))); load();
   }
   async function editAnn(x) {
-    const t = prompt('Title', x.title); if (t === null) return; const d = prompt('Description', x.description || ''); if (d === null) return;
+    const t = prompt('عنوان', x.title); if (t === null) return; const d = prompt('تفصیل', x.description || ''); if (d === null) return;
     await supabase.from('announcements').update({ title: t, description: d }).eq('id', x.id); load();
   }
   async function addMoments(e) {
     e.preventDefault(); setMsg('');
-    if (!mf.files.length || !mf.date) return setMsg('Date and images are required.');
-    setMsg('Uploading, please wait...');
+    if (!mf.files.length || !mf.date) return setMsg('تاریخ اور تصاویر ضروری ہیں۔');
+    setMsg('اپلوڈ ہو رہا ہے، انتظار کریں...');
     for (const [i, file] of Array.from(mf.files).entries()) {
-      if (!okImg(file)) return setMsg('ہر Image must be JPG, PNG, or WEBP.');
+      if (!okImg(file)) return setMsg('ہر تصویر JPG/PNG/WEBP ہو۔');
       const path = `moments/${Date.now()}-${i}.jpg`; const blob = await shrink(file, 1400);
       const { error } = await supabase.storage.from('announcements').upload(path, blob, { contentType: 'image/jpeg' }); if (error) return setMsg(error.message);
       const { error: e2 } = await supabase.from('moments').insert({ image_path: path, caption: mf.caption, moment_date: mf.date }); if (e2) return setMsg(e2.message);
     }
-    setMf({ caption: '', date: '', files: [] }); e.target.reset(); setMsg('Photos published ✔'); load();
+    setMf({ caption: '', date: '', files: [] }); e.target.reset(); setMsg('تصاویر شائع ہو گئیں ✔'); load();
   }
   async function addQuote(e) {
-    e.preventDefault(); if (!qf.body.trim() || !qf.ref.trim()) return setMsg('Quote text and reference are required.');
+    e.preventDefault(); if (!qf.body.trim() || !qf.ref.trim()) return setMsg('قول اور حوالہ دونوں ضروری ہیں۔');
     const { error } = await supabase.from('quotes').insert({ body: qf.body.trim(), book: qf.book, ref: qf.ref.trim(), sort_order: qs.length + 1 });
-    setMsg(error ? error.message : 'قول شامل Done ✔'); setQf({ ...qf, body: '', ref: '' }); load();
+    setMsg(error ? error.message : 'قول شامل ہو گیا ✔'); setQf({ ...qf, body: '', ref: '' }); load();
   }
   async function editQuote(x) {
-    const b = prompt('Quote Text', x.body); if (b === null) return; const k = prompt('Book', x.book); if (k === null) return; const r = prompt('حوالہ', x.ref); if (r === null) return;
+    const b = prompt('قول (اردو)', x.body); if (b === null) return; const k = prompt('کتاب', x.book); if (k === null) return; const r = prompt('حوالہ', x.ref); if (r === null) return;
     await supabase.from('quotes').update({ body: b, book: k, ref: r }).eq('id', x.id); load();
   }
   async function togQuote(x) { await supabase.from('quotes').update({ published: !x.published }).eq('id', x.id); load(); }
-  async function delQuote(x) { if (!confirm('Delete this quote?')) return; await supabase.from('quotes').delete().eq('id', x.id); load(); }
+  async function delQuote(x) { if (!confirm('قول حذف کریں؟')) return; await supabase.from('quotes').delete().eq('id', x.id); load(); }
   async function moveQuote(i, d) {
     const arr = qs.slice(); const j = i + d; if (j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]];
     await Promise.all(arr.map((x, k) => supabase.from('quotes').update({ sort_order: k + 1 }).eq('id', x.id))); load();
   }
-  async function delMoment(m) { if (!confirm('Delete this image?')) return; await supabase.storage.from('announcements').remove([m.image_path]); await supabase.from('moments').delete().eq('id', m.id); load(); }
+  async function delMoment(m) { if (!confirm('تصویر حذف کریں؟')) return; await supabase.storage.from('announcements').remove([m.image_path]); await supabase.from('moments').delete().eq('id', m.id); load(); }
   async function togMoment(m) { await supabase.from('moments').update({ published: !m.published }).eq('id', m.id); load(); }
-  async function capMoment(m) { const v = prompt('Caption', m.caption || ''); if (v === null) return; await supabase.from('moments').update({ caption: v }).eq('id', m.id); load(); }
+  async function capMoment(m) { const v = prompt('کیپشن', m.caption || ''); if (v === null) return; await supabase.from('moments').update({ caption: v }).eq('id', m.id); load(); }
   async function addAnn(e) {
     e.preventDefault(); setMsg('');
-    if (!f.title.trim() || !f.date || !okImg(f.file)) return setMsg('Title, date, and image (JPG/PNG, up to 15 MB) are required.');
+    if (!f.title.trim() || !f.date || !okImg(f.file)) return setMsg('عنوان، تاریخ اور تصویر (JPG/PNG، 3MB تک) ضروری ہیں۔');
     const path = `ann/${Date.now()}.jpg`; const blob = await shrink(f.file, 1400);
     const { error } = await supabase.storage.from('announcements').upload(path, blob, { contentType: 'image/jpeg' }); if (error) return setMsg(error.message);
     const { error: e2 } = await supabase.from('announcements').insert({ title: f.title.trim(), description: f.description, image_path: path, announce_date: f.date, announce_time: f.time || null, published: true, sort_order: Math.min(0, ...ann.map(x => x.sort_order || 0)) - 1 });
     if (e2) return setMsg(e2.message);
-    setF({ title: '', description: '', date: '', time: '', file: null }); e.target.reset(); setMsg('اعلان شائع Done ✔'); load();
+    setF({ title: '', description: '', date: '', time: '', file: null }); e.target.reset(); setMsg('اعلان شائع ہو گیا ✔'); load();
   }
   async function toggle(a) { await supabase.from('announcements').update({ published: !a.published }).eq('id', a.id); load(); }
   async function del(a) {
-    if (!confirm('Permanently delete this announcement?')) return;
+    if (!confirm('یہ اعلان ہمیشہ کے لیے حذف کریں؟')) return;
     await supabase.storage.from('announcements').remove([a.image_path]); await supabase.from('announcements').delete().eq('id', a.id); load();
   }
-  if (!ready) return <div className="admin-loading"><span className="admin-spinner" /> Loading admin workspace...</div>;
-  if (!logged) return (<div className="admin-login-wrap"><form onSubmit={login} className="card admin-login"><h2>Administrator Login</h2>
-    <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} dir="ltr" autoComplete="username" />
-    <input placeholder="Password" type="password" value={pw} onChange={e => setPw(e.target.value)} dir="ltr" autoComplete="current-password" />
-    {msg && <div className="err">{msg}</div>}<button className="btn">Login</button></form></div>);
-  if (!isAdmin) return (<div className="admin-login-wrap"><div className="card admin-login"><div className="err">This account does not have administrator access.</div><button className="btn" onClick={logout}>Logout</button></div></div>);
-  const totalPlayers = teams.reduce((sum, team) => sum + (team.players || []).length, 0);
-  const verifiedCount = teams.filter(team => team.payment === 'verified').length;
-  const pendingCount = teams.filter(team => team.payment !== 'verified' && team.payment !== 'rejected').length;
-  const rejectedCount = teams.filter(team => team.payment === 'rejected').length;
-  const openObjections = objections.filter(item => item.status === 'open').length;
-  const paymentTotal = verifiedCount + pendingCount + rejectedCount;
-  const verifiedPct = paymentTotal ? Math.round(verifiedCount / paymentTotal * 100) : 0;
-  const pendingPct = paymentTotal ? Math.round(pendingCount / paymentTotal * 100) : 0;
-  const monthlyRegistrations = Array.from({ length: 6 }, (_, index) => {
-    const date = new Date(); date.setDate(1); date.setMonth(date.getMonth() - (5 - index));
-    const count = teams.filter(team => { const created = new Date(team.created_at); return !Number.isNaN(created.getTime()) && created.getMonth() === date.getMonth() && created.getFullYear() === date.getFullYear(); }).length;
-    return { label: date.toLocaleDateString('en', { month: 'short' }), count };
-  });
-  const maxMonthlyRegistrations = Math.max(1, ...monthlyRegistrations.map(item => item.count));
-  const recentTeams = teams.slice(0, 5);
+  if (!ready) return <p>...</p>;
+  if (!logged) return (<form onSubmit={login} className="card"><h2>Admin Login</h2>
+    <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} dir="ltr" autoComplete="username" autoCapitalize="none" spellCheck={false} />
+    <input placeholder="Password" type="password" value={pw} onChange={e => setPw(e.target.value)} dir="ltr" autoComplete="current-password" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
+    <p><a href="/reset-password?role=admin" className="tlink">Forgot Password?</a></p>
+    {msg && <div className="err">{msg}</div>}<button className="btn">Login</button></form>);
+  if (!isAdmin) return (<div className="card"><div className="err">You are not an administrator.</div><button className="btn" onClick={logout}>Logout</button></div>);
   const inp = (k, label, type = 'text') => (<><label>{label}</label><input type={type} list={['winner_team', 'loser_team', 'next_a', 'next_b'].includes(k) ? 'tn' : undefined} value={c[k] || ''} onChange={e => set(k, e.target.value)} /></>);
-  const tsel = (k, label) => (<><label>{label}</label><select value={c[k] || ''} onChange={e => set(k, e.target.value)}><option value="">— Select a team —</option>{c[k] && !teams.some(x => x.name === c[k]) && <option value={c[k]}>{c[k]}</option>}{teams.map(x => <option key={x.id} value={x.name}>{x.name}</option>)}</select></>);
+  const tsel = (k, label) => (<><label>{label}</label><select value={c[k] || ''} onChange={e => set(k, e.target.value)}><option value="">— ٹیم منتخب کریں —</option>{c[k] && !teams.some(x => x.name === c[k]) && <option value={c[k]}>{c[k]}</option>}{teams.map(x => <option key={x.id} value={x.name}>{x.name}</option>)}</select></>);
   const show = (k, l) => (<label><input type="checkbox" checked={c[k] !== '0'} onChange={e => set(k, e.target.checked ? '1' : '0')} style={{ width: 'auto' }} /> {l}</label>);
-  const pa = p => p?.startsWith('/') ? p : supabase.storage.from('announcements').getPublicUrl(p).data.publicUrl;
-  return (<div className="admin-shell">
-    <aside className="admin-brand"><div className="admin-brand-mark">BJL</div><div><strong>BJL CONTROL</strong><small>SEASON 1 · ADMIN</small></div></aside>
-    <header className="admin-topbar"><div><span className="admin-eyebrow">MANAGEMENT CONSOLE</span><h1>BJL Admin Dashboard</h1><p>Manage your tournament, teams, matches and player reviews in one place.</p></div><div className="admin-top-actions"><button className="admin-profile-chip" onClick={() => { setTab('profile'); setMsg(''); }} aria-label="Open your admin profile"><span className="admin-profile-chip-photo">{profile.photo_path ? <img src={pa(profile.photo_path)} alt="" /> : 'MK'}</span><span><b>{profile.name || 'Musa Kazim'}</b><small>Administrator</small></span></button><span className="admin-live"><i /> SYSTEM ONLINE</span><button className="btn admin-logout" onClick={logout}>Logout ↗</button></div></header>
+  const pa = p => supabase.storage.from('announcements').getPublicUrl(p).data.publicUrl;
+  return (<div>
+    <h2>BJL Admin</h2>
     <datalist id="tn">{teams.map(x => <option key={x.id} value={x.name} />)}</datalist>
-    <nav className="tabs admin-tabs" aria-label="Admin sections">
-      {[['overview', 'Overview'], ['teams', 'Teams'], ['accounts', 'Captain Accounts'], ['messages', 'Team Messages'], ['analytics', 'Traffic Analytics'], ['match', 'Match Center'], ['objections', 'Operations by Admin / Objections'], ['content', 'How to Register · Rules · Prizes'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['quotes', 'Quotes'], ['set', 'Website Settings'], ['profile', 'My Profile']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
-      </nav>
-    {msg && <div className="good admin-message">{msg}</div>}
-    <section className="admin-stats" aria-label="Live tournament statistics">
-      <article className="admin-stat"><span className="admin-stat-icon blue">♧</span><div><small>Total Teams</small><strong>{teams.length}</strong><em>Registered teams</em></div></article>
-      <article className="admin-stat"><span className="admin-stat-icon green">♙</span><div><small>Total Players</small><strong>{totalPlayers}</strong><em>Player records</em></div></article>
-      <article className="admin-stat"><span className="admin-stat-icon violet">✓</span><div><small>Verified Payments</small><strong>{verifiedCount}</strong><em>Confirmed payments</em></div></article>
-      <article className="admin-stat"><span className="admin-stat-icon amber">◷</span><div><small>Pending Payments</small><strong>{pendingCount}</strong><em>Awaiting review</em></div></article>
-      <article className="admin-stat"><span className="admin-stat-icon blue">▣</span><div><small>Announcements</small><strong>{ann.length}</strong><em>Published and draft items</em></div></article>
-      <article className="admin-stat"><span className="admin-stat-icon green">!</span><div><small>Open Objections</small><strong>{openObjections}</strong><em>Need administrator review</em></div></article>
-    </section>
-    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({overview:'Tournament Overview',teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',quotes:'Quotes & Content',content:'Homepage Content: Registration, Rules & Prizes',set:'Website Settings',profile:'My Admin Profile',accounts:'Captain Accounts',messages:'Team Messages',analytics:'Traffic Analytics'})[tab]}</strong></div>
-    <main className="admin-workspace">
-    {tab === 'accounts' && (<section className="admin-profile-page">
-      <div className="admin-overview-heading"><div><span className="admin-eyebrow">TEAM ACCESS</span><h2>Captain Accounts</h2><p>Create each captain login manually after reviewing the team's registration. Passwords are stored by Supabase Auth, not in the BJL database.</p></div></div>
-      <form className="card" onSubmit={createCaptainAccount}>
-        <label>Registered Team</label>
-        <select required value={captainTeam} onChange={e => { const team = teams.find(x => x.id === e.target.value); setCaptainTeam(e.target.value); setCaptainEmail(team?.captain_email || ''); }}>
-          <option value="">Select a team</option>{teams.map(team => <option key={team.id} value={team.id}>{team.name} · {team.reg_id || 'No Reg ID'}</option>)}
-        </select>
-        <label>Captain Gmail / Email</label><input required type="email" dir="ltr" value={captainEmail} onChange={e => setCaptainEmail(e.target.value)} placeholder="captain@gmail.com" />
-        <label>Set Initial Password (minimum 8 characters)</label><input required type="password" minLength={8} dir="ltr" value={captainPassword} onChange={e => setCaptainPassword(e.target.value)} placeholder="Set a temporary password" />
-        <button className="btn" disabled={captainBusy || !teams.length}>{captainBusy ? 'Creating...' : 'Create Team Account'}</button>
-      </form>
-      <div className="card"><h3>Account status overview</h3>{teams.map(team => <div key={team.id} className="admin-recent-row"><div className="admin-recent-main"><b>{team.name}</b><small dir="ltr">{team.captain_email || 'No captain account linked yet'}</small></div><span className={'admin-status-pill ' + (team.captain_email ? 'is-verified' : 'is-pending')}>{team.captain_email ? 'Email linked' : 'Not linked'}</span></div>)}</div>
-    </section>)}
-    {tab === 'analytics' && (<section className="admin-profile-page">
-      <div className="admin-overview-heading"><div><span className="admin-eyebrow">PRIVACY-MINIMAL VISITOR REPORT</span><h2>Traffic Analytics</h2><p>Anonymous page visits only. Visitors are not identified by Gmail unless they voluntarily provide it. No email addresses are collected by this tracker.</p></div><button className="btn alt" onClick={loadPageVisits}>Refresh</button></div>
-      <div className="admin-stats"><article className="admin-stat"><div><small>Page Views (last 1,000)</small><strong>{pageVisits.length}</strong></div></article><article className="admin-stat"><div><small>Unique Visitors</small><strong>{new Set(pageVisits.map(v=>v.anonymous_id)).size}</strong></div></article><article className="admin-stat"><div><small>Mobile Visits</small><strong>{pageVisits.filter(v=>v.device_type==='mobile').length}</strong></div></article><article className="admin-stat"><div><small>Desktop Visits</small><strong>{pageVisits.filter(v=>v.device_type==='desktop').length}</strong></div></article></div>
-      <div className="card"><h3>Popular Pages</h3>{Object.entries(pageVisits.reduce((a,v)=>{a[v.page_path]=(a[v.page_path]||0)+1;return a;},{})).sort((a,b)=>b[1]-a[1]).map(([path,count])=><div className="admin-recent-row" key={path}><b>{path}</b><strong>{count} views</strong></div>)}</div>
-      <div className="card"><h3>Recent Visits</h3>{pageVisits.slice(0,100).map(v=><div className="admin-recent-row" key={v.id}><div className="admin-recent-main"><b>{v.page_path}</b><small>{formatDateTime(v.created_at)} · {v.device_type}</small></div><small>Anonymous visitor</small></div>)}</div>
-    </section>)}
-    {tab === 'messages' && (<section className="admin-profile-page">
-      <div className="admin-overview-heading"><div><span className="admin-eyebrow">PRIVATE TEAM COMMUNICATION</span><h2>Team Messages</h2><p>Send a private message to one registered team. Only that team's captain can read and reply.</p></div></div>
-      <form className="card" onSubmit={sendAdminMessage}><label>Choose Team</label><select required value={messageTeam} onChange={e=>setMessageTeam(e.target.value)}><option value="">Select team</option>{teams.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select><label>Message</label><textarea required minLength={1} maxLength={4000} rows={4} value={messageBody} onChange={e=>setMessageBody(e.target.value)} placeholder="Write a private message to the captain..." /><button className="btn">Send Private Message</button></form>
-      <div className="card"><h3>Message History</h3>{teamMessages.map(m=><article className="card" key={m.id}><b>{m.teams?.name || 'Team'} · {m.sender_role==='admin'?'Admin':'Captain'}</b><p>{m.message}</p><small>{formatDateTime(m.created_at)} {m.read_at?'· Read':''}</small></article>)}</div>
-    </section>)}
-    {tab === 'profile' && (<section className="admin-profile-page">
-      <div className="admin-overview-heading"><div><span className="admin-eyebrow">PERSONAL ADMIN ACCOUNT</span><h2>Your profile</h2><p>Manage the name, portrait and introduction shown in your BJL admin workspace.</p></div><span className="admin-updated">● Private admin profile</span></div>
-      <div className="admin-profile-layout">
-        <article className="admin-panel admin-profile-preview"><span className="admin-profile-preview-label">PROFILE PREVIEW</span>
-          <div className="admin-profile-large-photo">{profile.photo_path ? <img src={pa(profile.photo_path)} alt="Your profile" /> : <span>MK</span>}</div>
-          <h2>{profile.name || 'Your name'}</h2><p className="admin-profile-role">{profile.role || 'Your role'}</p>
-          <p className="admin-profile-bio">{profile.bio || 'Add a short introduction about yourself and your role in Battagram Junior League.'}</p>
-          <div className="admin-profile-preview-foot"><span> BJL SEASON 1</span><span>ADMINISTRATOR</span></div>
-        </article>
-        <form className="admin-panel admin-profile-form" onSubmit={saveProfile}>
-          <div className="admin-panel-head"><div><h3>Personal information</h3><p>Only the authorized administrator can edit this profile.</p></div><span className="admin-panel-icon">✎</span></div>
-          <label htmlFor="admin-profile-photo">Profile photo <span className="admin-demo-photo-note">Demo photo is active · You can replace it anytime</span></label>
-          <div className="admin-photo-upload-row"><div className="admin-profile-upload-thumb">{profileFile ? <img src={URL.createObjectURL(profileFile)} alt="Selected profile" /> : profile.photo_path ? <img src={pa(profile.photo_path)} alt="Current profile" /> : <span>MK</span>}</div><div className="admin-photo-upload-copy"><b>Upload your portrait</b><small>JPG, PNG or WEBP · Maximum 15 MB</small><input id="admin-profile-photo" type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setProfileFile(e.target.files?.[0] || null)} /></div></div>
-          <label htmlFor="admin-profile-name">Full name</label><input id="admin-profile-name" required maxLength={80} value={profile.name} onChange={e => setProfile(v => ({ ...v, name: e.target.value }))} placeholder="Musa Kazim Qureshi" />
-          <label htmlFor="admin-profile-role">Position / designation</label><input id="admin-profile-role" required maxLength={100} value={profile.role} onChange={e => setProfile(v => ({ ...v, role: e.target.value }))} placeholder="Founder & Organizer · Battagram Junior League" />
-          <label htmlFor="admin-profile-bio">About you</label><textarea id="admin-profile-bio" rows="4" maxLength={500} value={profile.bio} onChange={e => setProfile(v => ({ ...v, bio: e.target.value }))} placeholder="Write a short professional introduction..." />
-          <div className="admin-profile-form-foot"><small>Your profile details are stored in the existing admin settings. No new database table is required.</small><button className="btn" type="submit" disabled={profileSaving}>{profileSaving ? 'Saving...' : 'Save Profile Changes'}</button></div>
-        </form>
+    <div className="tabs">
+      {[['overview', 'Overview'], ['teams', 'Teams'], ['match', 'Matches & Results'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['quotes', 'Quotes'], ['set', 'Settings']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
+      <button className="btn" onClick={logout}>Logout</button></div>
+    {msg && <div className="good">{msg}</div>}
+    {tab === 'overview' && (<>
+      <div className="card"><h3>Dashboard Overview</h3><p>Season 1 tournament summary</p>
+        <div className="two">
+          <div className="card"><b>کل ٹیمیں</b><div className="big">{teams.length}</div></div>
+          <div className="card"><b>Approve Team شدہ</b><div className="big">{teams.filter(x => x.status === 'approved').length}</div></div>
+          <div className="card"><b>ادائیگی تصدیق شدہ</b><div className="big">{teams.filter(x => x.payment === 'verified').length}</div></div>
+          <div className="card"><b>Mark Payment Pending</b><div className="big">{teams.filter(x => x.payment === 'submitted').length}</div></div>
+          <div className="card"><b>کل کھلاڑی</b><div className="big">{teams.reduce((n, x) => n + (x.players || []).length, 0)}</div></div>
+          <div className="card"><b>اعلانات</b><div className="big">{ann.length}</div></div>
+        </div>
       </div>
-    </section>)}
-    {tab === 'overview' && (<section className="admin-overview">
-      <div className="admin-overview-heading"><div><span className="admin-eyebrow">LIVE SNAPSHOT</span><h2>Tournament at a glance</h2><p>These figures are calculated from the current BJL records.</p></div><span className="admin-updated">● Connected data</span></div>
-      <div className="admin-analytics-grid">
-        <article className="admin-panel admin-chart-panel"><div className="admin-panel-head"><div><h3>Payment overview</h3><p>Team payment status breakdown</p></div><span className="admin-panel-icon">◉</span></div>
-          <div className="admin-payment-chart"><div className="admin-donut" style={{ background: paymentTotal ? `conic-gradient(#24a66a 0 ${verifiedPct}%, #e8a23b ${verifiedPct}% ${verifiedPct + pendingPct}%, #e05b66 ${verifiedPct + pendingPct}% 100%)` : '#e9eef5' }}><div><strong>{paymentTotal}</strong><small>Teams</small></div></div>
-            <div className="admin-legend"><div><i className="verified"/><span>Verified</span><b>{verifiedCount}</b></div><div><i className="pending"/><span>Pending</span><b>{pendingCount}</b></div><div><i className="rejected"/><span>Rejected</span><b>{rejectedCount}</b></div></div></div>
-        </article>
-        <article className="admin-panel admin-chart-panel"><div className="admin-panel-head"><div><h3>Registration activity</h3><p>New teams over the last six months</p></div><span className="admin-panel-icon">▥</span></div>
-          <div className="admin-bars" role="img" aria-label="Monthly team registrations">{monthlyRegistrations.map((item, index) => <div className="admin-bar-column" key={item.label + index}><strong>{item.count}</strong><div className="admin-bar-track"><span style={{ height: `${item.count ? Math.max(8, item.count / maxMonthlyRegistrations * 100) : 3}%` }} /></div><small>{item.label}</small></div>)}</div>
-        </article>
-      </div>
-      <div className="admin-analytics-grid admin-lower-grid">
-        <article className="admin-panel"><div className="admin-panel-head"><div><h3>Recently registered teams</h3><p>Latest five records from the database</p></div><button className="btn alt admin-mini-link" onClick={() => setTab('teams')}>View all teams ↗</button></div>
-          {recentTeams.length ? <div className="admin-recent-list">{recentTeams.map(team => <div className="admin-recent-row" key={team.id}><span className="admin-team-avatar">{(team.name || 'T').slice(0,1).toUpperCase()}</span><div className="admin-recent-main"><b>{team.name}</b><small>{team.reg_id || 'Registration'} · {team.created_at ? formatDate(team.created_at) : 'Date unavailable'}</small></div><span className={'admin-status-pill ' + (team.payment === 'verified' ? 'is-verified' : team.payment === 'rejected' ? 'is-rejected' : 'is-pending')}>{team.payment === 'verified' ? 'Verified' : team.payment === 'rejected' ? 'Rejected' : 'Pending'}</span></div>)}</div> : <p className="admin-empty-state">No team registrations yet.</p>}
-        </article>
-        <article className="admin-panel"><div className="admin-panel-head"><div><h3>Admin attention</h3><p>Items that may need your review</p></div><span className="admin-panel-icon">✦</span></div>
-          <div className="admin-attention-item"><span className="admin-attention-icon amber">◷</span><div><b>{pendingCount} payment reviews</b><small>Teams awaiting payment verification</small></div><button onClick={() => setTab('teams')}>Open</button></div>
-          <div className="admin-attention-item"><span className="admin-attention-icon red">!</span><div><b>{openObjections} open objections</b><small>Player eligibility and review cases</small></div><button onClick={() => setTab('objections')}>Review</button></div>
-          <div className="admin-attention-item"><span className="admin-attention-icon blue">▣</span><div><b>{ann.length} announcements</b><small>Manage tournament updates</small></div><button onClick={() => setTab('ann')}>Manage</button></div>
-        </article>
-      </div>
-    </section>)}
-    {tab === 'match' && (<><div className="card"><h3>Match Result</h3>
-      {tsel('winner_team', 'Winning Team')}{tsel('loser_team', 'Opposition Team')}{inp('winner_result', 'Result / Short Note (Optional)')}{inp('winner_date', 'Match Date', 'date')}{show('winner_show', 'Show on Homepage')}
-      <button className="btn" onClick={() => save(['winner_team', 'loser_team', 'winner_result', 'winner_date', 'winner_show'])}>Save Changes</button></div>
-      <div className="card"><h3>Upcoming Match</h3>
-        {tsel('next_a', 'Team A')}{tsel('next_b', 'Team B')}{inp('next_date', 'Date', 'date')}{inp('next_time', 'Time', 'time')}{inp('next_venue', 'Venue (Default: Dab Ground, Battagram)')}{show('next_show', 'Show on Homepage')}
-        <button className="btn" onClick={() => save(['next_a', 'next_b', 'next_date', 'next_time', 'next_venue', 'next_show'])}>Save Changes</button></div></>)}
-    {tab === 'objections' && (<div className="admin-objections-list">
-      <div className="card"><h3>Player Objections Overview</h3><p>{objections.filter(o => o.status === 'open').length} open · {objections.length} total records</p></div>
-      {objections.length === 0 && <div className="card">No player objections have been submitted.</div>}
-      {objections.map(o => <article className="card admin-objection-card" key={o.id}>
-        <div className="admin-objection-head"><div><span className="admin-eyebrow">{o.reason}</span><h3>{o.players?.name || 'Player'} · {o.teams?.name || 'Team'}</h3></div><span className={'admin-objection-status '+o.status}>{o.status.toUpperCase()}</span></div>
-        <p>{o.details || 'No description provided.'}</p>
-        <small>Raised by <b>{o.raised_by || 'Not provided'}</b> · From: <b>{o.source_team?.name || 'Admin'}</b> · {formatDateTime(o.created_at)}</small>{o.admin_note && <p><b>Admin note:</b> {o.admin_note}</p>}
-        <div className="row admin-objection-actions"><button className="btn alt" onClick={() => setObjectionStatus(o,'under_review')} disabled={o.status==='under_review'}>Under Review</button><button className="btn" onClick={() => setObjectionStatus(o,'confirmed')} disabled={o.status==='confirmed'}>Confirm</button><button className="btn alt" onClick={() => setObjectionStatus(o,'rejected')} disabled={o.status==='rejected'}>Reject</button><button className="btn alt" onClick={() => setObjectionStatus(o,'open')} disabled={o.status==='open'}>Reopen</button></div><small>Resolved or dismissed objections remain in admin records and disappear from the public website.</small>
-      </article>)}
-    </div>)}
+      <div className="card"><h3>Quick Actions</h3><div className="row" style={{justifyContent:'flex-start'}}>
+        <button className="btn" onClick={() => setTab('teams')}>Teams & Payments</button>
+        <button className="btn alt" onClick={() => setTab('match')}>Matches & Results</button>
+        <button className="btn alt" onClick={() => setTab('ann')}>Announcements & Photos</button>
+        <button className="btn alt" onClick={() => setTab('set')}>Website Settings</button>
+      </div></div>
+    </>)}
+    {tab === 'match' && (<><div className="card"><h3>Today's Winner</h3>
+      {tsel('winner_team', 'Winning Team')}{tsel('loser_team', 'Opponent Team')}{inp('winner_result', 'Text below winner photo (result / short details)')}{inp('winner_date', 'Match Date', 'date')}{show('winner_show', 'Show on Homepage')}
+      <label>Winner / Team Photo</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('winner_photo', e.target.files[0])} />{c.winner_photo_path && <img className="match-photo" src={pa(c.winner_photo_path)} alt="Winning team" />}<button className="btn" onClick={() => save(['winner_team', 'loser_team', 'winner_result', 'winner_date', 'winner_show'])}>Save Winner</button></div>
+      <div className="card"><h3>Next Match</h3>
+        {tsel('next_a', 'Team A')}{tsel('next_b', 'Team B')}{inp('next_date', 'Match Date', 'date')}{inp('next_time', 'Match Time', 'time')}{inp('next_venue', 'Venue (default: Dab Ground, Battagram)')}<div className="two"><div><label>Team A Captain Photo</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('next_a_photo', e.target.files[0])} />{c.next_a_photo_path && <img className="match-photo" src={pa(c.next_a_photo_path)} alt="Team A captain" />}</div><div><label>Team B Captain Photo</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('next_b_photo', e.target.files[0])} />{c.next_b_photo_path && <img className="match-photo" src={pa(c.next_b_photo_path)} alt="Team B captain" />}</div></div>{show('next_show', 'Show on Homepage')}
+        <button className="btn" onClick={() => save(['next_a', 'next_b', 'next_date', 'next_time', 'next_venue', 'next_show'])}>Save Next Match</button></div></>)}
     {tab === 'ann' && (<><form className="card" onSubmit={addAnn}><h3>New Announcement</h3>
       <label>Title</label><input value={f.title} onChange={e => setF({ ...f, title: e.target.value })} />
       <label>Description</label><input value={f.description} onChange={e => setF({ ...f, description: e.target.value })} />
@@ -413,86 +236,62 @@ export default function Admin() {
       <label>Time</label><input type="time" value={f.time} onChange={e => setF({ ...f, time: e.target.value })} />
       <label>Image</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setF({ ...f, file: e.target.files[0] })} />
       <button className="btn">Publish</button></form>
-      {ann.map((a, i) => (<div className="card" key={a.id}><b>{a.title}</b> <small>{formatDate(a.announce_date)}</small> {a.published ? '✅' : '⛔'}
-        <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt admin-reorder" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move announcement up" title="Move up"><span aria-hidden="true">↑</span><small>UP</small></button><button className="btn alt admin-reorder" onClick={() => move(i, 1)} disabled={i === ann.length - 1} aria-label="Move announcement down" title="Move down"><span aria-hidden="true">↓</span><small>DOWN</small></button><button className="btn alt" onClick={() => editAnn(a)}>Edit</button><button className="btn alt" onClick={() => toggle(a)}>{a.published ? 'Hide' : 'Show'}</button>
-          <button className="btn" onClick={() => del(a)}>Delete Team</button></div></div>))}</>)}
+      {ann.map((a, i) => (<div className="card" key={a.id}><b>{a.title}</b> <small>{dateFmt(a.announce_date)}</small> {a.published ? '✅' : '⛔'}
+        <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt" onClick={() => move(i, -1)}>▲</button><button className="btn alt" onClick={() => move(i, 1)}>▼</button><button className="btn alt" onClick={() => editAnn(a)}>ایڈٹ</button><button className="btn alt" onClick={() => toggle(a)}>{a.published ? 'چھپائیں' : 'دکھائیں'}</button>
+          <button className="btn" onClick={() => del(a)}>Delete</button></div></div>))}</>)}
     {tab === 'people' && (<>{[[1, 'AMAN MALIK – MEMBER'], [2, 'WALEED AFRIDI – MEMBER'], [3, 'MUHAMMAD HASNAIN – MEMBER'], [4, 'FALAK – ORGANIZER']].map(([n, l]) => (<div className="card" key={n}><h3>{l}</h3>
       {c['person' + n + '_path'] && <img src={pa(c['person' + n + '_path'])} alt="" width="90" style={{ borderRadius: 8 }} />}
-      <p><label>Choose a new image</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('person' + n, e.target.files[0])} /></p></div>))}
-      <div className="card"><h3>Arabic Calligraphy Image (Optional)</h3>
+      <p><label>Choose New Photo</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('person' + n, e.target.files[0])} /></p></div>))}
+      <div className="card"><h3>Calligraphy Image (Optional)</h3>
         {c.calli_path && <img src={pa(c.calli_path)} alt="" width="200" style={{ borderRadius: 8 }} />}
         <p><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('calli', e.target.files[0])} /></p>
-        {c.calli_path && <button className="btn alt" onClick={() => clearKey('calli')}>Remove image (restore default calligraphy)</button>}</div></>)}
-    {tab === 'moms' && (<><form className="card" onSubmit={addMoments}><h3>Upload New Photos (5–6 at a time)</h3>
+        {c.calli_path && <button className="btn alt" onClick={() => clearKey('calli')}>تصویر ہٹائیں (سادہ خطاطی واپس)</button>}</div></>)}
+    {tab === 'moms' && (<><form className="card" onSubmit={addMoments}><h3>نئی تصاویر (5-6 ایک ساتھ)</h3>
       <label>Date</label><input type="date" value={mf.date} onChange={e => setMf({ ...mf, date: e.target.value })} />
       <label>Caption (Optional)</label><input value={mf.caption} onChange={e => setMf({ ...mf, caption: e.target.value })} />
-      <label>Select Images</label><input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={e => setMf({ ...mf, files: e.target.files })} />
+      <label>Choose Photos</label><input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={e => setMf({ ...mf, files: e.target.files })} />
       <button className="btn">Publish</button></form>
       {moms.map(m => (<div className="card" key={m.id} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
         <img src={pa(m.image_path)} alt="" width="70" height="70" style={{ borderRadius: 8, objectFit: 'cover' }} />
-        <div style={{ flex: 1 }}><small>{formatDate(m.moment_date)}</small><div>{m.caption} {m.published ? '✅' : '⛔'}</div>
-          <button className="btn alt" onClick={() => capMoment(m)}>Edit Caption</button> <button className="btn alt" onClick={() => togMoment(m)}>{m.published ? 'Hide' : 'Publish'}</button> <button className="btn alt" onClick={() => delMoment(m)}>Delete Team</button></div></div>))}</>)}
-    {tab === 'quotes' && (<><form className="card" onSubmit={addQuote}><h3>Add Quote</h3>
+        <div style={{ flex: 1 }}><small>{dateFmt(m.moment_date)}</small><div>{m.caption} {m.published ? '✅' : '⛔'}</div>
+          <button className="btn alt" onClick={() => capMoment(m)}>کیپشن</button> <button className="btn alt" onClick={() => togMoment(m)}>{m.published ? 'چھپائیں' : 'دکھائیں'}</button> <button className="btn alt" onClick={() => delMoment(m)}>Delete</button></div></div>))}</>)}
+    {tab === 'quotes' && (<><form className="card" onSubmit={addQuote}><h3>New Quote</h3>
       <label>Quote Text</label><textarea rows="4" style={{ width: '100%', padding: 10, borderRadius: 8 }} value={qf.body} onChange={e => setQf({ ...qf, body: e.target.value })} />
       <label>Book</label><input value={qf.book} onChange={e => setQf({ ...qf, book: e.target.value })} />
       <label>Reference</label><input value={qf.ref} onChange={e => setQf({ ...qf, ref: e.target.value })} />
       <button className="btn">Add Quote</button></form>
       {qs.map((x, i) => (<div className="card" key={x.id} dir="rtl"><small>{i + 1}</small> {x.published ? '✅' : '⛔'}<p>{x.body}</p><small>{x.book} · {x.ref}</small>
-        <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt admin-reorder" onClick={() => moveQuote(i, -1)} disabled={i === 0} aria-label="Move quote up" title="Move up"><span aria-hidden="true">↑</span><small>UP</small></button><button className="btn alt admin-reorder" onClick={() => moveQuote(i, 1)} disabled={i === qs.length - 1} aria-label="Move quote down" title="Move down"><span aria-hidden="true">↓</span><small>DOWN</small></button>
-          <button className="btn alt" onClick={() => editQuote(x)}>Edit</button><button className="btn alt" onClick={() => togQuote(x)}>{x.published ? 'Hide' : 'Publish'}</button><button className="btn alt" onClick={() => delQuote(x)}>Delete Team</button></div></div>))}</>)}
-    {tab === 'set' && (<>
-      <div className="card"><h3>WhatsApp Contact Button</h3>
-      {inp('tutorial_video_url', 'Homepage Video Tutorial URL (YouTube or video link)')}
-      <button className="btn" onClick={() => save(['tutorial_video_url'])}>Save Tutorial Video</button>
-      {inp('falak_whatsapp', 'WhatsApp Number (international format, e.g. 923001234567)')}{inp('falak_btn', 'Button Text')}{inp('falak_msg', 'Default WhatsApp Message')}
-      <label><input type="checkbox" style={{ width: 'auto' }} checked={c.registration_open !== 'false'} onChange={e => set('registration_open', e.target.checked ? 'true' : 'false')} /> Team registration is open</label>
-      <button className="btn" onClick={() => save(['falak_whatsapp', 'falak_btn', 'falak_msg', 'registration_open'])}>Save Changes</button></div>
-      <div className="card admin-moment-settings"><h3>Homepage Moments · Image Fit & Zoom</h3>
-        <p>Control how player and team photos appear in the Moments carousel on the public homepage.</p>
-        <label>Image Fit</label><select value={c.moments_fit || 'cover'} onChange={e => set('moments_fit', e.target.value)}><option value="cover">Fill frame (Cover)</option><option value="contain">Show full photo (Contain)</option></select>
-        <label>Zoom · {c.moments_zoom || '100'}%</label><input type="range" min="80" max="160" step="5" value={Number(c.moments_zoom || 100)} onChange={e => set('moments_zoom', e.target.value)} />
-        <div className="admin-moment-preview"><img src={moms[0] ? pa(moms[0].image_path) : ''} alt="Moment preview" style={{ objectFit: c.moments_fit || 'cover', transform: 'scale(' + (Number(c.moments_zoom || 100) / 100) + ')' }} />{!moms[0] && <span>Upload a photo in BJL Moments to preview</span>}</div>
-        <button className="btn" onClick={() => save(['moments_fit','moments_zoom'])}>Save Moments Display Settings</button>
-      </div>
-    </>)}
-    {tab === 'content' && (<>
-      <div className="card admin-site-copy">
-        <h3>Homepage Information Controls</h3><p>Edit the public How to Register, Rules and Prizes sections.</p>
-        <label>How to Register</label><textarea rows="5" value={c.how_to_register || '1. Register your team with exactly 15 players.\n2. Provide the captain mobile number.\n3. Pay PKR 5,000 through EasyPaisa.\n4. Upload the payment receipt.\n5. Wait for admin verification.'} onChange={e => set('how_to_register', e.target.value)} placeholder="Enter registration steps, one per line..." />
-        <button className="btn" onClick={() => save(['how_to_register'])}>Save How to Register</button>
-        <label>Rules</label><textarea rows="5" value={c.rules || 'Will be announced soon'} onChange={e => set('rules', e.target.value)} placeholder="Enter tournament rules, one per line..." />
-        <button className="btn" onClick={() => save(['rules'])}>Save Rules</button>
-        <label>Prizes</label><textarea rows="5" value={c.prizes || 'Will be announced soon'} onChange={e => set('prizes', e.target.value)} placeholder="Enter prizes, one per line..." />
-        <button className="btn" onClick={() => save(['prizes'])}>Save Prizes</button>
-      </div>
-      <div className="card"><h3>How these changes appear</h3><p>Saved text is shown on the public homepage under How to Register, Rules and Prizes. Line breaks are preserved. You can edit and save each section independently.</p></div>
-    </>)}
-    {tab === 'teams' && (<><div className="card">Total teams: {teams.length} · Verified payments: {teams.filter(x => x.payment === 'verified').length}</div>
+        <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt" onClick={() => moveQuote(i, -1)}>▲</button><button className="btn alt" onClick={() => moveQuote(i, 1)}>▼</button>
+          <button className="btn alt" onClick={() => editQuote(x)}>ایڈٹ</button><button className="btn alt" onClick={() => togQuote(x)}>{x.published ? 'چھپائیں' : 'دکھائیں'}</button><button className="btn alt" onClick={() => delQuote(x)}>Delete</button></div></div>))}</>)}
+    {tab === 'set' && (<div className="card"><h3>WhatsApp & Website Settings</h3>
+      {inp('falak_whatsapp', 'WhatsApp Contact Number (international format, e.g. 923165738591)')}{inp('falak_btn', 'Floating WhatsApp Button Text')}{inp('falak_msg', 'Default WhatsApp Message')}
+      <label>Official WhatsApp Group Invite Link</label><input value={c.official_whatsapp_group || 'https://chat.whatsapp.com/D5RUqQB6XVIIwHkYJkz5vZ'} onChange={e => set('official_whatsapp_group', e.target.value)} dir="ltr" />
+      <label>Group Information Message</label><input value={c.official_group_text || 'All BJL Season 1 updates, schedules, results and announcements are available in the official WhatsApp group.'} onChange={e => set('official_group_text', e.target.value)} />
+      <label><input type="checkbox" style={{ width: 'auto' }} checked={c.registration_open !== 'false'} onChange={e => set('registration_open', e.target.checked ? 'true' : 'false')} /> نئی ٹیموں کی رجسٹریشن کھلی ہے</label>
+      <button className="btn" onClick={() => save(['falak_whatsapp', 'falak_btn', 'falak_msg', 'official_whatsapp_group', 'official_group_text', 'registration_open'])}>Save Settings</button></div>)}
+    {tab === 'teams' && (<><div className="card">Total Teams: {teams.length} · Verified: {teams.filter(x => x.payment === 'verified').length}</div>
       {teams.map(tm => { const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
-        return (<div className="card" key={tm.id}><b>{tm.name}</b> <small>{tm.reg_id}</small> {tm.payment === 'verified' ? '✅ VERIFIED' : '❌ NOT VERIFIED'}
-          <div dir="ltr">{tm.captain_email}</div><div dir="ltr">C1: {ps[0] && ps[0].name} {ps[0] && ps[0].mobile} | C2: {ps[1] && ps[1].name} {ps[1] && ps[1].mobile}</div>
+        return (<div className="card" key={tm.id}><b>{tm.name}</b> <small>{tm.reg_id}</small>
+          <div>Team: <span className={'badge ' + (tm.status === 'approved' ? 'v' : 'n')}>{tm.status || 'pending'}</span> · Payment: <span className={'badge ' + (tm.payment === 'verified' ? 'v' : 'n')}>{tm.payment || 'pending'}</span></div>
+          <div dir="ltr">Captain Gmail: {tm.captain_email || 'Not added yet'}</div>
+          <button className="btn alt" onClick={() => updateCaptainEmail(tm)}>Add / Edit Captain Email</button>
+          <div dir="ltr">C1: {ps[0] && ps[0].name} {ps[0] && ps[0].mobile} | C2: {ps[1] && ps[1].name} {ps[1] && ps[1].mobile}</div>
           {last && <div dir="ltr">Txn: {last.transaction_id || '-'} <button className="btn alt" onClick={() => shot(last)}>Screenshot</button></div>}
-          {tm.payment_rejection_reason && <small>Payment rejection reason: {tm.payment_rejection_reason}</small>}
-          <details><summary>View Players</summary>{ps.map(pp => (<div key={pp.id} className="admin-player-row">
-            <img src={pub(pp.photo_path)} alt="" width="48" height="48" style={{ borderRadius: 10, objectFit: 'cover' }} />
-            <div className="admin-player-main"><div><b>{pp.name}</b> · Age {pp.age} · {pp.position}</div>
-              <button type="button" className="btn alt admin-objection-trigger" onClick={() => { setObjectionPlayer(objectionPlayer === pp.id ? null : pp.id); setObjectionDraft({ reason: '', raised_by: '', details: '' }); }}>＋ Raise Objection</button>
-              {objectionPlayer === pp.id && <form className="admin-objection-form" onSubmit={e => raiseObjection(e, pp, tm)}>
-                <label>Objection Reason</label>
-                <select required value={objectionDraft.reason} onChange={e => setObjectionDraft(v => ({ ...v, reason: e.target.value }))}>
-                  <option value="">Select a reason</option><option value="Senior Player">Senior Player</option><option value="Over Age">Over Age</option><option value="Community Misconduct">Community Misconduct</option>
-                </select>
-                <label>Raised By (Name)</label><input required value={objectionDraft.raised_by} onChange={e => setObjectionDraft(v => ({ ...v, raised_by: e.target.value }))} placeholder="Name of the person raising the objection" />
-                <label>Description / Evidence</label><textarea required rows="2" value={objectionDraft.details} onChange={e => setObjectionDraft(v => ({ ...v, details: e.target.value }))} placeholder="Write the objection details..." />
-                <div className="row"><button className="btn">Submit Objection</button><button type="button" className="btn alt" onClick={() => setObjectionPlayer(null)}>Cancel</button></div>
-              </form>}
-              {objections.filter(o => o.player_id === pp.id).map(o => <div className="admin-objection-mini" key={o.id}><b>{o.reason}</b> · {o.status.toUpperCase()}<br/><small>Raised by {o.raised_by || 'Not provided'} · {formatDateTime(o.created_at)}</small><div>{o.details}</div></div>)}
-            </div></div>))}</details>
+          {tm.payment_rejection_reason && <small>رد کرنے کی وجہ: {tm.payment_rejection_reason}</small>}
+          <details><summary>15 کھلاڑی</summary>{ps.map(pp => (<div key={pp.id} style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '6px 0' }}>
+            <img src={pub(pp.photo_path)} alt="" width="48" height="48" style={{ borderRadius: 8, objectFit: 'cover' }} />{pp.name} · {pp.age} · {pp.position}</div>))}</details>
           <div className="row" style={{ justifyContent: 'flex-start' }}>
+            <button className="btn" onClick={() => setTeamStatus(tm, 'approved')}>✓ Approve Team</button>
+            <button className="btn alt" onClick={() => setTeamStatus(tm, 'rejected')}>Reject Team</button>
+            <button className="btn alt" onClick={() => createCaptainAccount(tm)}>{captainCreds[tm.id] ? 'Generate New Password' : 'Generate Captain Password'}</button>
+            {captainCreds[tm.id] && <div className="good" style={{ width: '100%', textAlign: 'left' }} dir="ltr">
+              <b>Captain Login Details</b><div>Gmail: {captainCreds[tm.id].email}</div>
+              <div>Password: <strong>{captainCreds[tm.id].password}</strong></div>
+              <button className="btn alt" onClick={() => copyCaptainCredentials(tm)}>Copy Gmail + Password</button>
+            </div>}
             <button className="btn" onClick={() => setPay(tm, 'verified')}>✓ Verify Payment</button>
-            <button className="btn alt" onClick={() => setPay(tm, 'notverified')}>Mark Unverified</button>
-            <button className="btn alt" onClick={() => setPay(tm, 'rejected')}>Reject Payment</button>
-            <button className="btn alt" onClick={() => delTeam(tm)}>Delete Team</button></div></div>); })}</>)}
-    </main>
+            <button className="btn alt" onClick={() => setPay(tm, 'notverified')}>Mark Payment Pending</button>
+            <button className="btn alt" onClick={() => setPay(tm, 'rejected')}>مسترد</button>
+            <button className="btn alt" onClick={() => delTeam(tm)}>Delete</button></div></div>); })}</>)}
   </div>);
 }
