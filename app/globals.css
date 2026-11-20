@@ -700,3 +700,38 @@ body:has(.hdr){background:#f3f6fc!important;color:#17233b!important}
 /* Homepage AI Help Center entry */
 .ai-home-cta{background:linear-gradient(120deg,#b01212,#e0242b)!important;border:1px solid #e9c86a!important;color:#fff!important;box-shadow:0 0 18px #b0121255!important;font-weight:850!important}
 .ai-home-cta:hover{transform:translateY(-2px);box-shadow:0 8px 24px #b0121288!important}
+
+
+/* BJL AI assistant marker and admin conversation reports */
+.bjl-robot-marker{
+ position:fixed;left:16px;bottom:22px;z-index:38;width:38px;height:38px;
+ display:grid;place-items:center;border-radius:50%;
+ background:linear-gradient(145deg,#172f66,#b0122b);border:1px solid #e8c95e;
+ box-shadow:0 5px 18px #071b4a45;pointer-events:none;
+ animation:bjl-robot-drift 9s ease-in-out infinite;
+}
+.bjl-robot-marker span{font-size:21px;line-height:1;filter:drop-shadow(0 2px 3px #0006)}
+@keyframes bjl-robot-drift{
+ 0%,100%{transform:translate(0,0) rotate(-5deg)}
+ 25%{transform:translate(18px,-12px) rotate(5deg)}
+ 50%{transform:translate(8px,-27px) rotate(-4deg)}
+ 75%{transform:translate(-5px,-10px) rotate(4deg)}
+}
+[lang="ur"],[dir="rtl"],.bjl-chat-transcript .bjl-chat-line p{
+ font-family:"Noto Nastaliq Urdu","Aref Ruqaa","Amiri",serif;
+}
+.bjl-direct-whatsapp{margin:12px 0 24px;padding:16px;border:1px solid #b8dfc9;border-radius:14px;background:linear-gradient(120deg,#e9fff2,#fff)}
+.bjl-direct-whatsapp p{margin:5px 0 12px;color:#33445f}
+.bjl-direct-whatsapp .btn{background:linear-gradient(135deg,#128a59,#20bd79)}
+.bjl-chat-reports{margin-top:12px}
+.bjl-chat-report{border:1px solid #dce5f4;border-radius:12px;margin:10px 0;overflow:hidden;background:#fff}
+.bjl-chat-report-head{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px;border:0;background:#f4f7ff;color:#20345d;text-align:left;cursor:pointer}
+.bjl-chat-report-head span:first-child{display:flex;flex-direction:column;gap:3px}
+.bjl-chat-report-head small{color:#71809a}
+.bjl-chat-transcript{padding:12px;display:flex;flex-direction:column;gap:10px}
+.bjl-chat-line{padding:10px 12px;border-radius:10px;background:#f3f6fc;color:#243653;max-width:95%}
+.bjl-chat-line.user{align-self:flex-end;background:#e6efff}
+.bjl-chat-line b{font-size:12px;color:#274b91}
+.bjl-chat-line p{margin:4px 0 0;white-space:pre-wrap;line-height:2}
+@media(prefers-reduced-motion:reduce){.bjl-robot-marker{animation:none}}
+@media(max-width:440px){.bjl-robot-marker{left:10px;bottom:18px;width:34px;height:34px}}
