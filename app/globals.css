@@ -604,3 +604,73 @@ label{color:#52627f}
  .hero:before{display:none}
  .card,.btn,.lang{transition:none}
 }
+
+
+/* Targeted readability correction for the public site. Admin layout is intentionally excluded. */
+body:has(.hdr){background:#f3f6fc!important;color:#17233b!important}
+.hdr ~ main{color:#17233b!important}
+.hdr ~ main h1,.hdr ~ main h2,.hdr ~ main h3,.hdr ~ main h4,
+.hdr ~ main p,.hdr ~ main label,.hdr ~ main li,.hdr ~ main span,
+.hdr ~ main div,.hdr ~ main small,.hdr ~ main b,.hdr ~ main strong{ text-shadow:none; }
+.hdr ~ main>.card,
+.hdr ~ main .card,
+.hdr ~ main .duo .card{
+ background:#fff!important;color:#24334f!important;
+ border:1px solid #d8e1ef!important;
+ box-shadow:0 8px 24px rgba(27,49,86,.09)!important;
+ -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+.hdr ~ main>.card h2,.hdr ~ main .card h2,
+.hdr ~ main .card h3{color:#173f8a!important}
+.hdr ~ main>.card p,.hdr ~ main .card p,
+.hdr ~ main>.card div,.hdr ~ main .card small,
+.hdr ~ main .card label,.hdr ~ main .card li{color:#33445f!important}
+.hdr ~ main>.card .big{color:#174db7!important;text-shadow:none!important}
+.hdr ~ main>.card small{color:#76520a!important}
+.hdr ~ main .team{color:#173f8a!important;text-shadow:none!important}
+.hdr ~ main .dt,.hdr ~ main .empty{color:#5c6a82!important}
+.hdr ~ main .res{color:#8a5a00!important}
+.hdr ~ main .vsx{color:#c32643!important}
+.hdr ~ main .ann{color:#24334f!important}
+.hdr ~ main .bjl-group-invite{background:linear-gradient(115deg,#eaf2ff,#fff 58%,#e8fbf3)!important}
+.hdr ~ main .bjl-group-invite h2{color:#174db7!important}
+.hdr ~ main .bjl-group-invite p{color:#33445f!important}
+.hdr ~ main .quotes{
+ background:linear-gradient(145deg,#101e3d,#1b3260 55%,#172443)!important;
+ border:1px solid #d9b85d!important;
+ box-shadow:0 14px 36px rgba(10,26,58,.2)!important;
+ color:#fff!important;
+}
+.hdr ~ main .quotes h2{color:#ffe5a1!important;text-shadow:0 2px 10px #0008!important}
+.hdr ~ main .quotes .qt,.hdr ~ main .quotes .qb{
+ color:#fff8e8!important;
+ font-family:"Noto Nastaliq Urdu","Aref Ruqaa","Amiri",serif!important;
+ font-weight:700!important;
+ font-size:clamp(1.45rem,4.7vw,2.05rem)!important;
+ line-height:2.35!important;
+ text-shadow:0 2px 8px #0008!important;
+ opacity:1!important;
+}
+.hdr ~ main .quotes .qn{color:#ffdc83!important;font-size:1rem!important}
+.hdr ~ main .quotes .qr{color:#e1e9fa!important}
+.hdr ~ main .quotes .quote-controls span{color:#ffe5a1!important;font-weight:800}
+.hdr ~ main .quotes .quote-nav{background:#fff!important;color:#17315e!important;border:1px solid #e4c66f!important}
+.hdr ~ main .quotes *{opacity:1!important}
+.hdr ~ main .orgs>h2{color:#172b50!important}
+.hdr ~ main .pp{background:#fff!important;color:#17233b!important;border-color:#d8e1ef!important;box-shadow:0 8px 24px #1b315018!important}
+.hdr ~ main .pp b{color:#17233b!important}
+.hdr ~ main .pp .role{color:#a66b00!important}
+.hdr ~ main .pp.org{border-color:#d9b85d!important}
+.hdr ~ main .pp:after{opacity:.22}
+.hdr ~ main .hero{color:#fff!important}
+.hdr ~ main .hero h1,.hdr ~ main .hero p,.hdr ~ main .hero small{color:#fff!important}
+.hdr ~ main .hero .calli .ar{font-family:"Noto Nastaliq Urdu","Aref Ruqaa","Amiri",serif!important;color:#fff2cf!important}
+.hdr ~ main .card a:not(.btn){color:#174db7!important}
+.hdr ~ main input,.hdr ~ main select,.hdr ~ main textarea{background:#fff!important;color:#17233b!important;border-color:#c7d4e7!important}
+.admin-message{background:#eaf2ff!important;color:#183b73!important;border:1px solid #bfd2f2!important;font-weight:700}
+@media(max-width:760px){
+ .hdr ~ main .quotes .qt,.hdr ~ main .quotes .qb{font-size:1.5rem!important;line-height:2.2!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .hdr ~ main .quotes,.hdr ~ main .card{animation:none!important;transition:none!important}
+}
