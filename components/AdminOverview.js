@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+const dateDMY = value => { if (!value) return ''; const [y,m,d] = String(value).slice(0,10).split('-'); return y && m && d ? `${d.padStart(2,'0')} ${m.padStart(2,'0')} ${y}` : value; };
 const number = n => new Intl.NumberFormat().format(n || 0);
 const dayKey = value => {
   const d = new Date(value);
@@ -73,7 +74,7 @@ export default function AdminOverview({ supabase, teams = [], objections = [] })
         {topPages.length ? topPages.map(([path, count]) => <div className="bjl-rank-row" key={path}><span dir="ltr">{path}</span><b>{number(count)}</b></div>) : <div className="bjl-empty">Page analytics will appear when visits are recorded.</div>}
       </section>
       <section className="bjl-panel"><div className="bjl-panel-head"><div><small>TOURNAMENT SCHEDULE</small><h3>Upcoming Matches</h3></div><span>🏏</span></div>
-        {upcoming.length ? upcoming.map(m => <div className="bjl-match-row" key={m.id}><span className="bjl-match-date">{new Date(m.match_date + 'T12:00:00').toLocaleDateString(undefined, { day: '2-digit', month: 'short' })}</span><span>{m.kind === 'final' ? 'Final' : 'Match'} · {m.winner_team ? 'Result recorded' : 'Scheduled'}</span><b>{m.published ? 'LIVE' : 'DRAFT'}</b></div>) : <div className="bjl-empty">No published upcoming matches found.</div>}
+        {upcoming.length ? upcoming.map(m => <div className="bjl-match-row" key={m.id}><span className="bjl-match-date">{dateDMY(m.match_date)}</span><span>{m.kind === 'final' ? 'Final' : 'Match'} · {m.winner_team ? 'Result recorded' : 'Scheduled'}</span><b>{m.published ? 'LIVE' : 'DRAFT'}</b></div>) : <div className="bjl-empty">No published upcoming matches found.</div>}
       </section>
     </div>
     <div className="bjl-overview-footer"><span><i className="bjl-status-dot" /> Database connected</span><span>Last 30 days · Refresh for latest records</span></div>
