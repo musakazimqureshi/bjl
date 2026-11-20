@@ -53,6 +53,9 @@ Deno.serve(async (req) => {
   const existing = users.users.find((u) => (u.email || "").toLowerCase() === email);
   let userId = existing?.id;
   if (existing) {
+    if (existing.user_metadata?.bjl_role !== "captain" || existing.user_metadata?.bjl_team_id !== teamId) {
+      return json({ ok: false, error: "This email is already used by a different account. Contact the organizer before changing it." }, 409);
+    }
     const { error } = await admin.auth.admin.updateUserById(existing.id, {
       password,
       email_confirm: true,
