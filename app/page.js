@@ -87,8 +87,8 @@ export default function Home() {
     <div className="card"><div className="big">{s.total} {t('teamsRegistered')}</div>
       <div>✓ {t('verifiedT')}: {s.verified}</div><div>{t('notVerifiedT')}: {s.not_verified}</div><small>{t('fee')}</small></div>
     <h2>{t('contactTitle')}</h2>
-    {CONTACTS.map((x, i) => (<div className="card" key={x.num}><b>{x.name}</b> · {t(x.role)}{i !== 0 && <div dir="ltr">{x.disp}</div>}
-      <div style={{ marginTop: 8 }}><a className="btn" href={`https://wa.me/${i === 0 && c.falak_whatsapp ? c.falak_whatsapp : x.num}?text=${encodeURIComponent((i === 0 && c.falak_msg) || t(x.msg))}`} target="_blank" rel="noopener noreferrer">{i === 0 ? (c.falak_btn || t('askFalak')) : t('wa')}</a></div></div>))}
+    {CONTACTS.map((x, i) => (<div className="card" key={x.num}><b>{x.name}</b> · {t(x.role)}<div dir="ltr">{x.disp}</div>
+      <div style={{ marginTop: 8 }}><a className="btn" href={`https://wa.me/${x.num}?text=${encodeURIComponent((i === 0 && c.falak_msg) || t(x.msg))}`} target="_blank" rel="noopener noreferrer">{i === 0 ? (c.falak_btn || t('askFalak')) : t('wa')}</a></div></div>))}
     {qs.length > 0 && qs[qi] && <section className="quotes" onMouseEnter={pauseQ} onTouchStart={pauseQ}>
       <h2>اقوالِ امام علیؑ و تعلیماتِ اہلِ بیتؑ</h2>
       <div className="qt" key={qs[qi].id} dir="rtl" lang="ur">
