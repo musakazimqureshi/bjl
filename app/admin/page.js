@@ -89,8 +89,7 @@ export default function Admin() {
       const { data, error } = await supabase.functions.invoke('captain-login-provisioner', { body: { team_id: team.id, password } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setMsg('Captain login password saved. Share it securely with the captain.');
-      setCaptainPasswords(v => ({ ...v, [team.id]: '' }));
+      setMsg('Captain login password saved. Copy the credentials now and share them securely.');
     } catch (error) {
       let detail = error?.message || 'Unknown error';
       try {
@@ -102,6 +101,13 @@ export default function Admin() {
       setMsg('Captain password was NOT saved. ' + detail);
     }
     finally { setBusyTeam(''); }
+  }
+  async function copyCaptainLogin(team) {
+    const password = captainPasswords[team.id] || '';
+    if (!password) return setMsg('Generate or enter a password first.');
+    const text = 'BJL Team Login\\nTeam: ' + team.name + '\\nGmail: ' + team.captain_email + '\\nTemporary password: ' + password + '\\nChange this password after your first login.';
+    try { await navigator.clipboard.writeText(text); setMsg('Team login details copied.'); }
+    catch (_) { setMsg('Clipboard unavailable. Select and copy the Gmail and password manually.'); }
   }
   async function uploadTutorial(e) {
     e.preventDefault(); if (!tutorialFile) return setMsg('Choose an MP4 or WebM video first.');
@@ -374,7 +380,7 @@ export default function Admin() {
             <div className="admin-password-row">
               <input type="text" autoComplete="new-password" value={captainPasswords[tm.id] || ''} onChange={e => setCaptainPasswords(v => ({ ...v, [tm.id]: e.target.value }))} placeholder="Enter or generate a password" />
               <button type="button" className="btn alt" onClick={() => generateCaptainPassword(tm.id)}>Generate Password</button>
-              <button type="button" className="btn" disabled={busyTeam === tm.id || (captainPasswords[tm.id] || '').length < 12} onClick={() => saveCaptainPassword(tm)}>{busyTeam === tm.id ? 'Saving...' : 'Save Captain Password'}</button>
+              <button type="button" className="btn" disabled={busyTeam === tm.id || (captainPasswords[tm.id] || '').length < 12} onClick={() => saveCaptainPassword(tm)}>{busyTeam === tm.id ? 'Saving...' : 'Save Captain Password'}</button><button type="button" className="btn alt" disabled={!(captainPasswords[tm.id] || '')} onClick={() => copyCaptainLogin(tm)}>Copy Login Details</button>
             </div>
           </div>
           <div dir="ltr">C1: {ps[0] && ps[0].name} {ps[0] && ps[0].mobile} | C2: {ps[1] && ps[1].name} {ps[1] && ps[1].mobile}</div>
