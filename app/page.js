@@ -5,6 +5,7 @@ import { useLang } from '../lib/i18n';
 import { supabase } from '../lib/supabase';
 import { CONTACTS } from '../lib/config';
 import People from '../components/People';
+const dateDMY = value => { if (!value) return ''; const [y,m,d] = String(value).slice(0,10).split('-'); return y && m && d ? `${d.padStart(2,'0')} ${m.padStart(2,'0')} ${y}` : value; };
 const fmt = tm => { if (!tm) return ''; const [h, m] = tm.split(':'); const hh = +h; return `${((hh + 11) % 12) + 1}:${m} ${hh >= 12 ? 'PM' : 'AM'}`; };
 const img = p => supabase.storage.from('announcements').getPublicUrl(p).data.publicUrl;
 const pubP = p => supabase.storage.from('player-photos').getPublicUrl(p).data.publicUrl;
@@ -16,7 +17,7 @@ export default function Home() {
   const [lb, setLb] = useState(null); const [gi, setGi] = useState(null); const [allAnn, setAllAnn] = useState(false);
   const [qs, setQs] = useState([]); const [qi, setQi] = useState(0); const [hold, setHold] = useState(false);
   const [mi, setMi] = useState(0); const [mh, setMh] = useState(false);
-  const [tms, setTms] = useState([]); const [tmSel, setTmSel] = useState(null); const [now, setNow] = useState(Date.now());
+  const [tms, setTms] = useState([]); const [tutorialOpen, setTutorialOpen] = useState(false); const [tmSel, setTmSel] = useState(null); const [now, setNow] = useState(Date.now());
   useEffect(() => {
     supabase.rpc('public_stats').then(({ data }) => data && setS(data));
     supabase.rpc('public_content').then(({ data }) => data && setC(data));
@@ -52,24 +53,24 @@ export default function Home() {
         <Link href="/teams" className="btn alt">{t('viewBtn')}</Link>
         <Link href="/team" className="btn alt">🔑 {t('captainSignIn')}</Link>
         <Link href="/help" className="btn ai-home-cta">🤖 AI Help Center</Link>
-        <a href="#bjl-video-tutorial" className="btn alt tutorial-cta">▶ Video Tutorial</a>
+        <button type="button" className="btn alt tutorial-cta" onClick={() => setTutorialOpen(true)}>▶ Video Tutorial</button>
       </div>
     </section>
     {(c.how_to_register || c.tournament_rules || c.prize_details || true) && <section className="bjl-public-guides">
       {c.how_to_register && <article className="card"><h2>How to Register</h2><p className="bjl-guide-copy">{c.how_to_register}</p></article>}
       {c.tournament_rules && <article className="card"><h2>Tournament Rules</h2><p className="bjl-guide-copy">{c.tournament_rules}</p></article>}
       {c.prize_details && <article className="card"><h2>Prize Details</h2><p className="bjl-guide-copy">{c.prize_details}</p></article>}
-      {<article id="bjl-video-tutorial" className="card bjl-tutorial"><h2>Video Tutorial</h2>{c.tutorial_video_path ? <video controls preload="auto" playsInline width="100%" poster={c.tutorial_poster_path ? img(c.tutorial_poster_path) : undefined}><source src={img(c.tutorial_video_path)} type={c.tutorial_video_path.endsWith('.webm') ? 'video/webm' : 'video/mp4'}/></video> : <p className="bjl-guide-copy">Video tutorial will appear here once uploaded by the admin.</p>}</article>}
+}
     </section>}
     <div className="duo">
       <div className="card mc"><h3>{t('todayWinner')}</h3>
         {showWin ? (<><div className="team">🏆 {nm(c.winner_team)}</div>
           {c.loser_team && <div className="lose"><span className="dl">{t('defeated')}</span> {nm(c.loser_team)}</div>}
           {c.winner_result && <div className="res">{c.winner_result}</div>}
-          {c.winner_date && <div className="dt">📅 {c.winner_date}</div>}</>) : <div className="empty">{t('noWinner')}</div>}</div>
+          {c.winner_date && <div className="dt">📅 {dateDMY(c.winner_date)}</div>}</>) : <div className="empty">{t('noWinner')}</div>}</div>
       <div className="card mc"><h3>{t('nextMatch')}</h3>
         {showNext ? (<><div className="team">{nm(c.next_a)}</div><div className="vsx">{t('vs')}</div><div className="team">{nm(c.next_b)}</div>
-          <div className="dt">📅 {c.next_date} {c.next_time && '· ' + fmt(c.next_time)}</div>
+          <div className="dt">📅 {dateDMY(c.next_date)} {c.next_time && '· ' + fmt(c.next_time)}</div>
           <div className="dt">📍 {c.next_venue || 'Dab Ground, Battagram'}</div>
           {cd && <div className="dt">⏳ {t('startsIn')}: {cd}</div>}</>) : <div className="empty">{t('noNext')}</div>}</div>
     </div>
@@ -77,7 +78,7 @@ export default function Home() {
       <div className="card"><h3>{t('annTitle')}</h3>
         {!la ? <div className="empty">{t('noAnnCard')}</div> : (<>
           <img className="sqimg" src={img(la.image_path)} alt={la.title} loading="lazy" onClick={() => setLb(la)} />
-          <div className="annt">{la.title}</div><small>{la.announce_date}</small>
+          <div className="annt">{la.title}</div><small>{dateDMY(la.announce_date)}</small>
           {ann.length > 1 && <button className="tlink" style={{ marginTop: 6, textAlign: 'start' }} onClick={() => setAllAnn(true)}>{t('allAnn')} ({ann.length})</button>}</>)}</div>
       <div className="card"><h3>{t('momentsT')}</h3>
         {!cm ? <div className="empty">{t('noMom')}</div> : (<div className="ms" onMouseEnter={pauseM} onTouchStart={pauseM}>
@@ -100,19 +101,20 @@ export default function Home() {
         <div className="qr">کتاب: {qs[qi].book}</div><div className="qr">حوالہ: {qs[qi].ref}</div></div>
       <div className="row quote-controls" dir="ltr"><button className="btn alt quote-nav quote-prev" onClick={() => stepQ(-1)} aria-label="Previous quote" title="Previous quote"><span aria-hidden="true">←</span></button>
         <span>{qi + 1} / {qs.length}</span><button className="btn alt quote-nav quote-next" onClick={() => stepQ(1)} aria-label="Next quote" title="Next quote"><span aria-hidden="true">→</span></button></div></section>}
+    {tutorialOpen && <div className="modal" onClick={() => setTutorialOpen(false)}><div className="mbox bjl-tutorial-player" onClick={e => e.stopPropagation()}><div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}><h2 style={{ margin: 0 }}>Video Tutorial</h2><button className="btn alt" onClick={() => setTutorialOpen(false)}>✕ {t('close')}</button></div>{c.tutorial_video_path ? <video key={c.tutorial_video_path} controls preload="none" playsInline autoPlay={false} style={{ width: '100%', maxHeight: '75vh', marginTop: 12, background: '#000', borderRadius: 10 }}><source src={img(c.tutorial_video_path)} type={c.tutorial_video_path.endsWith('.webm') ? 'video/webm' : 'video/mp4'}/></video> : <p className="bjl-guide-copy">Video tutorial will appear here once uploaded by the admin.</p>}</div></div>}
     {allAnn && <div className="modal" onClick={() => setAllAnn(false)}><div className="mbox" onClick={e => e.stopPropagation()}>
       <button className="btn alt" onClick={() => setAllAnn(false)}>✕ {t('close')}</button>
-      {ann.map(a => (<div className="alist" key={a.id} onClick={() => { setAllAnn(false); setLb(a); }}><img src={img(a.image_path)} alt="" /><div><b>{a.title}</b><div><small>{a.announce_date}</small></div></div></div>))}</div></div>}
+      {ann.map(a => (<div className="alist" key={a.id} onClick={() => { setAllAnn(false); setLb(a); }}><img src={img(a.image_path)} alt="" /><div><b>{a.title}</b><div><small>{dateDMY(a.announce_date)}</small></div></div></div>))}</div></div>}
     {lb && <div className="modal" onClick={() => setLb(null)}><div className="mbox" onClick={e => e.stopPropagation()}>
       <button className="btn alt" onClick={() => setLb(null)}>✕ {t('close')}</button>
       <img src={img(lb.image_path)} alt={lb.title} style={{ width: '100%', borderRadius: 10, marginTop: 8 }} /><h3>{lb.title}</h3>
-      <p style={{ whiteSpace: 'pre-wrap' }}>{lb.description}</p><small>{lb.announce_date}</small>
+      <p style={{ whiteSpace: 'pre-wrap' }}>{lb.description}</p><small>{dateDMY(lb.announce_date)}</small>
       <div style={{ marginTop: 10 }}><a className="btn" href={`https://wa.me/?text=${encodeURIComponent(lb.title + ' – ' + (typeof window !== 'undefined' ? window.location.href : ''))}`} target="_blank" rel="noopener noreferrer">{t('share')}</a></div></div></div>}
     {gi !== null && moms[gi] && <div className="modal" onClick={() => setGi(null)}><div className="mbox" onClick={e => e.stopPropagation()}>
       <div className="row" style={{ justifyContent: 'space-between' }}><button className="btn alt" onClick={() => step(-1)}>◀</button>
         <button className="btn alt" onClick={() => setGi(null)}>✕</button><button className="btn alt" onClick={() => step(1)}>▶</button></div>
       <img src={img(moms[gi].image_path)} alt="" style={{ width: '100%', borderRadius: 10 }} />
-      <p>{moms[gi].caption}</p><small>{moms[gi].moment_date}</small></div></div>}
+      <p>{moms[gi].caption}</p><small>{dateDMY(moms[gi].moment_date)}</small></div></div>}
     {tmSel && <div className="modal" onClick={() => setTmSel(null)}><div className="mbox" onClick={e => e.stopPropagation()}>
       <button className="btn alt" onClick={() => setTmSel(null)}>✕ {t('close')}</button>
       <h3>{tmSel.name} <small>{tmSel.reg_id}</small></h3>
