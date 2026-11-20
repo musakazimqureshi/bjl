@@ -39,6 +39,7 @@ export default function Home() {
   const cm = moms[Math.min(mi, moms.length - 1)]; const la = ann[0];
   const showWin = c.winner_show !== '0' && c.winner_team; const showNext = c.next_show !== '0' && c.next_a && c.next_b;
   return (<>
+    <div className="bjl-robot-marker" aria-hidden="true"><span>🤖</span></div>
     <section className="hero">
       <div className="stadium-ball" aria-hidden="true"><span /></div>
       <div className="shield" style={{ display: 'inline-block', fontSize: '2rem' }}>BJL</div>
