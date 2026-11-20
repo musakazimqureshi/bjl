@@ -88,7 +88,16 @@ export default function Admin() {
       if (data?.error) throw new Error(data.error);
       setMsg('Captain login password saved. Share it securely with the captain.');
       setCaptainPasswords(v => ({ ...v, [team.id]: '' }));
-    } catch (error) { setMsg(error?.message || 'Captain login could not be saved.'); }
+    } catch (error) {
+      let detail = error?.message || 'Unknown error';
+      try {
+        if (error?.context && typeof error.context.clone === 'function') {
+          const body = await error.context.clone().json();
+          detail = body?.message || body?.error_description || body?.error || detail;
+        }
+      } catch (_) {}
+      setMsg('Captain password was NOT saved. ' + detail);
+    }
     finally { setBusyTeam(''); }
   }
   async function uploadTutorial(e) {
