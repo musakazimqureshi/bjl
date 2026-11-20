@@ -10,7 +10,7 @@ export default function Admin() {
   const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
   const [tab, setTab] = useState('teams'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
   const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
-  const [objections, setObjections] = useState([]); const [objectionPlayer, setObjectionPlayer] = useState(null); const [objectionDraft, setObjectionDraft] = useState({ reason: '', raised_by: '', details: '' });
+  const [objections, setObjections] = useState([]); const [objectionPlayer, setObjectionPlayer] = useState(null); const [objectionDraft, setObjectionDraft] = useState({ reason: '', raised_by: '', raised_by_team: '', details: '' });
   const [captainPasswords, setCaptainPasswords] = useState({}); const [tutorialFile, setTutorialFile] = useState(null); const [busyTeam, setBusyTeam] = useState('');
   async function check() {
     try {
@@ -64,12 +64,12 @@ export default function Admin() {
     e.preventDefault();
     const { error } = await supabase.from('player_objections').insert({
       player_id: player.id, team_id: team.id, reason: objectionDraft.reason,
-      raised_by: objectionDraft.raised_by.trim(), details: objectionDraft.details.trim()
+      raised_by: `${objectionDraft.raised_by_team} (${objectionDraft.raised_by.trim()})`, details: objectionDraft.details.trim()
     });
     if (error) return setMsg(error.message);
     setMsg('Player objection recorded successfully.');
     setObjectionPlayer(null);
-    setObjectionDraft({ reason: '', raised_by: '', details: '' });
+    setObjectionDraft({ reason: '', raised_by: '', raised_by_team: '', details: '' });
     loadObjections();
   }
   function generateCaptainPassword(teamId) {
@@ -368,13 +368,13 @@ export default function Admin() {
           <details><summary>View Players</summary>{ps.map(pp => (<div key={pp.id} className="admin-player-row">
             <img src={pub(pp.photo_path)} alt="" width="48" height="48" style={{ borderRadius: 10, objectFit: 'cover' }} />
             <div className="admin-player-main"><div><b>{pp.name}</b> · Age {pp.age} · {pp.position}</div>
-              <button type="button" className="btn alt admin-objection-trigger" onClick={() => { setObjectionPlayer(objectionPlayer === pp.id ? null : pp.id); setObjectionDraft({ reason: '', raised_by: '', details: '' }); }}>＋ Raise Objection</button>
+              <button type="button" className="btn alt admin-objection-trigger" onClick={() => { setObjectionPlayer(objectionPlayer === pp.id ? null : pp.id); setObjectionDraft({ reason: '', raised_by: '', raised_by_team: '', details: '' }); }}>＋ Raise Objection</button>
               {objectionPlayer === pp.id && <form className="admin-objection-form" onSubmit={e => raiseObjection(e, pp, tm)}>
                 <label>Objection Reason</label>
                 <select required value={objectionDraft.reason} onChange={e => setObjectionDraft(v => ({ ...v, reason: e.target.value }))}>
                   <option value="">Select a reason</option><option value="Senior Player">Senior Player</option><option value="Over Age">Over Age</option><option value="Community Misconduct">Community Misconduct</option>
                 </select>
-                <label>Raised By (Name)</label><input required value={objectionDraft.raised_by} onChange={e => setObjectionDraft(v => ({ ...v, raised_by: e.target.value }))} placeholder="Name of the person raising the objection" />
+                <label>Objection Raised By Team</label><select required value={objectionDraft.raised_by_team} onChange={e => setObjectionDraft(v => ({ ...v, raised_by_team: e.target.value }))}><option value="">Select the team raising objection</option>{teams.filter(x => x.id !== tm.id).map(x => <option key={x.id} value={x.name}>{x.name}</option>)}</select><label>Representative Name (Optional)</label><input value={objectionDraft.raised_by} onChange={e => setObjectionDraft(v => ({ ...v, raised_by: e.target.value }))} placeholder="Name of the person raising the objection" />
                 <label>Description / Evidence</label><textarea required rows="2" value={objectionDraft.details} onChange={e => setObjectionDraft(v => ({ ...v, details: e.target.value }))} placeholder="Write the objection details..." />
                 <div className="row"><button className="btn">Submit Objection</button><button type="button" className="btn alt" onClick={() => setObjectionPlayer(null)}>Cancel</button></div>
               </form>}

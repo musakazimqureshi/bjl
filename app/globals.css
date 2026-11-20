@@ -512,3 +512,7 @@ body:has(.hdr):before{
   body:has(.hdr):before,.hero .calli:after,.hdr ~ main>.card:has(.big):after,.fwa{animation:none!important}
   .pp,.pp img{transition:none!important}
 }
+
+/* BJL homepage tutorial quick link */
+.hero .tutorial-cta{font-size:.82rem;padding:8px 11px;white-space:nowrap;align-self:center}
+.bjl-tutorial video{display:block;max-height:70vh;background:#000;border-radius:10px}
