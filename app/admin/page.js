@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { adminSupabase as supabase } from '../../lib/adminSupabase';
 import { shrink } from '../../lib/img';
 import AdminAnalytics from '../../components/AdminAnalytics';
+import AdminOverview from '../../components/AdminOverview';
 import AIChatReports from '../../components/AIChatReports';
 const ADMIN_EMAIL = 'musakazim373@gmail.com';
 const ext = f => (f.type === 'image/png' ? 'png' : f.type === 'image/webp' ? 'webp' : 'jpg');
@@ -10,7 +11,7 @@ const okImg = f => f && ['image/jpeg', 'image/png', 'image/webp'].includes(f.typ
 export default function Admin() {
   const [ready, setReady] = useState(false); const [isAdmin, setIsAdmin] = useState(false); const [logged, setLogged] = useState(false);
   const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
-  const [tab, setTab] = useState('teams'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
+  const [tab, setTab] = useState('overview'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
   const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
   const [objections, setObjections] = useState([]); const [objectionPlayer, setObjectionPlayer] = useState(null); const [objectionDraft, setObjectionDraft] = useState({ reason: '', raised_by: '', raised_by_team: '', details: '' });
   const [captainPasswords, setCaptainPasswords] = useState({}); const [tutorialFile, setTutorialFile] = useState(null); const [busyTeam, setBusyTeam] = useState('');
@@ -280,8 +281,9 @@ export default function Admin() {
       <article className="admin-stat"><span className="admin-stat-icon amber">◷</span><div><small>Pending Payments</small><strong>{teams.filter(x => x.payment !== 'verified' && x.payment !== 'rejected').length}</strong><em>Awaiting review</em></div></article>
       <article className="admin-stat"><span className="admin-stat-icon violet">▣</span><div><small>Announcements</small><strong>{ann.length}</strong><em>Announcements</em></div></article>
     </section>
-    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',quotes:'Quotes & Content',video:'Homepage Video Tutorial',set:'Website Settings',analytics:'Traffic Analytics',aiReports:'AI Chat Reports'})[tab]}</strong></div>
+    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({overview:'Dashboard Overview',teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',quotes:'Quotes & Content',video:'Homepage Video Tutorial',set:'Website Settings',analytics:'Traffic Analytics',aiReports:'AI Chat Reports'})[tab]}</strong></div>
     <main className="admin-workspace">
+    {tab === 'overview' && <AdminOverview supabase={supabase} teams={teams} objections={objections} />}
     {tab === 'analytics' && <AdminAnalytics supabase={supabase} />}
     {tab === 'aiReports' && <AIChatReports supabase={supabase} />}
     {tab === 'match' && (<><div className="card"><h3>Match Result</h3>
