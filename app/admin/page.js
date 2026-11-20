@@ -1,12 +1,14 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { adminSupabase as supabase } from '../../lib/adminSupabase';
+import { Upload } from 'tus-js-client';
 import { shrink } from '../../lib/img';
 import AdminAnalytics from '../../components/AdminAnalytics';
 import AdminOverview from '../../components/AdminOverview';
 import AIChatReports from '../../components/AIChatReports';
 const ADMIN_EMAIL = 'musakazim373@gmail.com';
 const ext = f => (f.type === 'image/png' ? 'png' : f.type === 'image/webp' ? 'webp' : 'jpg');
+const dateDMY = value => { if (!value) return ''; const [y,m,d] = String(value).slice(0,10).split('-'); return y && m && d ? `${d.padStart(2,'0')} ${m.padStart(2,'0')} ${y}` : value; };
 const okImg = f => f && ['image/jpeg', 'image/png', 'image/webp'].includes(f.type) && f.size <= 15 * 1024 * 1024;
 export default function Admin() {
   const [ready, setReady] = useState(false); const [isAdmin, setIsAdmin] = useState(false); const [logged, setLogged] = useState(false);
@@ -14,7 +16,7 @@ export default function Admin() {
   const [tab, setTab] = useState('overview'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
   const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
   const [objections, setObjections] = useState([]); const [objectionPlayer, setObjectionPlayer] = useState(null); const [objectionDraft, setObjectionDraft] = useState({ reason: '', raised_by: '', raised_by_team: '', details: '' });
-  const [captainPasswords, setCaptainPasswords] = useState({}); const [tutorialFile, setTutorialFile] = useState(null); const [busyTeam, setBusyTeam] = useState('');
+  const [captainPasswords, setCaptainPasswords] = useState({}); const [tutorialFile, setTutorialFile] = useState(null); const [tutorialProgress, setTutorialProgress] = useState(0); const [busyTeam, setBusyTeam] = useState('');
   async function check() {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -110,15 +112,39 @@ export default function Admin() {
     catch (_) { setMsg('Clipboard unavailable. Select and copy the Gmail and password manually.'); }
   }
   async function uploadTutorial(e) {
-    e.preventDefault(); if (!tutorialFile) return setMsg('Choose an MP4 or WebM video first.');
-    if (!['video/mp4','video/webm'].includes(tutorialFile.type) || tutorialFile.size > 100 * 1024 * 1024) return setMsg('Video must be MP4/WebM and no larger than 100 MB.');
-    setMsg('Uploading tutorial video...');
+    e.preventDefault();
+    if (!tutorialFile) return setMsg('Choose an MP4 or WebM video first.');
+    if (!['video/mp4', 'video/webm'].includes(tutorialFile.type)) return setMsg('Please choose an MP4 or WebM video.');
+    if (tutorialFile.size > 1024 * 1024 * 1024) return setMsg('Video exceeds the 1 GB upload limit. Compress the video or choose a smaller file.');
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session?.access_token) return setMsg('Admin session expired. Please sign in again.');
+    const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const projectId = new URL(projectUrl).hostname.split('.')[0];
+    const endpoint = `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`;
     const path = 'tutorials/bjl-registration-' + Date.now() + (tutorialFile.type === 'video/webm' ? '.webm' : '.mp4');
-    const { error } = await supabase.storage.from('announcements').upload(path, tutorialFile, { contentType: tutorialFile.type, upsert: true, cacheControl: '31536000' });
-    if (error) return setMsg(error.message);
-    const { error: saveError } = await supabase.from('settings').upsert({ key: 'tutorial_video_path', value: path });
-    if (saveError) return setMsg(saveError.message);
-    setTutorialFile(null); e.target.reset(); setMsg('Tutorial uploaded and saved.'); load();
+    setTutorialProgress(0); setMsg('Uploading full video... 0%');
+    try {
+      await new Promise((resolve, reject) => {
+        const upload = new Upload(tutorialFile, {
+          endpoint,
+          retryDelays: [0, 3000, 5000, 10000, 20000],
+          headers: { authorization: 'Bearer ' + session.access_token, apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, 'x-upsert': 'true' },
+          uploadDataDuringCreation: true,
+          removeFingerprintOnSuccess: true,
+          chunkSize: 6 * 1024 * 1024,
+          metadata: { bucketName: 'announcements', objectName: path, contentType: tutorialFile.type, cacheControl: '31536000' },
+          onError: reject,
+          onProgress: (uploaded, total) => { const pct = Math.round(uploaded / total * 100); setTutorialProgress(pct); setMsg('Uploading full video... ' + pct + '%'); },
+          onSuccess: resolve
+        });
+        upload.findPreviousUploads().then(previous => { if (previous.length) upload.resumeFromPreviousUpload(previous[0]); upload.start(); }).catch(reject);
+      });
+      const { error: saveError } = await supabase.from('settings').upsert({ key: 'tutorial_video_path', value: path });
+      if (saveError) throw saveError;
+      setTutorialFile(null); setTutorialProgress(100); e.target.reset(); setMsg('Full tutorial video uploaded and saved successfully.'); load();
+    } catch (error) {
+      setMsg('Video upload failed: ' + (error?.message || 'Please try again. Your selected video was not published.'));
+    }
   }
   async function setObjectionStatus(item, status) {
     const { error } = await supabase.from('player_objections').update({
@@ -293,10 +319,10 @@ export default function Admin() {
     {tab === 'analytics' && <AdminAnalytics supabase={supabase} />}
     {tab === 'aiReports' && <AIChatReports supabase={supabase} />}
     {tab === 'match' && (<><div className="card"><h3>Match Result</h3>
-      {tsel('winner_team', 'Winning Team')}{tsel('loser_team', 'Opposition Team')}{inp('winner_result', 'Result / Short Note (Optional)')}{inp('winner_date', 'Match Date', 'date')}{show('winner_show', 'Show on Homepage')}
+      {tsel('winner_team', 'Winning Team')}{tsel('loser_team', 'Opposition Team')}{inp('winner_result', 'Result / Short Note (Optional)')}{inp('winner_date', 'Match Date (DD MM YYYY)', 'date')}{show('winner_show', 'Show on Homepage')}
       <button className="btn" onClick={() => save(['winner_team', 'loser_team', 'winner_result', 'winner_date', 'winner_show'])}>Save Changes</button></div>
       <div className="card"><h3>Upcoming Match</h3>
-        {tsel('next_a', 'Team A')}{tsel('next_b', 'Team B')}{inp('next_date', 'Date', 'date')}{inp('next_time', 'Time', 'time')}{inp('next_venue', 'Venue (Default: Dab Ground, Battagram)')}{show('next_show', 'Show on Homepage')}
+        {tsel('next_a', 'Team A')}{tsel('next_b', 'Team B')}{inp('next_date', 'Date (DD MM YYYY)', 'date')}{inp('next_time', 'Time', 'time')}{inp('next_venue', 'Venue (Default: Dab Ground, Battagram)')}{show('next_show', 'Show on Homepage')}
         <button className="btn" onClick={() => save(['next_a', 'next_b', 'next_date', 'next_time', 'next_venue', 'next_show'])}>Save Changes</button></div></>)}
     {tab === 'objections' && (<div className="admin-objections-list">
       <div className="card"><h3>Player Objections Overview</h3><p>{objections.filter(o => o.status === 'open').length} open · {objections.length} total records</p></div>
@@ -304,18 +330,18 @@ export default function Admin() {
       {objections.map(o => <article className="card admin-objection-card" key={o.id}>
         <div className="admin-objection-head"><div><span className="admin-eyebrow">{o.reason}</span><h3>{o.players?.name || 'Player'} · {o.teams?.name || 'Team'}</h3></div><span className={'admin-objection-status '+o.status}>{o.status.toUpperCase()}</span></div>
         <p>{o.details || 'No description provided.'}</p>
-        <small>Raised by <b>{o.raised_by || 'Not provided'}</b> · {new Date(o.created_at).toLocaleString()}</small>
+        <small>Raised by <b>{o.raised_by || 'Not provided'}</b> · {new Date(o.created_at).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</small>
         <div className="row admin-objection-actions"><button className="btn" onClick={() => setObjectionStatus(o,'resolved')} disabled={o.status==='resolved'}>Mark Resolved</button><button className="btn alt" onClick={() => setObjectionStatus(o,'dismissed')} disabled={o.status==='dismissed'}>Dismiss</button><button className="btn alt" onClick={() => setObjectionStatus(o,'open')} disabled={o.status==='open'}>Reopen</button></div>
       </article>)}
     </div>)}
     {tab === 'ann' && (<><form className="card" onSubmit={addAnn}><h3>New Announcement</h3>
       <label>Title</label><input value={f.title} onChange={e => setF({ ...f, title: e.target.value })} />
       <label>Description</label><input value={f.description} onChange={e => setF({ ...f, description: e.target.value })} />
-      <label>Date</label><input type="date" value={f.date} onChange={e => setF({ ...f, date: e.target.value })} />
+      <label>Date</label><input type="date" lang="en-GB" value={f.date} onChange={e => setF({ ...f, date: e.target.value })} />
       <label>Time</label><input type="time" value={f.time} onChange={e => setF({ ...f, time: e.target.value })} />
       <label>Image</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setF({ ...f, file: e.target.files[0] })} />
       <button className="btn">Publish</button></form>
-      {ann.map((a, i) => (<div className="card" key={a.id}><b>{a.title}</b> <small>{a.announce_date}</small> {a.published ? '✅' : '⛔'}
+      {ann.map((a, i) => (<div className="card" key={a.id}><b>{a.title}</b> <small>{dateDMY(a.announce_date)}</small> {a.published ? '✅' : '⛔'}
         <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt admin-reorder" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move announcement up" title="Move up"><span aria-hidden="true">↑</span><small>UP</small></button><button className="btn alt admin-reorder" onClick={() => move(i, 1)} disabled={i === ann.length - 1} aria-label="Move announcement down" title="Move down"><span aria-hidden="true">↓</span><small>DOWN</small></button><button className="btn alt" onClick={() => editAnn(a)}>Edit</button><button className="btn alt" onClick={() => toggle(a)}>{a.published ? 'Hide' : 'Show'}</button>
           <button className="btn" onClick={() => del(a)}>Delete Team</button></div></div>))}</>)}
     {tab === 'people' && (<>{[[1, 'AMAN MALIK – MEMBER'], [2, 'WALEED AFRIDI – MEMBER'], [3, 'MUHAMMAD HASNAIN – MEMBER'], [4, 'FALAK – ORGANIZER']].map(([n, l]) => (<div className="card" key={n}><h3>{l}</h3>
@@ -326,13 +352,13 @@ export default function Admin() {
         <p><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => e.target.files[0] && uploadKey('calli', e.target.files[0])} /></p>
         {c.calli_path && <button className="btn alt" onClick={() => clearKey('calli')}>Remove image (restore default calligraphy)</button>}</div></>)}
     {tab === 'moms' && (<><form className="card" onSubmit={addMoments}><h3>Upload New Photos (5–6 at a time)</h3>
-      <label>Date</label><input type="date" value={mf.date} onChange={e => setMf({ ...mf, date: e.target.value })} />
+      <label>Date</label><input type="date" lang="en-GB" value={mf.date} onChange={e => setMf({ ...mf, date: e.target.value })} />
       <label>Caption (Optional)</label><input value={mf.caption} onChange={e => setMf({ ...mf, caption: e.target.value })} />
       <label>Select Images</label><input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={e => setMf({ ...mf, files: e.target.files })} />
       <button className="btn">Publish</button></form>
       {moms.map(m => (<div className="card" key={m.id} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
         <img src={pa(m.image_path)} alt="" width="70" height="70" style={{ borderRadius: 8, objectFit: 'cover' }} />
-        <div style={{ flex: 1 }}><small>{m.moment_date}</small><div>{m.caption} {m.published ? '✅' : '⛔'}</div>
+        <div style={{ flex: 1 }}><small>{dateDMY(m.moment_date)}</small><div>{m.caption} {m.published ? '✅' : '⛔'}</div>
           <button className="btn alt" onClick={() => capMoment(m)}>Edit Caption</button> <button className="btn alt" onClick={() => togMoment(m)}>{m.published ? 'Hide' : 'Publish'}</button> <button className="btn alt" onClick={() => delMoment(m)}>Delete Team</button></div></div>))}</>)}
     {tab === 'quotes' && (<><form className="card" onSubmit={addQuote}><h3>Add Quote</h3>
       <label>Quote Text</label><textarea rows="4" style={{ width: '100%', padding: 10, borderRadius: 8 }} value={qf.body} onChange={e => setQf({ ...qf, body: e.target.value })} />
