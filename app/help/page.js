@@ -55,7 +55,7 @@ export default function Help() {
       </div>
       {error && <p className="bjl-ai-error" role="alert">{error}</p>}
       <form className="bjl-ai-form" onSubmit={send}><textarea value={input} onChange={e=>setInput(e.target.value)} maxLength={1200} rows={2} placeholder="Write your question…" disabled={busy || remaining===0} /><button className="btn" disabled={busy || !input.trim() || remaining===0}>Send</button></form>
-      <p className="bjl-ai-footnote">Text only. No voice, photos or file uploads. Please avoid sharing passwords or private information.</p>
+      <p className="bjl-ai-footnote">Text only. No voice, photos or file uploads. Authorized BJL admins may review chats for support quality. Email and phone details are masked in reports. Please do not share passwords, OTPs or private information.</p>
     </section>
     <div className="bjl-direct-whatsapp"><b>Need a person to help?</b><p>BJL tournament help ke liye WhatsApp par seedha message bhejein.</p><a className="btn" href="https://wa.me/923145453155?text=Assalam-o-Alaikum%2C%20I%20need%20help%20with%20BJL%20tournament." target="_blank" rel="noopener noreferrer">WhatsApp Help ↗</a></div>
     <h3>{t('helpTitle')}</h3>
