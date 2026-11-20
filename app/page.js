@@ -50,14 +50,14 @@ export default function Home() {
         <Link href="/register" className="btn">{t('regBtn')}</Link>
         <Link href="/teams" className="btn alt">{t('viewBtn')}</Link>
         <Link href="/team" className="btn alt">🔑 {t('captainSignIn')}</Link>
-        {c.tutorial_video_path && <a href="#bjl-video-tutorial" className="btn alt">▶ Video Tutorial</a>}
+        <a href="#bjl-video-tutorial" className="btn alt tutorial-cta">▶ Video Tutorial</a>
       </div>
     </section>
-    {(c.how_to_register || c.tournament_rules || c.prize_details || c.tutorial_video_path) && <section className="bjl-public-guides">
+    {(c.how_to_register || c.tournament_rules || c.prize_details || true) && <section className="bjl-public-guides">
       {c.how_to_register && <article className="card"><h2>How to Register</h2><p className="bjl-guide-copy">{c.how_to_register}</p></article>}
       {c.tournament_rules && <article className="card"><h2>Tournament Rules</h2><p className="bjl-guide-copy">{c.tournament_rules}</p></article>}
       {c.prize_details && <article className="card"><h2>Prize Details</h2><p className="bjl-guide-copy">{c.prize_details}</p></article>}
-      {c.tutorial_video_path && <article id="bjl-video-tutorial" className="card bjl-tutorial"><h2>Video Tutorial</h2><video controls preload="auto" playsInline width="100%" poster={c.tutorial_poster_path ? img(c.tutorial_poster_path) : undefined}><source src={img(c.tutorial_video_path)} type={c.tutorial_video_path.endsWith('.webm') ? 'video/webm' : 'video/mp4'}/></video></article>}
+      {<article id="bjl-video-tutorial" className="card bjl-tutorial"><h2>Video Tutorial</h2>{c.tutorial_video_path ? <video controls preload="auto" playsInline width="100%" poster={c.tutorial_poster_path ? img(c.tutorial_poster_path) : undefined}><source src={img(c.tutorial_video_path)} type={c.tutorial_video_path.endsWith('.webm') ? 'video/webm' : 'video/mp4'}/></video> : <p className="bjl-guide-copy">Video tutorial will appear here once uploaded by the admin.</p>}</article>}
     </section>}
     <div className="duo">
       <div className="card mc"><h3>{t('todayWinner')}</h3>
