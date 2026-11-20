@@ -102,9 +102,16 @@ export default function Admin() {
     const email = (tm.captain_email || '').trim().toLowerCase();
     if (!email) return setMsg('اس ٹیم کا کپتان Gmail ریکارڈ میں موجود نہیں۔');
     const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
-    const passwordBytes = new Uint8Array(18);
-    crypto.getRandomValues(passwordBytes);
-    const password = Array.from(passwordBytes, b => alphabet[b % alphabet.length]).join('');
+    let password = '';
+    const maxAcceptedByte = Math.floor(256 / alphabet.length) * alphabet.length;
+    while (password.length < 18) {
+      const randomBytes = new Uint8Array(24);
+      crypto.getRandomValues(randomBytes);
+      for (const byte of randomBytes) {
+        if (byte < maxAcceptedByte) password += alphabet[byte % alphabet.length];
+        if (password.length === 18) break;
+      }
+    }
     setMsg('کپتان کے لیے نیا پاس ورڈ بنایا جا رہا ہے...');
     const { data, error } = await supabase.functions.invoke('captain-login-provisioner', {
       body: { teamId: tm.id, email, password }
