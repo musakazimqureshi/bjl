@@ -790,3 +790,18 @@ body:has(.hdr){background:#f3f6fc!important;color:#17233b!important}
 .bjl-status-viewer{max-width:620px}
 @media(max-width:480px){.bjl-media-duo{gap:7px}.bjl-media-card{padding:8px;gap:7px;min-height:112px}.bjl-media-thumb,.bjl-status-preview{width:58px;height:58px;flex-basis:58px}.bjl-media-thumb span{width:38px;height:38px}.bjl-media-copy p{font-size:.66rem}.bjl-media-copy .btn{font-size:.68rem;padding:5px 8px}}
 @media(max-width:340px){.bjl-media-card{flex-direction:column;align-items:flex-start}.bjl-media-copy{width:100%}}
+
+/* Private BJL Admin AI floating assistant */
+.bjl-admin-ai-fab{position:fixed;left:18px;top:48%;z-index:1200;width:54px;height:54px;border-radius:50%;border:2px solid #e5c15e;background:linear-gradient(145deg,#152c5b,#9f172d);color:#fff;box-shadow:0 8px 28px #0006;cursor:pointer;display:grid;place-items:center;transition:transform .2s,box-shadow .2s}
+.bjl-admin-ai-fab:hover{transform:scale(1.08);box-shadow:0 10px 30px #0008}.bjl-admin-ai-fab span{font-size:27px}
+.bjl-admin-ai-panel{position:fixed;left:84px;top:50%;transform:translateY(-50%);z-index:1199;width:min(410px,calc(100vw - 105px));height:min(610px,calc(100dvh - 36px));display:flex;flex-direction:column;background:#101827;color:#eef3fb;border:1px solid #b89543;border-radius:17px;box-shadow:0 18px 60px #0009;overflow:hidden}
+.bjl-admin-ai-panel>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;background:linear-gradient(110deg,#142a55,#641a2b);border-bottom:1px solid #4a5262}
+.bjl-admin-ai-panel>header div{display:flex;flex-direction:column;gap:4px}.bjl-admin-ai-panel>header b{font-size:15px}.bjl-admin-ai-panel>header small,.bjl-admin-ai-note{font-size:10px;color:#c4cede}
+.bjl-admin-ai-panel>header button{border:0;background:transparent;color:white;font-size:27px;cursor:pointer}
+.bjl-admin-ai-messages{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.bjl-admin-ai-messages article{max-width:92%;padding:10px 12px;border-radius:12px;background:#1b2a40;align-self:flex-start;white-space:pre-wrap;overflow-wrap:anywhere}
+.bjl-admin-ai-messages article.user{align-self:flex-end;background:#244b88}.bjl-admin-ai-messages article b{font-size:10px;color:#e9c66f}.bjl-admin-ai-messages article p{margin:5px 0 0;font-size:13px;line-height:1.65}
+.bjl-admin-ai-messages .typing{color:#d7bd77;font-size:11px}
+.bjl-admin-ai-panel form{display:flex;gap:8px;padding:10px;border-top:1px solid #354157}.bjl-admin-ai-panel textarea{flex:1;min-width:0;resize:none;border:1px solid #44536a;border-radius:10px;padding:10px;background:#0b1220;color:#fff;font:inherit;font-size:13px}.bjl-admin-ai-panel form .btn{align-self:flex-end;min-width:62px}
+.bjl-admin-ai-note{padding:0 12px 12px;line-height:1.4}
+@media(max-width:600px){.bjl-admin-ai-fab{left:9px;width:46px;height:46px}.bjl-admin-ai-panel{left:62px;width:calc(100vw - 72px);height:min(590px,calc(100dvh - 24px))}}
