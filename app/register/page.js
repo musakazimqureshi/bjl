@@ -8,7 +8,7 @@ const POS = [['batter','Batter'],['bowler','Bowler'],['all_rounder','All-Rounder
 const MOB = /^(03\d{9}|\+923\d{9})$/;
 const blank = () => ({ name:'', mobile:'', age:'', position:'', file:null });
 export default function Register() {
-  const { t } = useLang(); const router = useRouter();
+  const { t, lang } = useLang(); const router = useRouter();
   const [team, setTeam] = useState(''); const [email, setEmail] = useState(''); const [open, setOpen] = useState(true);
   useEffect(() => { supabase.rpc('public_stats').then(({ data }) => data && setOpen(data.open !== false)); }, []);
   const [pl, setPl] = useState(Array.from({ length: 15 }, blank));
@@ -50,6 +50,10 @@ export default function Register() {
   }
   return (<form onSubmit={submit}>
     <h2>{t('regTitle')}</h2>
+    <div className="card bjl-squad-rules">
+      <b>{lang === 'ur' ? 'اسکواڈ کے لازمی اصول' : 'Squad rules'}</b>
+      <p>{lang === 'ur' ? 'رجسٹریشن صرف ویب سائٹ پر آن لائن ہوگی۔ ہر ٹیم میں کل 15 کھلاڑی ہوں گے: کپتان 1، کپتان 2 اور 13 دیگر کھلاڑی۔ میچ کے 11 کھلاڑی انہی رجسٹرڈ 15 میں سے ہوں گے۔ ان کے علاوہ کوئی باہر کا کھلاڑی ٹیم کی طرف سے نہیں کھیل سکتا۔ فارم جمع کرنے کے بعد ریفرنس محفوظ کریں اور ویب سائٹ کے Payment صفحے سے ادائیگی جمع کروائیں۔' : 'Registration is online only through this website. Each team must register exactly 15 players: Captain 1, Captain 2 and 13 other players. The playing XI must be selected from these same 15 registered players. No outside player may play for the team. Save the reference after submitting the form, then complete payment on the website.'}</p>
+    </div>
     {!open && <div className="warn">{t('regClosed')}</div>}
     <div className="card"><label>{t('teamName')}</label><input value={team} onChange={e => setTeam(e.target.value)} />
       <label>{t('emailLead')}</label><input type="email" dir="ltr" value={email} onChange={e => setEmail(e.target.value)} /></div>
