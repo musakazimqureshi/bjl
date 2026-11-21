@@ -16,7 +16,7 @@ async function rpc(name, body) {
   if (!response.ok) throw new Error('Could not check the daily chat allowance.');
   return response.json();
 }
-async function callAI(systemInstruction, messages, maxOutputTokens = 900) {
+async function callFreeAI(systemInstruction, messages, maxOutputTokens = 900) {
   const chatMessages = [
     { role: 'system', content: systemInstruction },
     ...messages.map(m => ({ role: m.role, content: m.content }))
