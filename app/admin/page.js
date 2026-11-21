@@ -70,7 +70,7 @@ export default function Admin() {
     e.preventDefault();
     const { error } = await supabase.from('player_objections').insert({
       player_id: player.id, team_id: team.id, reason: objectionDraft.reason,
-      raised_by: `${objectionDraft.raised_by_team} (${objectionDraft.raised_by.trim()})`, details: objectionDraft.details.trim()
+      raised_by: `${objectionDraft.raised_by_team} (${objectionDraft.raised_by.trim()})`, source_team_id: teams.find(x => x.name === objectionDraft.raised_by_team)?.id || null, details: objectionDraft.details.trim()
     });
     if (error) return setMsg(error.message);
     setMsg('Player objection recorded successfully.');
