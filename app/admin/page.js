@@ -16,7 +16,7 @@ export default function Admin() {
   const [tab, setTab] = useState('overview'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
   const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
   const [objections, setObjections] = useState([]); const [objectionPlayer, setObjectionPlayer] = useState(null); const [objectionDraft, setObjectionDraft] = useState({ reason: '', raised_by: '', raised_by_team: '', details: '' });
-  const [captainPasswords, setCaptainPasswords] = useState({}); const [tutorialFile, setTutorialFile] = useState(null); const [tutorialProgress, setTutorialProgress] = useState(0); const [statusRows, setStatusRows] = useState([]); const [statusFile, setStatusFile] = useState(null); const [statusCaption, setStatusCaption] = useState(''); const [statusDate, setStatusDate] = useState(new Date().toISOString().slice(0,10)); const [statusProgress, setStatusProgress] = useState(0); const [busyTeam, setBusyTeam] = useState('');
+  const [captainPasswords, setCaptainPasswords] = useState({}); const [adminAiOpen, setAdminAiOpen] = useState(false); const [adminAiInput, setAdminAiInput] = useState(''); const [adminAiBusy, setAdminAiBusy] = useState(false); const [adminAiMessages, setAdminAiMessages] = useState([{ role: 'assistant', content: 'Assalam-o-Alaikum! Main aapka BJL Admin AI hoon. Tournament data, teams, payments, matches, website settings aur dashboard ke hawale se mujh se pooch sakte hain.' }]); const [tutorialFile, setTutorialFile] = useState(null); const [tutorialProgress, setTutorialProgress] = useState(0); const [statusRows, setStatusRows] = useState([]); const [statusFile, setStatusFile] = useState(null); const [statusCaption, setStatusCaption] = useState(''); const [statusDate, setStatusDate] = useState(new Date().toISOString().slice(0,10)); const [statusProgress, setStatusProgress] = useState(0); const [busyTeam, setBusyTeam] = useState('');
   async function check() {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -253,6 +253,23 @@ export default function Admin() {
     const id = window.setInterval(verifyActiveSession, 15000);
     return () => window.clearInterval(id);
   }, [isAdmin]);
+  async function sendAdminAi(e) {
+    e?.preventDefault();
+    const question = adminAiInput.trim();
+    if (!question || adminAiBusy) return;
+    const next = [...adminAiMessages, { role: 'user', content: question }].slice(-40);
+    setAdminAiMessages(next); setAdminAiInput(''); setAdminAiBusy(true);
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session?.access_token) throw new Error('Admin session expired. Please sign in again.');
+      const response = await fetch('/api/admin-ai', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token }, body: JSON.stringify({ messages: next }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'AI reply could not be generated.');
+      setAdminAiMessages(v => [...v, { role: 'assistant', content: data.reply }].slice(-40));
+    } catch (error) {
+      setAdminAiMessages(v => [...v, { role: 'assistant', content: 'Maazrat, abhi jawab nahi aa saka: ' + (error.message || 'Please try again.') }].slice(-40));
+    } finally { setAdminAiBusy(false); }
+  }
   async function login(e) {
     e.preventDefault();
     setMsg('');
@@ -504,5 +521,12 @@ export default function Admin() {
             <button className="btn alt" onClick={() => setPay(tm, 'rejected')}>Reject Payment</button>
             <button className="btn alt" onClick={() => delTeam(tm)}>Delete Team</button></div></div>); })}</>)}
     </main>
+    <button type="button" className="bjl-admin-ai-fab" onClick={() => setAdminAiOpen(v => !v)} aria-label="Open Admin AI" title="BJL Admin AI"><span>🤖</span></button>
+    {adminAiOpen && <section className="bjl-admin-ai-panel" aria-label="BJL Admin AI chat">
+      <header><div><b>🤖 BJL Admin AI</b><small>Private admin assistant · Live tournament data</small></div><button type="button" onClick={() => setAdminAiOpen(false)} aria-label="Close AI assistant">×</button></header>
+      <div className="bjl-admin-ai-messages">{adminAiMessages.map((m,i) => <article key={i} className={m.role}><b>{m.role === 'user' ? 'You' : 'BJL AI'}</b><p>{m.content}</p></article>)}{adminAiBusy && <small className="typing">BJL AI is thinking...</small>}</div>
+      <form onSubmit={sendAdminAi}><textarea value={adminAiInput} onChange={e => setAdminAiInput(e.target.value)} placeholder="Ask anything about your tournament..." rows="2" onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAdminAi(e); } }} /><button className="btn" disabled={adminAiBusy || !adminAiInput.trim()}>{adminAiBusy ? '...' : 'Send'}</button></form>
+      <small className="bjl-admin-ai-note">Only visible inside the authorized admin dashboard. AI answers from available live records and does not change or delete data.</small>
+    </section>}
   </div>);
 }
