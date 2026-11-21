@@ -12,7 +12,7 @@ async function readTable(base, headers, path) {
   } catch { return { unavailable: true }; }
 }
 
-async function callAI(systemInstruction, messages, maxOutputTokens = 900) {
+async function callFreeAI(systemInstruction, messages, maxOutputTokens = 900) {
   const chatMessages = [
     { role: 'system', content: systemInstruction },
     ...messages.map(m => ({ role: m.role, content: m.content }))
