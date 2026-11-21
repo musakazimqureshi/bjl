@@ -88,7 +88,7 @@ async function getWebsiteContext() {
   return {
     tournament: 'Battagram Junior League (BJL), Season 1',
     format: 'Tape Ball Cricket',
-    venue: content?.ground_name || 'Dab Ground, Battagram, near Hazara University, Khyber Pakhtunkhwa',
+    venue: content?.ground_name || 'Dab Ground, Battagram, Khyber Pakhtunkhwa, Pakistan',
     entryFeePKR: 5000,
     squad: { totalPlayers: 15, captain1: 1, captain2: 1, otherPlayers: 13, matchPlayingXI: 11, substitutes: 4, externalPlayersAllowed: false },
     registration: { onlineOnly: true, open: stats?.open !== false && content?.registration_open !== 'false', maximumTeams: Number(content?.max_teams) || 30, loginEmailRequired: true, captainLoginCreatedByAdmin: true },
@@ -97,7 +97,7 @@ async function getWebsiteContext() {
     verifiedTeams: stats?.verified ?? null,
     nextMatch: upcoming,
     latestAnnouncements: recentAnnouncements,
-    websiteSections: ['Register Team', 'Registered Teams', 'Payment', 'Team Login', 'Announcements', 'Match Center', 'AI Help Center']
+    websiteSections: ['Register Team', 'Registered Teams', 'Payment', 'Team Login', 'Announcements', 'Match Center', 'Felux AI Assistant']
   };
 }
 
