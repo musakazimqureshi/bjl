@@ -95,9 +95,11 @@ ${JSON.stringify(websiteContext)}
       body: JSON.stringify({
         model: 'gemini-3.8-flash',
         store: false,
-        input: systemPrompt + '\nConversation so far:\n' + conversation + '\nBJL Assistant:'
+        input: systemPrompt + '\nConversation so far:\n' + conversation + '\nBJL Assistant:',
+        generation_config: { temperature: 0.35, max_output_tokens: 700 }
       }),
-      cache: 'no-store'
+      cache: 'no-store',
+      signal: AbortSignal.timeout(45000)
     });
     const result = await response.json();
     if (!response.ok) {
