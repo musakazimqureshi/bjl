@@ -66,7 +66,7 @@ export default function Home() {
         <div className="bjl-status-preview" onClick={() => statuses.length && setStatusOpen(0)} role="button" tabIndex={0} onKeyDown={e => { if ((e.key === 'Enter' || e.key === ' ') && statuses.length) setStatusOpen(0); }}>
           {statuses[0] ? (statuses[0].media_type === 'video' ? <span aria-label="Video update">▶</span> : <img src={img(statuses[0].media_path)} alt="Latest organizer update" loading="lazy" />) : <span>＋</span>}
         </div>
-        <div className="bjl-media-copy"><h3>Organizer Updates</h3><p>{statuses.length ? (statuses[0].caption || 'Updates, photos and videos from the organizer') : 'Photos and videos will appear here'}</p><button type="button" className="btn alt" onClick={() => statuses.length && setStatusOpen(0)} disabled={!statuses.length}>View Status{statuses.length ? ' (' + statuses.length + ')' : ''}</button></div>
+        <div className="bjl-media-copy"><h3>Organizer Updates</h3><p>{statuses.length ? (statuses[0].caption || 'Updates, photos and videos from the organizer') : 'Photos and videos will appear here'}</p><button type="button" className="btn alt" onClick={() => statuses.length && setStatusOpen(0)} disabled={!statuses.length}>View Updates{statuses.length ? ' (' + statuses.length + ')' : ''}</button></div>
       </article>
     </section>
     {(c.how_to_register || c.tournament_rules || c.prize_details || true) && <section className="bjl-public-guides">
