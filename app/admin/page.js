@@ -39,7 +39,7 @@ const uploadResumable = async (file, bucketName, objectName, session, onProgress
       return;
     } catch (error) { lastError = error; }
   }
-  throw new Error('Both Supabase resumable upload endpoints failed. ' + (lastError?.message || 'Check storage access and network connection.'));
+  throw new Error('Both Supabase resumable upload endpoints failed. ' + (lastError?.message || 'Check storage access and network connection.') + (String(lastError?.message || lastError).includes('413') || String(lastError?.message || lastError).includes('Maximum size exceeded') ? ' The announcements bucket already allows up to 1 GB, but the Supabase project-wide Storage upload limit is lower than this file. Increase the global limit in Supabase Dashboard > Storage > Settings, or upload a video below the current project limit.' : ''));
 };
 
 export default function Admin() {
@@ -185,7 +185,7 @@ export default function Admin() {
       }
       const { error: insertError } = await supabase.from('bjl_status').insert({ media_path: path, media_type: isVideo ? 'video' : 'image', caption: statusCaption.trim(), status_date: statusDate, published: true });
       if (insertError) throw insertError;
-      setStatusFile(null); setStatusCaption(''); setStatusProgress(100); setMsg('Organizer update published successfully.'); e.target.reset(); load();
+      setStatusFile(null); setStatusCaption(''); setStatusProgress(100); setMsg('OS Status published successfully.'); e.target.reset(); load();
     } catch (error) {
       setMsg('Status upload failed: ' + (error?.message || 'Please try again.'));
     }
@@ -434,7 +434,7 @@ export default function Admin() {
           <button className="btn alt" onClick={() => capMoment(m)}>Edit Caption</button> <button className="btn alt" onClick={() => togMoment(m)}>{m.published ? 'Hide' : 'Publish'}</button> <button className="btn alt" onClick={() => delMoment(m)}>Delete Team</button></div></div>))}</>)}
     {tab === 'status' && (<>
       <form className="card" onSubmit={addStatus}>
-        <h3>Publish Organizer Update</h3>
+        <h3>Publish OS Status</h3>
         <p>Upload photos and videos for visitors. Photos up to 15 MB; MP4/WebM videos up to 1 GB. For smoother playback on slower networks, use MP4 (H.264 video + AAC audio), 720p, and enable Fast Start / Web Optimized when exporting.</p>
         <label>Photo or Video</label><input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" onChange={e => setStatusFile(e.target.files?.[0] || null)} />
         <label>Caption (Optional)</label><input value={statusCaption} onChange={e => setStatusCaption(e.target.value)} placeholder="Write a short caption..." />
@@ -445,11 +445,11 @@ export default function Admin() {
       </form>
       {statusRows.map(item => <article className="card" key={item.id} style={{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
         {item.media_type === 'video' ? <video src={pa(item.media_path)} controls preload="none" width="110" style={{borderRadius:8}} /> : <img src={pa(item.media_path)} alt="" width="90" height="90" style={{borderRadius:8,objectFit:'cover'}} />}
-        <div style={{flex:1,minWidth:150}}><b>{item.caption || 'Organizer Update'}</b><div><small>{dateDMY(item.status_date)} · {item.media_type.toUpperCase()} · {item.published ? 'Published' : 'Hidden'}</small></div>
+        <div style={{flex:1,minWidth:150}}><b>{item.caption || 'OS Status'}</b><div><small>{dateDMY(item.status_date)} · {item.media_type.toUpperCase()} · {item.published ? 'Published' : 'Hidden'}</small></div>
           <button className="btn alt" onClick={() => toggleStatus(item)}>{item.published ? 'Hide' : 'Publish'}</button> <button className="btn alt" onClick={() => deleteStatus(item)}>Delete</button>
         </div>
       </article>)}
-      {statusRows.length === 0 && <div className="card">No organizer updates yet.</div>}
+      {statusRows.length === 0 && <div className="card">No OS Status entries yet.</div>}
     </>)}
     {tab === 'quotes' && (<><form className="card" onSubmit={addQuote}><h3>Add Quote</h3>
       <label>Quote Text</label><textarea rows="4" style={{ width: '100%', padding: 10, borderRadius: 8 }} value={qf.body} onChange={e => setQf({ ...qf, body: e.target.value })} />
