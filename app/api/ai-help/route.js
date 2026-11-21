@@ -91,7 +91,7 @@ async function getWebsiteContext() {
     venue: content?.ground_name || 'Dab Ground, Battagram, Khyber Pakhtunkhwa, Pakistan',
     entryFeePKR: 5000,
     squad: { totalPlayers: 15, captain1: 1, captain2: 1, otherPlayers: 13, matchPlayingXI: 11, substitutes: 4, externalPlayersAllowed: false },
-    registration: { onlineOnly: true, open: stats?.open !== false && content?.registration_open !== 'false', maximumTeams: Number(content?.max_teams) || 30, loginEmailRequired: true, captainLoginCreatedByAdmin: true },
+    registration: { onlineOnly: true, open: stats?.open !== false && content?.registration_open !== 'false', maximumTeams: content?.max_teams ? Number(content.max_teams) : null, loginEmailRequired: true, captainLoginCreatedByAdmin: true },
     registrationSteps: ['Open /register on the official website; registration is online only.', 'Enter the team name and a valid Gmail address.', 'Add exactly 15 players: Captain 1, Captain 2, and 13 other players.', 'For every player, enter name, age, playing position and upload a JPG/PNG photo; add separate mobile numbers for both captains.', 'Submit the registration and save the reference number.', 'Use the website Payment page with the reference number, pay the current PKR 5,000 fee through the displayed EasyPaisa details, and upload the payment screenshot; transaction ID is optional.', 'Wait for admin payment verification and registration approval.', 'The admin creates the team login for the registered Gmail. Open /team and sign in with the credentials provided by the organizer; change the temporary password after first login.'],
     registeredTeams: stats?.total ?? null,
     verifiedTeams: stats?.verified ?? null,
@@ -104,7 +104,7 @@ async function getWebsiteContext() {
 export async function POST(request) {
   try {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      return NextResponse.json({ error: 'AI Help Center is not configured yet.' }, { status: 503 });
+      return NextResponse.json({ error: 'Felux AI Assistant is not configured yet.' }, { status: 503 });
     }
     const body = await request.json();
     const visitor = String(body.visitor || '');
