@@ -10,6 +10,38 @@ const ADMIN_EMAIL = 'musakazim373@gmail.com';
 const ext = f => (f.type === 'image/png' ? 'png' : f.type === 'image/webp' ? 'webp' : 'jpg');
 const dateDMY = value => { if (!value) return ''; const [y,m,d] = String(value).slice(0,10).split('-'); return y && m && d ? `${d.padStart(2,'0')} ${m.padStart(2,'0')} ${y}` : value; };
 const okImg = f => f && ['image/jpeg', 'image/png', 'image/webp'].includes(f.type) && f.size <= 15 * 1024 * 1024;
+const uploadResumable = async (file, bucketName, objectName, session, onProgress) => {
+  const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const projectId = new URL(projectUrl).hostname.split('.')[0];
+  const endpoints = [
+    `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`,
+    projectUrl.replace(/\\/$/, '') + '/storage/v1/upload/resumable'
+  ];
+  let lastError;
+  for (const endpoint of endpoints) {
+    try {
+      await new Promise((resolve, reject) => {
+        const upload = new Upload(file, {
+          endpoint, retryDelays: [0, 3000, 5000, 10000, 20000],
+          headers: { authorization: 'Bearer ' + session.access_token, apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, 'x-upsert': 'true' },
+          uploadDataDuringCreation: true, removeFingerprintOnSuccess: true,
+          chunkSize: 6 * 1024 * 1024,
+          metadata: { bucketName, objectName, contentType: file.type, cacheControl: '31536000' },
+          onError: reject,
+          onProgress: (uploaded, total) => onProgress?.(Math.round(uploaded / total * 100)),
+          onSuccess: resolve
+        });
+        upload.findPreviousUploads().then(previous => {
+          if (previous.length) upload.resumeFromPreviousUpload(previous[0]);
+          upload.start();
+        }).catch(reject);
+      });
+      return;
+    } catch (error) { lastError = error; }
+  }
+  throw new Error('Both Supabase resumable upload endpoints failed. ' + (lastError?.message || 'Check storage access and network connection.'));
+};
+
 export default function Admin() {
   const [ready, setReady] = useState(false); const [isAdmin, setIsAdmin] = useState(false); const [logged, setLogged] = useState(false);
   const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
@@ -119,27 +151,10 @@ export default function Admin() {
     if (tutorialFile.size > 1024 * 1024 * 1024) return setMsg('Video exceeds the 1 GB upload limit. Compress the video or choose a smaller file.');
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     if (sessionError || !session?.access_token) return setMsg('Admin session expired. Please sign in again.');
-    const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const projectId = new URL(projectUrl).hostname.split('.')[0];
-    const endpoint = projectUrl.replace(/\/$/, '') + '/storage/v1/upload/resumable';
     const path = 'tutorials/bjl-registration-' + Date.now() + (tutorialFile.type === 'video/webm' ? '.webm' : '.mp4');
     setTutorialProgress(0); setMsg('Uploading full video... 0%');
     try {
-      await new Promise((resolve, reject) => {
-        const upload = new Upload(tutorialFile, {
-          endpoint,
-          retryDelays: [0, 3000, 5000, 10000, 20000],
-          headers: { authorization: 'Bearer ' + session.access_token, apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, 'x-upsert': 'true' },
-          uploadDataDuringCreation: true,
-          removeFingerprintOnSuccess: true,
-          chunkSize: 6 * 1024 * 1024,
-          metadata: { bucketName: 'announcements', objectName: path, contentType: tutorialFile.type, cacheControl: '31536000' },
-          onError: reject,
-          onProgress: (uploaded, total) => { const pct = Math.round(uploaded / total * 100); setTutorialProgress(pct); setMsg('Uploading full video... ' + pct + '%'); },
-          onSuccess: resolve
-        });
-        upload.findPreviousUploads().then(previous => { if (previous.length) upload.resumeFromPreviousUpload(previous[0]); upload.start(); }).catch(reject);
-      });
+      await uploadResumable(tutorialFile, 'announcements', path, session, pct => { setTutorialProgress(pct); setMsg('Uploading full video... ' + pct + '%'); });
       const { error: saveError } = await supabase.from('settings').upsert({ key: 'tutorial_video_path', value: path });
       if (saveError) throw saveError;
       setTutorialFile(null); setTutorialProgress(100); e.target.reset(); setMsg('Full tutorial video uploaded and saved successfully.'); load();
@@ -162,19 +177,7 @@ export default function Admin() {
       if (isVideo) {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError || !session?.access_token) throw new Error('Admin session expired. Sign in again.');
-        const projectId = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname.split('.')[0];
-        const endpoint = process.env.NEXT_PUBLIC_SUPABASE_URL.replace(/\/$/, '') + '/storage/v1/upload/resumable';
-        await new Promise((resolve, reject) => {
-          const upload = new Upload(statusFile, {
-            endpoint, retryDelays: [0,3000,5000,10000,20000], chunkSize: 6 * 1024 * 1024,
-            headers: { authorization: 'Bearer ' + session.access_token, apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, 'x-upsert': 'true' },
-            uploadDataDuringCreation: true, removeFingerprintOnSuccess: true,
-            metadata: { bucketName: 'announcements', objectName: path, contentType: statusFile.type, cacheControl: '31536000' },
-            onError: reject, onSuccess: resolve,
-            onProgress: (sent,total) => setStatusProgress(Math.round(sent / total * 100))
-          });
-          upload.findPreviousUploads().then(old => { if (old.length) upload.resumeFromPreviousUpload(old[0]); upload.start(); }).catch(reject);
-        });
+        await uploadResumable(statusFile, 'announcements', path, session, pct => setStatusProgress(pct));
       } else {
         const blob = await shrink(statusFile, 1400);
         const { error } = await supabase.storage.from('announcements').upload(path, blob, { contentType: 'image/jpeg' });
