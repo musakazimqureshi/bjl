@@ -12,41 +12,54 @@ async function readTable(base, headers, path) {
   } catch { return { unavailable: true }; }
 }
 
-async function callFreeAI(systemInstruction, messages, maxOutputTokens = 900) {
-  let lastError = 'Free AI service is temporarily unavailable.';
+async function callAI(systemInstruction, messages, maxOutputTokens = 900) {
+  const chatMessages = [
+    { role: 'system', content: systemInstruction },
+    ...messages.map(m => ({ role: m.role, content: m.content }))
+  ];
   const payload = {
-    model: 'openai-fast',
-    messages: [
-      { role: 'system', content: systemInstruction },
-      ...messages.map(m => ({ role: m.role, content: m.content }))
-    ],
+    model: 'openai/gpt-oss-20b',
+    messages: chatMessages,
     temperature: 0.3,
     max_tokens: maxOutputTokens
   };
+
+  const apiKey = process.env.GROQ_API_KEY;
+  if (apiKey) {
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + apiKey },
+        body: JSON.stringify(payload),
+        cache: 'no-store',
+        signal: AbortSignal.timeout(14000)
+      });
+      const result = await response.json().catch(() => ({}));
+      const reply = result.choices?.[0]?.message?.content;
+      if (response.ok && typeof reply === 'string' && reply.trim()) return reply.trim();
+      console.warn('[BJL AI] Groq provider returned no usable answer:', response.status);
+    } catch (error) {
+      console.warn('[BJL AI] Groq provider unavailable:', error?.name || 'request error');
+    }
+  }
 
   try {
     const response = await fetch('https://text.pollinations.ai/openai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, model: 'openai-fast' }),
       cache: 'no-store',
-      signal: AbortSignal.timeout(22000)
+      signal: AbortSignal.timeout(20000)
     });
     const result = await response.json().catch(() => ({}));
-    if (response.ok) {
-      const reply = result.choices?.[0]?.message?.content;
-      if (typeof reply === 'string' && reply.trim()) return reply.trim();
-      lastError = 'Free AI service returned an empty response.';
-    } else {
-      lastError = result.error?.message || result.message || `Free AI service failed (${response.status}).`;
-    }
+    const reply = result.choices?.[0]?.message?.content;
+    if (response.ok && typeof reply === 'string' && reply.trim()) return reply.trim();
+    console.error('[BJL AI] fallback provider failed:', response.status);
+    throw new Error('AI service is temporarily unavailable. Please try again in a moment.');
   } catch (error) {
-    lastError = error?.name === 'TimeoutError' || error?.name === 'AbortError'
-      ? 'Free AI service timed out. Please try again.'
-      : (error?.message || 'Could not connect to the free AI service.');
+    const timedOut = error?.name === 'TimeoutError' || error?.name === 'AbortError';
+    throw new Error(timedOut ? 'AI reply is taking too long. Please try again in a moment.' : (error?.message || 'AI service is temporarily unavailable.'));
   }
-  console.error('[BJL AI] free provider error:', lastError);
-  throw new Error(lastError);
 }
 
 export async function POST(request) {
