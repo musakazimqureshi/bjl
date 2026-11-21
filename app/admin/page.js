@@ -185,7 +185,7 @@ export default function Admin() {
       }
       const { error: insertError } = await supabase.from('bjl_status').insert({ media_path: path, media_type: isVideo ? 'video' : 'image', caption: statusCaption.trim(), status_date: statusDate, published: true });
       if (insertError) throw insertError;
-      setStatusFile(null); setStatusCaption(''); setStatusProgress(100); setMsg('BJL Status published successfully.'); e.target.reset(); load();
+      setStatusFile(null); setStatusCaption(''); setStatusProgress(100); setMsg('Organizer update published successfully.'); e.target.reset(); load();
     } catch (error) {
       setMsg('Status upload failed: ' + (error?.message || 'Please try again.'));
     }
@@ -376,7 +376,7 @@ export default function Admin() {
     <header className="admin-topbar"><div><span className="admin-eyebrow">MANAGEMENT CONSOLE</span><h1>BJL Admin Dashboard</h1><p>Manage your tournament, teams, matches and player reviews in one place.</p></div><div className="admin-top-actions"><span className="admin-live"><i /> SYSTEM ONLINE</span><button className="btn admin-logout" onClick={logout}>Logout ↗</button></div></header>
     <datalist id="tn">{teams.map(x => <option key={x.id} value={x.name} />)}</datalist>
     <nav className="tabs admin-tabs" aria-label="Admin sections">
-      {[['overview', '⌂ Overview'], ['teams', '👥 Teams'], ['analytics', '📊 Traffic Analytics'], ['aiReports', '🤖 AI Chat Reports'], ['match', '🏏 Match Center'], ['objections', 'Player Objections'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['status', '🎞 BJL Status'], ['quotes', 'Quotes'], ['video', 'Video Tutorial'], ['set', 'Settings']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
+      {[['overview', '⌂ Overview'], ['teams', '👥 Teams'], ['analytics', '📊 Traffic Analytics'], ['aiReports', '🤖 AI Chat Reports'], ['match', '🏏 Match Center'], ['objections', 'Player Objections'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['status', '🎞 Organizer Updates'], ['quotes', 'Quotes'], ['video', 'Video Tutorial'], ['set', 'Settings']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
       </nav>
     {msg && <div className="good admin-message">{msg}</div>}
     <section className="admin-stats" aria-label="Quick statistics">
@@ -385,7 +385,7 @@ export default function Admin() {
       <article className="admin-stat"><span className="admin-stat-icon amber">◷</span><div><small>Pending Payments</small><strong>{teams.filter(x => x.payment !== 'verified' && x.payment !== 'rejected').length}</strong><em>Awaiting review</em></div></article>
       <article className="admin-stat"><span className="admin-stat-icon violet">▣</span><div><small>Announcements</small><strong>{ann.length}</strong><em>Announcements</em></div></article>
     </section>
-    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({overview:'Dashboard Overview',teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',status:'BJL Status Photos & Videos',quotes:'Quotes & Content',video:'Homepage Video Tutorial',set:'Website Settings',analytics:'Traffic Analytics',aiReports:'AI Chat Reports'})[tab]}</strong></div>
+    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({overview:'Dashboard Overview',teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',status:'Organizer Updates · Photos & Videos',quotes:'Quotes & Content',video:'Homepage Video Tutorial',set:'Website Settings',analytics:'Traffic Analytics',aiReports:'AI Chat Reports'})[tab]}</strong></div>
     <main className="admin-workspace">
     {tab === 'overview' && <AdminOverview supabase={supabase} teams={teams} objections={objections} />}
     {tab === 'analytics' && <AdminAnalytics supabase={supabase} />}
@@ -434,22 +434,22 @@ export default function Admin() {
           <button className="btn alt" onClick={() => capMoment(m)}>Edit Caption</button> <button className="btn alt" onClick={() => togMoment(m)}>{m.published ? 'Hide' : 'Publish'}</button> <button className="btn alt" onClick={() => delMoment(m)}>Delete Team</button></div></div>))}</>)}
     {tab === 'status' && (<>
       <form className="card" onSubmit={addStatus}>
-        <h3>Publish BJL Status Photo or Video</h3>
-        <p>Upload match photos, short clips and BJL updates. Photos up to 15 MB; MP4/WebM videos up to 1 GB. Large videos upload in resumable chunks.</p>
+        <h3>Publish Organizer Update</h3>
+        <p>Upload photos and videos for visitors. Photos up to 15 MB; MP4/WebM videos up to 1 GB. For smoother playback on slower networks, use MP4 (H.264 video + AAC audio), 720p, and enable Fast Start / Web Optimized when exporting.</p>
         <label>Photo or Video</label><input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" onChange={e => setStatusFile(e.target.files?.[0] || null)} />
         <label>Caption (Optional)</label><input value={statusCaption} onChange={e => setStatusCaption(e.target.value)} placeholder="Write a short caption..." />
         <label>Date (DD MM YYYY)</label><input type="date" lang="en-GB" value={statusDate} onChange={e => setStatusDate(e.target.value)} />
-        <button className="btn" disabled={!statusFile || (statusProgress > 0 && statusProgress < 100)}>Publish Status</button>
+        <button className="btn" disabled={!statusFile || (statusProgress > 0 && statusProgress < 100)}>Publish Update</button>
         {statusProgress > 0 && <div className="admin-upload-progress"><progress value={statusProgress} max="100" /><small>{statusProgress}% uploaded</small></div>}
         {statusFile && <small>Selected: {statusFile.name} · {(statusFile.size / (1024 * 1024)).toFixed(1)} MB</small>}
       </form>
       {statusRows.map(item => <article className="card" key={item.id} style={{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
-        {item.media_type === 'video' ? <video src={pa(item.media_path)} controls preload="metadata" width="110" style={{borderRadius:8}} /> : <img src={pa(item.media_path)} alt="" width="90" height="90" style={{borderRadius:8,objectFit:'cover'}} />}
-        <div style={{flex:1,minWidth:150}}><b>{item.caption || 'BJL Status'}</b><div><small>{dateDMY(item.status_date)} · {item.media_type.toUpperCase()} · {item.published ? 'Published' : 'Hidden'}</small></div>
+        {item.media_type === 'video' ? <video src={pa(item.media_path)} controls preload="none" width="110" style={{borderRadius:8}} /> : <img src={pa(item.media_path)} alt="" width="90" height="90" style={{borderRadius:8,objectFit:'cover'}} />}
+        <div style={{flex:1,minWidth:150}}><b>{item.caption || 'Organizer Update'}</b><div><small>{dateDMY(item.status_date)} · {item.media_type.toUpperCase()} · {item.published ? 'Published' : 'Hidden'}</small></div>
           <button className="btn alt" onClick={() => toggleStatus(item)}>{item.published ? 'Hide' : 'Publish'}</button> <button className="btn alt" onClick={() => deleteStatus(item)}>Delete</button>
         </div>
       </article>)}
-      {statusRows.length === 0 && <div className="card">No BJL Status posts yet.</div>}
+      {statusRows.length === 0 && <div className="card">No organizer updates yet.</div>}
     </>)}
     {tab === 'quotes' && (<><form className="card" onSubmit={addQuote}><h3>Add Quote</h3>
       <label>Quote Text</label><textarea rows="4" style={{ width: '100%', padding: 10, borderRadius: 8 }} value={qf.body} onChange={e => setQf({ ...qf, body: e.target.value })} />
@@ -461,7 +461,7 @@ export default function Admin() {
           <button className="btn alt" onClick={() => editQuote(x)}>Edit</button><button className="btn alt" onClick={() => togQuote(x)}>{x.published ? 'Hide' : 'Publish'}</button><button className="btn alt" onClick={() => delQuote(x)}>Delete Team</button></div></div>))}</>)}
     {tab === 'video' && (<>
       <form className="card" onSubmit={uploadTutorial}><h3>Homepage Video Tutorial Upload</h3>
-        <p>Upload the complete MP4 or WebM tutorial video up to 1 GB (about 15 minutes or longer, depending on video quality and bitrate). Large files upload in resumable chunks. The homepage loads the video only after a visitor opens Video Tutorial.</p>
+        <p>Upload the MP4 or WebM tutorial up to 1 GB. The homepage does not download video data in the background. Video metadata loads only after a visitor opens the player; playback begins only when they press Play. For smoother playback on slower networks, export MP4 (H.264 + AAC), 720p, with Fast Start / Web Optimized enabled.</p>
         <label>Select tutorial video</label><input type="file" accept="video/mp4,video/webm" onChange={e => setTutorialFile(e.target.files?.[0] || null)} />
         <button className="btn" disabled={!tutorialFile || (tutorialProgress > 0 && tutorialProgress < 100)}>Upload and Publish Video</button>{tutorialProgress > 0 && <div className="admin-upload-progress"><progress value={tutorialProgress} max="100" /><small>{tutorialProgress}% uploaded</small></div>}{tutorialFile && <small>Selected: {tutorialFile.name} · {(tutorialFile.size / (1024 * 1024)).toFixed(1)} MB</small>}
         {c.tutorial_video_path && <p>Current video: <a href={supabase.storage.from('announcements').getPublicUrl(c.tutorial_video_path).data.publicUrl} target="_blank" rel="noreferrer">Preview tutorial</a></p>}
