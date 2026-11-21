@@ -17,7 +17,7 @@ export default function Home() {
   const [lb, setLb] = useState(null); const [gi, setGi] = useState(null); const [allAnn, setAllAnn] = useState(false);
   const [qs, setQs] = useState([]); const [qi, setQi] = useState(0); const [hold, setHold] = useState(false);
   const [mi, setMi] = useState(0); const [mh, setMh] = useState(false);
-  const [tms, setTms] = useState([]); const [tutorialOpen, setTutorialOpen] = useState(false); const [tmSel, setTmSel] = useState(null); const [now, setNow] = useState(Date.now());
+  const [tms, setTms] = useState([]); const [statuses, setStatuses] = useState([]); const [tutorialOpen, setTutorialOpen] = useState(false); const [statusOpen, setStatusOpen] = useState(null); const [tmSel, setTmSel] = useState(null); const [now, setNow] = useState(Date.now());
   useEffect(() => {
     supabase.rpc('public_stats').then(({ data }) => data && setS(data));
     supabase.rpc('public_content').then(({ data }) => data && setC(data));
@@ -25,6 +25,7 @@ export default function Home() {
     supabase.rpc('public_moments').then(({ data }) => data && setMoms(data));
     supabase.rpc('public_quotes').then(({ data }) => data && setQs(data));
     supabase.rpc('public_teams').then(({ data }) => data && setTms(data));
+    supabase.rpc('public_status').then(({ data }) => data && setStatuses(data));
   }, []);
   useEffect(() => { if (qs.length < 2 || hold) return; const id = setInterval(() => setQi(i => (i + 1) % qs.length), 9000); return () => clearInterval(id); }, [qs.length, hold]);
   useEffect(() => { if (moms.length < 2 || mh) return; const id = setInterval(() => setMi(i => (i + 1) % moms.length), 4500); return () => clearInterval(id); }, [moms.length, mh]);
@@ -53,8 +54,20 @@ export default function Home() {
         <Link href="/teams" className="btn alt">{t('viewBtn')}</Link>
         <Link href="/team" className="btn alt">🔑 {t('captainSignIn')}</Link>
         <Link href="/help" className="btn ai-home-cta">🤖 AI Help Center</Link>
-        <button type="button" className="btn alt tutorial-cta" onClick={() => setTutorialOpen(true)}>▶ Video Tutorial</button>
+        
       </div>
+    </section>
+    <section className="bjl-media-duo" aria-label="BJL videos and status">
+      <article className="card bjl-media-card bjl-tutorial-card">
+        <div className="bjl-media-thumb"><span>▶</span></div>
+        <div className="bjl-media-copy"><h3>Video Tutorial</h3><p>Watch the complete BJL guide</p><button type="button" className="btn" onClick={() => setTutorialOpen(true)}>▶ Watch</button></div>
+      </article>
+      <article className="card bjl-media-card bjl-status-card">
+        <div className="bjl-status-preview" onClick={() => statuses.length && setStatusOpen(0)} role="button" tabIndex={0} onKeyDown={e => { if ((e.key === 'Enter' || e.key === ' ') && statuses.length) setStatusOpen(0); }}>
+          {statuses[0] ? (statuses[0].media_type === 'video' ? <video src={img(statuses[0].media_path)} muted playsInline preload="metadata" /> : <img src={img(statuses[0].media_path)} alt="Latest BJL status" />) : <span>＋</span>}
+        </div>
+        <div className="bjl-media-copy"><h3>BJL Status</h3><p>{statuses.length ? (statuses[0].caption || 'Photos and videos from BJL') : 'Photos and videos will appear here'}</p><button type="button" className="btn alt" onClick={() => statuses.length && setStatusOpen(0)} disabled={!statuses.length}>View Status{statuses.length ? ' (' + statuses.length + ')' : ''}</button></div>
+      </article>
     </section>
     {(c.how_to_register || c.tournament_rules || c.prize_details || true) && <section className="bjl-public-guides">
       {c.how_to_register && <article className="card"><h2>How to Register</h2><p className="bjl-guide-copy">{c.how_to_register}</p></article>}
@@ -101,6 +114,12 @@ export default function Home() {
       <div className="row quote-controls" dir="ltr"><button className="btn alt quote-nav quote-prev" onClick={() => stepQ(-1)} aria-label="Previous quote" title="Previous quote"><span aria-hidden="true">←</span></button>
         <span>{qi + 1} / {qs.length}</span><button className="btn alt quote-nav quote-next" onClick={() => stepQ(1)} aria-label="Next quote" title="Next quote"><span aria-hidden="true">→</span></button></div></section>}
     {tutorialOpen && <div className="modal" onClick={() => setTutorialOpen(false)}><div className="mbox bjl-tutorial-player" onClick={e => e.stopPropagation()}><div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}><h2 style={{ margin: 0 }}>Video Tutorial</h2><button className="btn alt" onClick={() => setTutorialOpen(false)}>✕ {t('close')}</button></div>{c.tutorial_video_path ? <video key={c.tutorial_video_path} controls preload="none" playsInline autoPlay={false} style={{ width: '100%', maxHeight: '75vh', marginTop: 12, background: '#000', borderRadius: 10 }}><source src={img(c.tutorial_video_path)} type={c.tutorial_video_path.endsWith('.webm') ? 'video/webm' : 'video/mp4'}/></video> : <p className="bjl-guide-copy">Video tutorial will appear here once uploaded by the admin.</p>}</div></div>}
+    {statusOpen !== null && statuses[statusOpen] && <div className="modal" onClick={() => setStatusOpen(null)}><div className="mbox bjl-status-viewer" onClick={e => e.stopPropagation()}>
+      <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}><h2 style={{ margin: 0 }}>BJL Status</h2><button className="btn alt" onClick={() => setStatusOpen(null)}>✕ {t('close')}</button></div>
+      {statuses[statusOpen].media_type === 'video' ? <video key={statuses[statusOpen].id} src={img(statuses[statusOpen].media_path)} controls autoPlay playsInline style={{ width: '100%', maxHeight: '72vh', background: '#000', borderRadius: 10, marginTop: 12 }} /> : <img src={img(statuses[statusOpen].media_path)} alt={statuses[statusOpen].caption || 'BJL Status'} style={{ width: '100%', maxHeight: '72vh', objectFit: 'contain', borderRadius: 10, marginTop: 12 }} />}
+      <p>{statuses[statusOpen].caption}</p><small>{dateDMY(statuses[statusOpen].status_date)}</small>
+      <div className="row"><button className="btn alt" disabled={statusOpen <= 0} onClick={() => setStatusOpen(i => Math.max(0, i - 1))}>Previous</button><span>{statusOpen + 1} / {statuses.length}</span><button className="btn alt" disabled={statusOpen >= statuses.length - 1} onClick={() => setStatusOpen(i => Math.min(statuses.length - 1, i + 1))}>Next</button></div>
+    </div></div>}
     {allAnn && <div className="modal" onClick={() => setAllAnn(false)}><div className="mbox" onClick={e => e.stopPropagation()}>
       <button className="btn alt" onClick={() => setAllAnn(false)}>✕ {t('close')}</button>
       {ann.map(a => (<div className="alist" key={a.id} onClick={() => { setAllAnn(false); setLb(a); }}><img src={img(a.image_path)} alt="" /><div><b>{a.title}</b><div><small>{dateDMY(a.announce_date)}</small></div></div></div>))}</div></div>}
