@@ -51,7 +51,7 @@ export default function Help() {
       <div className="bjl-ai-quota">{remaining} messages remaining today (resets daily)</div>
       <div className="bjl-ai-messages" aria-live="polite">
         {messages.length === 0 && <div className="bjl-ai-welcome"><b>Assalam-o-Alaikum!</b><p>Main Felux AI Assistant hoon. BJL registration, teams, 15-player squad, matches aur payment ke hawale se main aapki madad kar sakta hoon. Aap apna sawal bejhijhak poochhein.</p></div>}
-        {messages.map((m,i)=><div className={'bjl-ai-message '+m.role} key={i}><small>{m.role==='user'?'You':"Falak's AI Assistant"}</small><p>{m.content}</p></div>)}
+        {messages.map((m,i)=><div className={'bjl-ai-message '+m.role} key={i}><small>{m.role==='user'?'You':"Felux AI Assistant"}</small><p>{m.content}</p></div>)}
         {busy && <div className="bjl-ai-typing">BJL Assistant is typing…</div>}
         <div ref={bottom} />
       </div>
