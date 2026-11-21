@@ -805,3 +805,27 @@ body:has(.hdr){background:#f3f6fc!important;color:#17233b!important}
 .bjl-admin-ai-panel form{display:flex;gap:8px;padding:10px;border-top:1px solid #354157}.bjl-admin-ai-panel textarea{flex:1;min-width:0;resize:none;border:1px solid #44536a;border-radius:10px;padding:10px;background:#0b1220;color:#fff;font:inherit;font-size:13px}.bjl-admin-ai-panel form .btn{align-self:flex-end;min-width:62px}
 .bjl-admin-ai-note{padding:0 12px 12px;line-height:1.4}
 @media(max-width:600px){.bjl-admin-ai-fab{left:9px;width:46px;height:46px}.bjl-admin-ai-panel{left:62px;width:calc(100vw - 72px);height:min(590px,calc(100dvh - 24px))}}
+
+
+/* Khalaad Al-Arabeh Urdu quote font. Hosted WOFF2 source; fallback keeps Urdu readable if CDN is unavailable. */
+@font-face{
+  font-family:'Khalaad Al-Arabeh';
+  src:url('https://cdn.jsdelivr.net/gh/kareemhamed001/mada-assets@aef8ae4076bd46bfe99cab47c6673dbcbbe7b48d/assets/fonts/custom-fonts/khalaadal-arabeh2.woff2') format('woff2'),
+      url('https://cdn.jsdelivr.net/gh/kareemhamed001/mada-assets@aef8ae4076bd46bfe99cab47c6673dbcbbe7b48d/assets/fonts/custom-fonts/khalaadal-arabeh2.woff') format('woff');
+  font-style:normal;
+  font-weight:400;
+  font-display:swap;
+}
+.quotes{direction:rtl;text-align:right}
+.quote-section-title,.quote-number,.quote-text,.quote-attribution,.quote-source{
+  font-family:'Khalaad Al-Arabeh','Noto Nastaliq Urdu','Noto Naskh Arabic',serif;
+  direction:rtl;
+  text-align:right;
+}
+.quote-section-title{text-align:center;line-height:1.9}
+.quote-number{color:var(--gold);font-size:1rem;text-align:center}
+.quote-text{font-size:clamp(1.25rem,4.4vw,1.75rem);line-height:2.15;margin:12px auto;color:#fff;text-align:center}
+.quote-attribution{font-size:1.05rem;color:var(--gold);text-align:center}
+.quote-source{font-size:.92rem;line-height:2;color:#ccc}
+.bjl-squad-rules{border-inline-start:4px solid var(--gold);background:linear-gradient(135deg,#211b12,#202026)}
+.bjl-squad-rules p{margin:8px 0 0;line-height:2}
