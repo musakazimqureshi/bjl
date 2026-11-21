@@ -15,7 +15,7 @@ const uploadResumable = async (file, bucketName, objectName, session, onProgress
   const projectId = new URL(projectUrl).hostname.split('.')[0];
   const endpoints = [
     `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`,
-    projectUrl.replace(/\\/$/, '') + '/storage/v1/upload/resumable'
+    (projectUrl.endsWith('/') ? projectUrl.slice(0, -1) : projectUrl) + '/storage/v1/upload/resumable'
   ];
   let lastError;
   for (const endpoint of endpoints) {
