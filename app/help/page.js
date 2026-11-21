@@ -47,7 +47,7 @@ export default function Help() {
   }
   return <div className="bjl-help-page">
     <section className="bjl-ai-card">
-      <div className="bjl-ai-heading"><span className="bjl-ai-mark">BJL</span><div><h2>AI Help Center</h2><p>Ask about registration, teams, payments and tournament information.</p></div></div>
+      <div className="bjl-ai-heading"><span className="bjl-ai-mark">BJL</span><div><h2>Felux AI Assistant</h2><p>Ask about BJL registration, teams, payments and tournament information.</p></div></div>
       <div className="bjl-ai-quota">{remaining} messages remaining today (resets daily)</div>
       <div className="bjl-ai-messages" aria-live="polite">
         {messages.length === 0 && <div className="bjl-ai-welcome"><b>Assalam-o-Alaikum!</b><p>Main Falak's AI Assistant hoon. BJL registration, teams, 15-player squad, matches aur payment ke hawale se main aapki madad kar sakta hoon. Aap apna sawal bejhijhak poochhein.</p></div>}
