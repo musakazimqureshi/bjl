@@ -144,7 +144,14 @@ export default function Admin() {
     try { await navigator.clipboard.writeText(text); setMsg('Team login details copied.'); }
     catch (_) { setMsg('Clipboard unavailable. Select and copy the Gmail and password manually.'); }
   }
-  async function saveTutorialLink(e) {\n    e.preventDefault();\n    const value = (c.tutorial_video_url || '').trim();\n    if (value) { try { const parsed = new URL(value); if (parsed.protocol !== 'https:') throw new Error(); } catch (_) { return setMsg('Please enter a valid Facebook video URL starting with https://.'); } }\n    const { error } = await supabase.from('settings').upsert({ key: 'tutorial_video_url', value });\n    setMsg(error ? error.message : (value ? 'Website Tutorial Facebook link saved.' : 'Facebook video link removed.'));\n    if (!error) load();\n  }\n  async function uploadTutorial(e) {
+  async function saveTutorialLink(e) {
+    e.preventDefault();
+    const value = (c.tutorial_video_url || '').trim();
+    if (value) { try { const parsed = new URL(value); if (parsed.protocol !== 'https:') throw new Error(); } catch (_) { return setMsg('Please enter a valid Facebook video URL starting with https://.'); } }
+    const { error } = await supabase.from('settings').upsert({ key: 'tutorial_video_url', value });
+    setMsg(error ? error.message : (value ? 'Website Tutorial Facebook link saved.' : 'Facebook video link removed.'));
+    if (!error) load();
+  }\n  async function uploadTutorial(e) {
     e.preventDefault();
     if (!tutorialFile) return setMsg('Choose an MP4 or WebM video first.');
     if (!['video/mp4', 'video/webm'].includes(tutorialFile.type)) return setMsg('Please choose an MP4 or WebM video.');
