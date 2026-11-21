@@ -20,10 +20,12 @@ export default function Help() {
   const bottom = useRef(null);
   useEffect(() => {
     const id = makeId(); setVisitor(id);
+    try { const saved = JSON.parse(localStorage.getItem('bjl-ai-history-' + id) || '[]'); if (Array.isArray(saved)) setMessages(saved.filter(m => ['user','assistant'].includes(m.role) && typeof m.content === 'string').slice(-200)); } catch (_) {}
     fetch('/api/ai-help', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ visitor: id, checkOnly: true }) })
       .then(r => r.ok ? r.json() : null).then(data => { if (data && Number.isFinite(data.remaining)) setRemaining(data.remaining); }).catch(() => {});
   }, []);
   useEffect(() => { bottom.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, busy]);
+  useEffect(() => { if (visitor) { try { localStorage.setItem('bjl-ai-history-' + visitor, JSON.stringify(messages.slice(-200))); } catch (_) {} } }, [visitor, messages]);
   async function send(e) {
     e.preventDefault();
     const text = input.trim();
@@ -32,7 +34,7 @@ export default function Help() {
     const next = [...messages, { role: 'user', content: text }];
     setMessages(next); setBusy(true);
     try {
-      const res = await fetch('/api/ai-help', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ visitor, messages: next.slice(-12) }) });
+      const res = await fetch('/api/ai-help', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ visitor, messages: next.slice(-200) }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Could not send your message.');
       setMessages(v => [...v, { role: 'assistant', content: data.reply }]);
