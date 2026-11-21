@@ -144,7 +144,7 @@ export default function Admin() {
     try { await navigator.clipboard.writeText(text); setMsg('Team login details copied.'); }
     catch (_) { setMsg('Clipboard unavailable. Select and copy the Gmail and password manually.'); }
   }
-  async function uploadTutorial(e) {
+  async function saveTutorialLink(e) {\n    e.preventDefault();\n    const value = (c.tutorial_video_url || '').trim();\n    if (value) { try { const parsed = new URL(value); if (parsed.protocol !== 'https:') throw new Error(); } catch (_) { return setMsg('Please enter a valid Facebook video URL starting with https://.'); } }\n    const { error } = await supabase.from('settings').upsert({ key: 'tutorial_video_url', value });\n    setMsg(error ? error.message : (value ? 'Website Tutorial Facebook link saved.' : 'Facebook video link removed.'));\n    if (!error) load();\n  }\n  async function uploadTutorial(e) {
     e.preventDefault();
     if (!tutorialFile) return setMsg('Choose an MP4 or WebM video first.');
     if (!['video/mp4', 'video/webm'].includes(tutorialFile.type)) return setMsg('Please choose an MP4 or WebM video.');
@@ -376,7 +376,7 @@ export default function Admin() {
     <header className="admin-topbar"><div><span className="admin-eyebrow">MANAGEMENT CONSOLE</span><h1>BJL Admin Dashboard</h1><p>Manage your tournament, teams, matches and player reviews in one place.</p></div><div className="admin-top-actions"><span className="admin-live"><i /> SYSTEM ONLINE</span><button className="btn admin-logout" onClick={logout}>Logout ↗</button></div></header>
     <datalist id="tn">{teams.map(x => <option key={x.id} value={x.name} />)}</datalist>
     <nav className="tabs admin-tabs" aria-label="Admin sections">
-      {[['overview', '⌂ Overview'], ['teams', '👥 Teams'], ['analytics', '📊 Traffic Analytics'], ['aiReports', '🤖 AI Chat Reports'], ['match', '🏏 Match Center'], ['objections', 'Player Objections'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['status', '💀 OS Status'], ['quotes', 'Quotes'], ['video', 'Video Tutorial'], ['set', 'Settings']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
+      {[['overview', '⌂ Overview'], ['teams', '👥 Teams'], ['analytics', '📊 Traffic Analytics'], ['aiReports', '🤖 AI Chat Reports'], ['match', '🏏 Match Center'], ['objections', 'Player Objections'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['status', '💀 OS Status'], ['quotes', 'Quotes'], ['video', 'Website Tutorial'], ['set', 'Settings']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
       </nav>
     {msg && <div className="good admin-message">{msg}</div>}
     <section className="admin-stats" aria-label="Quick statistics">
@@ -385,7 +385,7 @@ export default function Admin() {
       <article className="admin-stat"><span className="admin-stat-icon amber">◷</span><div><small>Pending Payments</small><strong>{teams.filter(x => x.payment !== 'verified' && x.payment !== 'rejected').length}</strong><em>Awaiting review</em></div></article>
       <article className="admin-stat"><span className="admin-stat-icon violet">▣</span><div><small>Announcements</small><strong>{ann.length}</strong><em>Announcements</em></div></article>
     </section>
-    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({overview:'Dashboard Overview',teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',status:'OS Status',quotes:'Quotes & Content',video:'Homepage Video Tutorial',set:'Website Settings',analytics:'Traffic Analytics',aiReports:'AI Chat Reports'})[tab]}</strong></div>
+    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({overview:'Dashboard Overview',teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',status:'OS Status',quotes:'Quotes & Content',video:'Website Tutorial',set:'Website Settings',analytics:'Traffic Analytics',aiReports:'AI Chat Reports'})[tab]}</strong></div>
     <main className="admin-workspace">
     {tab === 'overview' && <AdminOverview supabase={supabase} teams={teams} objections={objections} />}
     {tab === 'analytics' && <AdminAnalytics supabase={supabase} />}
@@ -460,11 +460,17 @@ export default function Admin() {
         <div className="row" style={{ justifyContent: 'flex-start' }}><button className="btn alt admin-reorder" onClick={() => moveQuote(i, -1)} disabled={i === 0} aria-label="Move quote up" title="Move up"><span aria-hidden="true">↑</span><small>UP</small></button><button className="btn alt admin-reorder" onClick={() => moveQuote(i, 1)} disabled={i === qs.length - 1} aria-label="Move quote down" title="Move down"><span aria-hidden="true">↓</span><small>DOWN</small></button>
           <button className="btn alt" onClick={() => editQuote(x)}>Edit</button><button className="btn alt" onClick={() => togQuote(x)}>{x.published ? 'Hide' : 'Publish'}</button><button className="btn alt" onClick={() => delQuote(x)}>Delete Team</button></div></div>))}</>)}
     {tab === 'video' && (<>
-      <form className="card" onSubmit={uploadTutorial}><h3>Homepage Video Tutorial Upload</h3>
-        <p>Upload the MP4 or WebM tutorial up to 1 GB. The homepage does not download video data in the background. Video metadata loads only after a visitor opens the player; playback begins only when they press Play. For smoother playback on slower networks, export MP4 (H.264 + AAC), 720p, with Fast Start / Web Optimized enabled.</p>
+      <form className="card" onSubmit={saveTutorialLink}><h3>Website Tutorial · Facebook Video Link</h3>
+        <p>Paste the Facebook video link here. Visitors who click Website Tutorial on the homepage will be taken directly to this Facebook video. Keep the link public so visitors can view it.</p>
+        <label>Facebook Video URL</label><input type="url" value={c.tutorial_video_url || ''} onChange={e => set('tutorial_video_url', e.target.value)} placeholder="https://www.facebook.com/..." />
+        <button className="btn">Save Facebook Link</button>
+        {c.tutorial_video_url && <p>Current link: <a href={c.tutorial_video_url} target="_blank" rel="noopener noreferrer">Open Facebook video</a></p>}
+      </form>
+      <form className="card" onSubmit={uploadTutorial}><h3>Or Upload Tutorial Video to Website</h3>
+        <p>You can also upload an MP4 or WebM video here. The Facebook link and uploaded video are both supported. On the homepage, the Facebook link takes priority when saved; otherwise the uploaded video player is shown.</p>
         <label>Select tutorial video</label><input type="file" accept="video/mp4,video/webm" onChange={e => setTutorialFile(e.target.files?.[0] || null)} />
-        <button className="btn" disabled={!tutorialFile || (tutorialProgress > 0 && tutorialProgress < 100)}>Upload and Publish Video</button>{tutorialProgress > 0 && <div className="admin-upload-progress"><progress value={tutorialProgress} max="100" /><small>{tutorialProgress}% uploaded</small></div>}{tutorialFile && <small>Selected: {tutorialFile.name} · {(tutorialFile.size / (1024 * 1024)).toFixed(1)} MB</small>}
-        {c.tutorial_video_path && <p>Current video: <a href={supabase.storage.from('announcements').getPublicUrl(c.tutorial_video_path).data.publicUrl} target="_blank" rel="noreferrer">Preview tutorial</a></p>}
+        <button className="btn" disabled={!tutorialFile || (tutorialProgress > 0 && tutorialProgress < 100)}>Upload and Save Video</button>{tutorialProgress > 0 && <div className="admin-upload-progress"><progress value={tutorialProgress} max="100" /><small>{tutorialProgress}% uploaded</small></div>}{tutorialFile && <small>Selected: {tutorialFile.name} · {(tutorialFile.size / (1024 * 1024)).toFixed(1)} MB</small>}
+        {c.tutorial_video_path && <p>Current uploaded video: <a href={supabase.storage.from('announcements').getPublicUrl(c.tutorial_video_path).data.publicUrl} target="_blank" rel="noreferrer">Preview website video</a></p>}
       </form>
     </>)}
     {tab === 'set' && (<>
