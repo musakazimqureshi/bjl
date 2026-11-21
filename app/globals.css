@@ -829,3 +829,12 @@ body:has(.hdr){background:#f3f6fc!important;color:#17233b!important}
 .quote-source{font-size:.92rem;line-height:2;color:#ccc}
 .bjl-squad-rules{border-inline-start:4px solid var(--gold);background:linear-gradient(135deg,#211b12,#202026)}
 .bjl-squad-rules p{margin:8px 0 0;line-height:2}
+
+
+/* BJL cookie preference banner */
+.bjl-cookie-consent{position:fixed;z-index:10050;left:16px;right:16px;bottom:16px;max-width:760px;margin:0 auto;padding:18px 20px;background:#10233f;color:#fff;border:1px solid rgba(226,177,76,.55);border-radius:16px;box-shadow:0 18px 55px rgba(0,0,0,.28);display:flex;align-items:center;justify-content:space-between;gap:18px}
+.bjl-cookie-consent b{display:block;font-size:1rem;margin-bottom:5px}
+.bjl-cookie-consent p{margin:0;color:#dbe4ef;font-size:.88rem;line-height:1.55}
+.bjl-cookie-actions{display:flex;flex-wrap:wrap;gap:8px;flex-shrink:0}
+.bjl-cookie-actions .btn{white-space:nowrap}
+@media(max-width:620px){.bjl-cookie-consent{left:10px;right:10px;bottom:10px;display:block;padding:15px}.bjl-cookie-actions{margin-top:12px}.bjl-cookie-actions .btn{flex:1}}

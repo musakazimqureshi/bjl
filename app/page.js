@@ -53,7 +53,7 @@ export default function Home() {
         <Link href="/register" className="btn">{t('regBtn')}</Link>
         <Link href="/teams" className="btn alt">{t('viewBtn')}</Link>
         <Link href="/team" className="btn alt">🔑 {t('captainSignIn')}</Link>
-        <Link href="/help" className="btn ai-home-cta">🤖 AI Help Center</Link>
+        <Link href="/help" className="btn ai-home-cta">🤖 Felux AI Assistant</Link>
         
       </div>
     </section>

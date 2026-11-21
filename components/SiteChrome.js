@@ -7,6 +7,7 @@ import Splash from './Splash';
 import InfoTicker from './InfoTicker';
 import MotionObserver from './MotionObserver';
 import ScrollProgress from './ScrollProgress';
+import CookieConsent from './CookieConsent';
 
 export default function SiteChrome({ children }) {
   const pathname = usePathname();
@@ -20,6 +21,7 @@ export default function SiteChrome({ children }) {
       <InfoTicker />
       <main>{children}<People /></main>
       <FloatingWA />
+      <CookieConsent />
       <footer className="credit"><strong>OFFICIAL WEBSITE · BATTAGRAM JUNIOR LEAGUE</strong><span> BJL SEASON 1 · ORGANIZED FOR THE CRICKET COMMUNITY OF BATTAGRAM</span></footer>
     </>
   );
