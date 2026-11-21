@@ -17,11 +17,13 @@ async function rpc(name, body) {
   return response.json();
 }
 async function callGemini(systemInstruction, messages, maxOutputTokens = 900) {
-  const models = ['gemini-3.8-flash', 'gemini-3.5-flash-lite'];
+  // Try the requested latest model first, then a supported fast fallback.
+  const models = ['gemini-3.8-flash', 'gemini-3.5-flash'];
   let lastError = 'Gemini AI is temporarily unavailable.';
-  const input = messages.map(m =>
-    `${m.role === 'assistant' ? 'Assistant' : 'User'}: ${m.content}`
-  ).join('\n\n') + '\n\nAssistant:';
+  const input = messages.map(m => ({
+    type: m.role === 'assistant' ? 'model_output' : 'user_input',
+    content: [{ type: 'text', text: m.content }]
+  }));
 
   for (const model of models) {
     let response;
@@ -30,7 +32,6 @@ async function callGemini(systemInstruction, messages, maxOutputTokens = 900) {
         method: 'POST',
         headers: {
           'x-goog-api-key': process.env.GEMINI_API_KEY,
-          'Api-Revision': '2026-05-20',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -41,15 +42,15 @@ async function callGemini(systemInstruction, messages, maxOutputTokens = 900) {
           store: false
         }),
         cache: 'no-store',
-        signal: AbortSignal.timeout(20000)
+        signal: AbortSignal.timeout(12000)
       });
     } catch (error) {
-      if (error?.name === 'TimeoutError' || error?.name === 'AbortError') {
-        lastError = 'Gemini AI request timed out. Please try again.';
-        break;
-      }
-      lastError = error?.message || 'Could not connect to Gemini AI.';
-      break;
+      lastError = error?.name === 'TimeoutError' || error?.name === 'AbortError'
+        ? model + ' timed out after 12 seconds.'
+        : (error?.message || 'Could not connect to Gemini AI.');
+      console.error('[BJL AI] model request failed:', model, lastError);
+      // A slow/unavailable primary model must not prevent the fallback.
+      continue;
     }
 
     const result = await response.json().catch(() => ({}));
@@ -63,11 +64,13 @@ async function callGemini(systemInstruction, messages, maxOutputTokens = 900) {
         .trim();
       const reply = output || (typeof result.output_text === 'string' ? result.output_text.trim() : '');
       if (reply) return reply;
-      lastError = result.error?.message || 'Gemini returned an empty response. Please try again.';
-      break;
+      lastError = result.error?.message || model + ' returned an empty response.';
+      console.error('[BJL AI] empty model response:', model, lastError);
+      continue;
     }
 
     lastError = result.error?.message || `Gemini request failed (${response.status}).`;
+    console.error('[BJL AI] API response error:', model, response.status, lastError);
     if (![404, 429, 500, 502, 503, 504].includes(response.status)) break;
   }
   throw new Error(lastError);
