@@ -11,7 +11,7 @@ const supaHeaders = () => ({
 });
 async function rpc(name, body) {
   const response = await fetch(process.env.NEXT_PUBLIC_SUPABASE_URL + '/rest/v1/rpc/' + name, {
-    method: 'POST', headers: supaHeaders(), body: JSON.stringify(body), cache: 'no-store'
+    method: 'POST', headers: supaHeaders(), body: JSON.stringify(body), cache: 'no-store', signal: AbortSignal.timeout(7000)
   });
   if (!response.ok) throw new Error('Could not check the daily chat allowance.');
   return response.json();
