@@ -434,22 +434,22 @@ export default function Admin() {
           <button className="btn alt" onClick={() => capMoment(m)}>Edit Caption</button> <button className="btn alt" onClick={() => togMoment(m)}>{m.published ? 'Hide' : 'Publish'}</button> <button className="btn alt" onClick={() => delMoment(m)}>Delete Team</button></div></div>))}</>)}
     {tab === 'status' && (<>
       <form className="card" onSubmit={addStatus}>
-        <h3>Publish BJL Status Photo or Video</h3>
-        <p>Upload match photos, short clips and BJL updates. Photos up to 15 MB; MP4/WebM videos up to 1 GB. Large videos upload in resumable chunks.</p>
+        <h3>Publish Organizer Update</h3>
+        <p>Upload photos and videos for visitors. Photos up to 15 MB; MP4/WebM videos up to 1 GB. For smoother playback on slower networks, use MP4 (H.264 video + AAC audio), 720p, and enable Fast Start / Web Optimized when exporting.</p>
         <label>Photo or Video</label><input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" onChange={e => setStatusFile(e.target.files?.[0] || null)} />
         <label>Caption (Optional)</label><input value={statusCaption} onChange={e => setStatusCaption(e.target.value)} placeholder="Write a short caption..." />
         <label>Date (DD MM YYYY)</label><input type="date" lang="en-GB" value={statusDate} onChange={e => setStatusDate(e.target.value)} />
-        <button className="btn" disabled={!statusFile || (statusProgress > 0 && statusProgress < 100)}>Publish Status</button>
+        <button className="btn" disabled={!statusFile || (statusProgress > 0 && statusProgress < 100)}>Publish Update</button>
         {statusProgress > 0 && <div className="admin-upload-progress"><progress value={statusProgress} max="100" /><small>{statusProgress}% uploaded</small></div>}
         {statusFile && <small>Selected: {statusFile.name} · {(statusFile.size / (1024 * 1024)).toFixed(1)} MB</small>}
       </form>
       {statusRows.map(item => <article className="card" key={item.id} style={{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
-        {item.media_type === 'video' ? <video src={pa(item.media_path)} controls preload="metadata" width="110" style={{borderRadius:8}} /> : <img src={pa(item.media_path)} alt="" width="90" height="90" style={{borderRadius:8,objectFit:'cover'}} />}
-        <div style={{flex:1,minWidth:150}}><b>{item.caption || 'BJL Status'}</b><div><small>{dateDMY(item.status_date)} · {item.media_type.toUpperCase()} · {item.published ? 'Published' : 'Hidden'}</small></div>
+        {item.media_type === 'video' ? <video src={pa(item.media_path)} controls preload="none" width="110" style={{borderRadius:8}} /> : <img src={pa(item.media_path)} alt="" width="90" height="90" style={{borderRadius:8,objectFit:'cover'}} />}
+        <div style={{flex:1,minWidth:150}}><b>{item.caption || 'Organizer Update'}</b><div><small>{dateDMY(item.status_date)} · {item.media_type.toUpperCase()} · {item.published ? 'Published' : 'Hidden'}</small></div>
           <button className="btn alt" onClick={() => toggleStatus(item)}>{item.published ? 'Hide' : 'Publish'}</button> <button className="btn alt" onClick={() => deleteStatus(item)}>Delete</button>
         </div>
       </article>)}
-      {statusRows.length === 0 && <div className="card">No BJL Status posts yet.</div>}
+      {statusRows.length === 0 && <div className="card">No organizer updates yet.</div>}
     </>)}
     {tab === 'quotes' && (<><form className="card" onSubmit={addQuote}><h3>Add Quote</h3>
       <label>Quote Text</label><textarea rows="4" style={{ width: '100%', padding: 10, borderRadius: 8 }} value={qf.body} onChange={e => setQf({ ...qf, body: e.target.value })} />
@@ -461,7 +461,7 @@ export default function Admin() {
           <button className="btn alt" onClick={() => editQuote(x)}>Edit</button><button className="btn alt" onClick={() => togQuote(x)}>{x.published ? 'Hide' : 'Publish'}</button><button className="btn alt" onClick={() => delQuote(x)}>Delete Team</button></div></div>))}</>)}
     {tab === 'video' && (<>
       <form className="card" onSubmit={uploadTutorial}><h3>Homepage Video Tutorial Upload</h3>
-        <p>Upload the complete MP4 or WebM tutorial video up to 1 GB (about 15 minutes or longer, depending on video quality and bitrate). Large files upload in resumable chunks. The homepage loads the video only after a visitor opens Video Tutorial.</p>
+        <p>Upload the MP4 or WebM tutorial up to 1 GB. The homepage does not download video data in the background. Video metadata loads only after a visitor opens the player; playback begins only when they press Play. For smoother playback on slower networks, export MP4 (H.264 + AAC), 720p, with Fast Start / Web Optimized enabled.</p>
         <label>Select tutorial video</label><input type="file" accept="video/mp4,video/webm" onChange={e => setTutorialFile(e.target.files?.[0] || null)} />
         <button className="btn" disabled={!tutorialFile || (tutorialProgress > 0 && tutorialProgress < 100)}>Upload and Publish Video</button>{tutorialProgress > 0 && <div className="admin-upload-progress"><progress value={tutorialProgress} max="100" /><small>{tutorialProgress}% uploaded</small></div>}{tutorialFile && <small>Selected: {tutorialFile.name} · {(tutorialFile.size / (1024 * 1024)).toFixed(1)} MB</small>}
         {c.tutorial_video_path && <p>Current video: <a href={supabase.storage.from('announcements').getPublicUrl(c.tutorial_video_path).data.publicUrl} target="_blank" rel="noreferrer">Preview tutorial</a></p>}
