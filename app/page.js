@@ -106,11 +106,11 @@ export default function Home() {
     {CONTACTS.map((x, i) => (<div className="card" key={x.num}><b>{x.name}</b> · {t(x.role)}<div dir="ltr">{x.disp}</div>
       <div style={{ marginTop: 8 }}><a className="btn" href={`https://wa.me/${x.num}?text=${encodeURIComponent((i === 0 && c.falak_msg) || t(x.msg))}`} target="_blank" rel="noopener noreferrer">{i === 0 ? (c.falak_btn || t('askFalak')) : t('wa')}</a></div></div>))}
     {qs.length > 0 && qs[qi] && <section className="quotes" onMouseEnter={pauseQ} onTouchStart={pauseQ}>
-      <h2>اقوالِ امام علیؑ و تعلیماتِ اہلِ بیتؑ</h2>
+      <h2 className="quote-section-title">اقوالِ امام علیؑ و تعلیماتِ اہلِ بیتؑ</h2>
       <div className="qt" key={qs[qi].id} dir="rtl" lang="ur">
-        <div className="qn">قول نمبر {qi + 1}</div>
-        <p className="qb">{qs[qi].body}</p>
-        <div className="qr">کتاب: {qs[qi].book}</div><div className="qr">حوالہ: {qs[qi].ref}</div></div>
+        <div className="qn quote-number">قول نمبر {qi + 1}</div>
+        <p className="qb quote-text">{qs[qi].body}</p>
+        <div className="qr quote-attribution">حضرت امام علیؑ</div><div className="qr quote-source">کتاب: {qs[qi].book}</div><div className="qr quote-source">حوالہ: {qs[qi].ref}</div></div>
       <div className="row quote-controls" dir="ltr"><button className="btn alt quote-nav quote-prev" onClick={() => stepQ(-1)} aria-label="Previous quote" title="Previous quote"><span aria-hidden="true">←</span></button>
         <span>{qi + 1} / {qs.length}</span><button className="btn alt quote-nav quote-next" onClick={() => stepQ(1)} aria-label="Next quote" title="Next quote"><span aria-hidden="true">→</span></button></div></section>}
     {tutorialOpen && <div className="modal" onClick={() => setTutorialOpen(false)}><div className="mbox bjl-tutorial-player" onClick={e => e.stopPropagation()}><div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}><h2 style={{ margin: 0 }}>Video Tutorial</h2><button className="btn alt" onClick={() => setTutorialOpen(false)}>✕ {t('close')}</button></div>{c.tutorial_video_path ? <video key={c.tutorial_video_path} controls preload="none" playsInline autoPlay={false} style={{ width: '100%', maxHeight: '75vh', marginTop: 12, background: '#000', borderRadius: 10 }}><source src={img(c.tutorial_video_path)} type={c.tutorial_video_path.endsWith('.webm') ? 'video/webm' : 'video/mp4'}/></video> : <p className="bjl-guide-copy">Video tutorial will appear here once uploaded by the admin.</p>}</div></div>}
