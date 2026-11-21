@@ -121,7 +121,7 @@ export default function Admin() {
     if (sessionError || !session?.access_token) return setMsg('Admin session expired. Please sign in again.');
     const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const projectId = new URL(projectUrl).hostname.split('.')[0];
-    const endpoint = `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`;
+    const endpoint = projectUrl.replace(/\/$/, '') + '/storage/v1/upload/resumable';
     const path = 'tutorials/bjl-registration-' + Date.now() + (tutorialFile.type === 'video/webm' ? '.webm' : '.mp4');
     setTutorialProgress(0); setMsg('Uploading full video... 0%');
     try {
@@ -163,7 +163,7 @@ export default function Admin() {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError || !session?.access_token) throw new Error('Admin session expired. Sign in again.');
         const projectId = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname.split('.')[0];
-        const endpoint = 'https://' + projectId + '.storage.supabase.co/storage/v1/upload/resumable';
+        const endpoint = process.env.NEXT_PUBLIC_SUPABASE_URL.replace(/\/$/, '') + '/storage/v1/upload/resumable';
         await new Promise((resolve, reject) => {
           const upload = new Upload(statusFile, {
             endpoint, retryDelays: [0,3000,5000,10000,20000], chunkSize: 6 * 1024 * 1024,
