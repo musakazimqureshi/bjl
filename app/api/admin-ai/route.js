@@ -55,7 +55,7 @@ export async function POST(request) {
     if (!token) return NextResponse.json({ error: 'Admin login required.' }, { status: 401 });
     const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!baseUrl || !anon || false) {
+    if (!baseUrl || !anon) {
       return NextResponse.json({ error: 'Admin AI is not configured.' }, { status: 503 });
     }
     const authResponse = await fetch(baseUrl + '/auth/v1/user', {
