@@ -13,29 +13,58 @@ async function readTable(base, headers, path) {
 }
 
 async function callGemini(systemInstruction, messages, maxOutputTokens = 900) {
-  const models = ['gemini-2.5-flash-lite', 'gemini-2.5-flash'];
+  const models = ['gemini-3.8-flash', 'gemini-3.5-flash-lite'];
   let lastError = 'Gemini AI is temporarily unavailable.';
+  const input = messages.map(m =>
+    `${m.role === 'assistant' ? 'Assistant' : 'User'}: ${m.content}`
+  ).join('\n\n') + '\n\nAssistant:';
+
   for (const model of models) {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-      method: 'POST',
-      headers: { 'x-goog-api-key': process.env.GEMINI_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemInstruction }] },
-        contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
-        generationConfig: { temperature: 0.3, maxOutputTokens }
-      }),
-      cache: 'no-store',
-      signal: AbortSignal.timeout(16000)
-    });
+    let response;
+    try {
+      response = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
+        method: 'POST',
+        headers: {
+          'x-goog-api-key': process.env.GEMINI_API_KEY,
+          'Api-Revision': '2026-05-20',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model,
+          input,
+          system_instruction: systemInstruction,
+          generation_config: { temperature: 0.3, max_output_tokens: maxOutputTokens },
+          store: false
+        }),
+        cache: 'no-store',
+        signal: AbortSignal.timeout(20000)
+      });
+    } catch (error) {
+      if (error?.name === 'TimeoutError' || error?.name === 'AbortError') {
+        lastError = 'Gemini AI request timed out. Please try again.';
+        break;
+      }
+      lastError = error?.message || 'Could not connect to Gemini AI.';
+      break;
+    }
+
     const result = await response.json().catch(() => ({}));
     if (response.ok) {
-      const reply = (result.candidates?.[0]?.content?.parts || []).filter(p => typeof p.text === 'string').map(p => p.text).join('').trim();
+      const output = (result.steps || [])
+        .filter(step => step.type === 'model_output')
+        .flatMap(step => step.content || [])
+        .filter(part => part.type === 'text' && typeof part.text === 'string')
+        .map(part => part.text)
+        .join('')
+        .trim();
+      const reply = output || (typeof result.output_text === 'string' ? result.output_text.trim() : '');
       if (reply) return reply;
-      lastError = result.promptFeedback?.blockReason ? 'The AI could not answer this request. Please rephrase it.' : 'AI returned an empty response. Please try again.';
-      continue;
+      lastError = result.error?.message || 'Gemini returned an empty response. Please try again.';
+      break;
     }
+
     lastError = result.error?.message || `Gemini request failed (${response.status}).`;
-    if (![400, 404, 405].includes(response.status)) break;
+    if (![404, 429, 500, 502, 503, 504].includes(response.status)) break;
   }
   throw new Error(lastError);
 }
