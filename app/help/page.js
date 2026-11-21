@@ -50,8 +50,8 @@ export default function Help() {
       <div className="bjl-ai-heading"><span className="bjl-ai-mark">BJL</span><div><h2>AI Help Center</h2><p>Ask about registration, teams, payments and tournament information.</p></div></div>
       <div className="bjl-ai-quota">{remaining} messages remaining today (resets daily)</div>
       <div className="bjl-ai-messages" aria-live="polite">
-        {messages.length === 0 && <div className="bjl-ai-welcome"><b>Assalam-o-Alaikum!</b><p>Main Falak's AI Assistant hoon. Falak Battagram Junior League ki Organizer hain. Main aapki BJL registration, teams, 15-player squad, matches, announcements aur payment process mein madad kar sakti hoon. Apna sawal bejhijhak poochhein. Agar koi latest detail website par available na hui, main bata dungi ke admin se confirm karna zaroori hai.</p></div>}
-        {messages.map((m,i)=><div className={'bjl-ai-message '+m.role} key={i}><small>{m.role==='user'?'You':'Falak's AI Assistant'}</small><p>{m.content}</p></div>)}
+        {messages.length === 0 && <div className="bjl-ai-welcome"><b>Assalam-o-Alaikum!</b><p>Main Falak's AI Assistant hoon. BJL registration, teams, 15-player squad, matches aur payment ke hawale se main aapki madad kar sakta hoon. Aap apna sawal bejhijhak poochhein.</p></div>}
+        {messages.map((m,i)=><div className={'bjl-ai-message '+m.role} key={i}><small>{m.role==='user'?'You':"Falak's AI Assistant"}</small><p>{m.content}</p></div>)}
         {busy && <div className="bjl-ai-typing">BJL Assistant is typing…</div>}
         <div ref={bottom} />
       </div>
