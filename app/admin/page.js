@@ -262,7 +262,7 @@ export default function Admin() {
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session?.access_token) throw new Error('Admin session expired. Please sign in again.');
-      const response = await fetch('/api/admin-ai', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token }, body: JSON.stringify({ messages: next }) });
+      const response = await fetch('/api/admin-ai', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token }, body: JSON.stringify({ messages: next }), signal: AbortSignal.timeout(30000) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'AI reply could not be generated.');
       setAdminAiMessages(v => [...v, { role: 'assistant', content: data.reply }].slice(-40));
