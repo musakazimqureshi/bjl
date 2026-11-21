@@ -16,7 +16,7 @@ export default function Admin() {
   const [tab, setTab] = useState('overview'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
   const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
   const [objections, setObjections] = useState([]); const [objectionPlayer, setObjectionPlayer] = useState(null); const [objectionDraft, setObjectionDraft] = useState({ reason: '', raised_by: '', raised_by_team: '', details: '' });
-  const [captainPasswords, setCaptainPasswords] = useState({}); const [tutorialFile, setTutorialFile] = useState(null); const [tutorialProgress, setTutorialProgress] = useState(0); const [busyTeam, setBusyTeam] = useState('');
+  const [captainPasswords, setCaptainPasswords] = useState({}); const [tutorialFile, setTutorialFile] = useState(null); const [tutorialProgress, setTutorialProgress] = useState(0); const [statusRows, setStatusRows] = useState([]); const [statusFile, setStatusFile] = useState(null); const [statusCaption, setStatusCaption] = useState(''); const [statusDate, setStatusDate] = useState(new Date().toISOString().slice(0,10)); const [statusProgress, setStatusProgress] = useState(0); const [busyTeam, setBusyTeam] = useState('');
   async function check() {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -47,6 +47,7 @@ export default function Admin() {
     const { data } = await supabase.rpc('public_content'); setC(data || {});
     const { data: a } = await supabase.from('announcements').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: false }); setAnn(a || []);
     const { data: m } = await supabase.from('moments').select('*').order('moment_date', { ascending: false }).order('created_at', { ascending: false }); setMoms(m || []);
+    const { data: st, error: stError } = await supabase.from('bjl_status').select('*').order('created_at', { ascending: false }); if (!stError) setStatusRows(st || []);
     const { data: q } = await supabase.from('quotes').select('*').order('sort_order', { ascending: true }); setQs(q || []);
   }
   async function loadTeams() {
@@ -145,6 +146,57 @@ export default function Admin() {
     } catch (error) {
       setMsg('Video upload failed: ' + (error?.message || 'Please try again. Your selected video was not published.'));
     }
+  }
+  async function addStatus(e) {
+    e.preventDefault(); setMsg('');
+    if (!statusFile || !statusDate) return setMsg('Select a photo or video and date.');
+    const isVideo = statusFile.type.startsWith('video/');
+    if (isVideo && !['video/mp4', 'video/webm'].includes(statusFile.type)) return setMsg('Video must be MP4 or WebM.');
+    if (!isVideo && !['image/jpeg', 'image/png', 'image/webp'].includes(statusFile.type)) return setMsg('Photo must be JPG, PNG, or WEBP.');
+    if (isVideo && statusFile.size > 1024 * 1024 * 1024) return setMsg('Video limit is 1 GB.');
+    if (!isVideo && statusFile.size > 15 * 1024 * 1024) return setMsg('Photo limit is 15 MB.');
+    const ext = isVideo ? (statusFile.type === 'video/webm' ? 'webm' : 'mp4') : (statusFile.type === 'image/png' ? 'png' : statusFile.type === 'image/webp' ? 'webp' : 'jpg');
+    const path = 'status/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
+    setStatusProgress(0); setMsg('Uploading status media...');
+    try {
+      if (isVideo) {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !session?.access_token) throw new Error('Admin session expired. Sign in again.');
+        const projectId = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname.split('.')[0];
+        const endpoint = 'https://' + projectId + '.storage.supabase.co/storage/v1/upload/resumable';
+        await new Promise((resolve, reject) => {
+          const upload = new Upload(statusFile, {
+            endpoint, retryDelays: [0,3000,5000,10000,20000], chunkSize: 6 * 1024 * 1024,
+            headers: { authorization: 'Bearer ' + session.access_token, apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, 'x-upsert': 'true' },
+            uploadDataDuringCreation: true, removeFingerprintOnSuccess: true,
+            metadata: { bucketName: 'announcements', objectName: path, contentType: statusFile.type, cacheControl: '31536000' },
+            onError: reject, onSuccess: resolve,
+            onProgress: (sent,total) => setStatusProgress(Math.round(sent / total * 100))
+          });
+          upload.findPreviousUploads().then(old => { if (old.length) upload.resumeFromPreviousUpload(old[0]); upload.start(); }).catch(reject);
+        });
+      } else {
+        const blob = await shrink(statusFile, 1400);
+        const { error } = await supabase.storage.from('announcements').upload(path, blob, { contentType: 'image/jpeg' });
+        if (error) throw error;
+      }
+      const { error: insertError } = await supabase.from('bjl_status').insert({ media_path: path, media_type: isVideo ? 'video' : 'image', caption: statusCaption.trim(), status_date: statusDate, published: true });
+      if (insertError) throw insertError;
+      setStatusFile(null); setStatusCaption(''); setStatusProgress(100); setMsg('BJL Status published successfully.'); e.target.reset(); load();
+    } catch (error) {
+      setMsg('Status upload failed: ' + (error?.message || 'Please try again.'));
+    }
+  }
+  async function toggleStatus(item) {
+    const { error } = await supabase.from('bjl_status').update({ published: !item.published }).eq('id', item.id);
+    setMsg(error ? error.message : (item.published ? 'Status hidden.' : 'Status published.')); load();
+  }
+  async function deleteStatus(item) {
+    if (!confirm('Delete this status permanently?')) return;
+    const { error: storageError } = await supabase.storage.from('announcements').remove([item.media_path]);
+    if (storageError) return setMsg(storageError.message);
+    const { error } = await supabase.from('bjl_status').delete().eq('id', item.id);
+    setMsg(error ? error.message : 'Status deleted.'); load();
   }
   async function setObjectionStatus(item, status) {
     const { error } = await supabase.from('player_objections').update({
@@ -313,7 +365,7 @@ export default function Admin() {
       <article className="admin-stat"><span className="admin-stat-icon amber">◷</span><div><small>Pending Payments</small><strong>{teams.filter(x => x.payment !== 'verified' && x.payment !== 'rejected').length}</strong><em>Awaiting review</em></div></article>
       <article className="admin-stat"><span className="admin-stat-icon violet">▣</span><div><small>Announcements</small><strong>{ann.length}</strong><em>Announcements</em></div></article>
     </section>
-    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({overview:'Dashboard Overview',teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',quotes:'Quotes & Content',video:'Homepage Video Tutorial',set:'Website Settings',analytics:'Traffic Analytics',aiReports:'AI Chat Reports'})[tab]}</strong></div>
+    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({overview:'Dashboard Overview',teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',status:'BJL Status Photos & Videos',quotes:'Quotes & Content',video:'Homepage Video Tutorial',set:'Website Settings',analytics:'Traffic Analytics',aiReports:'AI Chat Reports'})[tab]}</strong></div>
     <main className="admin-workspace">
     {tab === 'overview' && <AdminOverview supabase={supabase} teams={teams} objections={objections} />}
     {tab === 'analytics' && <AdminAnalytics supabase={supabase} />}
@@ -360,6 +412,25 @@ export default function Admin() {
         <img src={pa(m.image_path)} alt="" width="70" height="70" style={{ borderRadius: 8, objectFit: 'cover' }} />
         <div style={{ flex: 1 }}><small>{dateDMY(m.moment_date)}</small><div>{m.caption} {m.published ? '✅' : '⛔'}</div>
           <button className="btn alt" onClick={() => capMoment(m)}>Edit Caption</button> <button className="btn alt" onClick={() => togMoment(m)}>{m.published ? 'Hide' : 'Publish'}</button> <button className="btn alt" onClick={() => delMoment(m)}>Delete Team</button></div></div>))}</>)}
+    {tab === 'status' && (<>
+      <form className="card" onSubmit={addStatus}>
+        <h3>Publish BJL Status Photo or Video</h3>
+        <p>Upload match photos, short clips and BJL updates. Photos up to 15 MB; MP4/WebM videos up to 1 GB. Large videos upload in resumable chunks.</p>
+        <label>Photo or Video</label><input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" onChange={e => setStatusFile(e.target.files?.[0] || null)} />
+        <label>Caption (Optional)</label><input value={statusCaption} onChange={e => setStatusCaption(e.target.value)} placeholder="Write a short caption..." />
+        <label>Date (DD MM YYYY)</label><input type="date" lang="en-GB" value={statusDate} onChange={e => setStatusDate(e.target.value)} />
+        <button className="btn" disabled={!statusFile || (statusProgress > 0 && statusProgress < 100)}>Publish Status</button>
+        {statusProgress > 0 && <div className="admin-upload-progress"><progress value={statusProgress} max="100" /><small>{statusProgress}% uploaded</small></div>}
+        {statusFile && <small>Selected: {statusFile.name} · {(statusFile.size / (1024 * 1024)).toFixed(1)} MB</small>}
+      </form>
+      {statusRows.map(item => <article className="card" key={item.id} style={{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
+        {item.media_type === 'video' ? <video src={pa(item.media_path)} controls preload="metadata" width="110" style={{borderRadius:8}} /> : <img src={pa(item.media_path)} alt="" width="90" height="90" style={{borderRadius:8,objectFit:'cover'}} />}
+        <div style={{flex:1,minWidth:150}}><b>{item.caption || 'BJL Status'}</b><div><small>{dateDMY(item.status_date)} · {item.media_type.toUpperCase()} · {item.published ? 'Published' : 'Hidden'}</small></div>
+          <button className="btn alt" onClick={() => toggleStatus(item)}>{item.published ? 'Hide' : 'Publish'}</button> <button className="btn alt" onClick={() => deleteStatus(item)}>Delete</button>
+        </div>
+      </article>)}
+      {statusRows.length === 0 && <div className="card">No BJL Status posts yet.</div>}
+    </>)}
     {tab === 'quotes' && (<><form className="card" onSubmit={addQuote}><h3>Add Quote</h3>
       <label>Quote Text</label><textarea rows="4" style={{ width: '100%', padding: 10, borderRadius: 8 }} value={qf.body} onChange={e => setQf({ ...qf, body: e.target.value })} />
       <label>Book</label><input value={qf.book} onChange={e => setQf({ ...qf, book: e.target.value })} />
