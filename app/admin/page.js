@@ -155,7 +155,7 @@ export default function Admin() {
     if (!isVideo && !['image/jpeg', 'image/png', 'image/webp'].includes(statusFile.type)) return setMsg('Photo must be JPG, PNG, or WEBP.');
     if (isVideo && statusFile.size > 1024 * 1024 * 1024) return setMsg('Video limit is 1 GB.');
     if (!isVideo && statusFile.size > 15 * 1024 * 1024) return setMsg('Photo limit is 15 MB.');
-    const ext = isVideo ? (statusFile.type === 'video/webm' ? 'webm' : 'mp4') : (statusFile.type === 'image/png' ? 'png' : statusFile.type === 'image/webp' ? 'webp' : 'jpg');
+    const ext = isVideo ? (statusFile.type === 'video/webm' ? 'webm' : 'mp4') : 'jpg';
     const path = 'status/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
     setStatusProgress(0); setMsg('Uploading status media...');
     try {
