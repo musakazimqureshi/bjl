@@ -98,7 +98,7 @@ async function getWebsiteContext() {
     nextMatch: upcoming,
     latestAnnouncements: recentAnnouncements,
     publicPlayerObjections: Array.isArray(objections) ? objections.slice(0, 20) : [],
-    websiteSections: ['Register Team', 'Registered Teams', 'Payment', 'Team Login', 'Announcements', 'Match Center', 'Falak's AI Assistant']
+    websiteSections: ['Register Team', 'Registered Teams', 'Payment', 'Team Login', 'Announcements', 'Match Center', "Falak's AI Assistant"]
   };
 }
 
