@@ -107,9 +107,9 @@ export default function Home() {
       <div style={{ marginTop: 8 }}><a className="btn" href={`https://wa.me/${x.num}?text=${encodeURIComponent((i === 0 && c.falak_msg) || t(x.msg))}`} target="_blank" rel="noopener noreferrer">{i === 0 ? (c.falak_btn || t('askFalak')) : t('wa')}</a></div></div>))}
     {qs.length > 0 && qs[qi] && <section className="quotes" onMouseEnter={pauseQ} onTouchStart={pauseQ}>
       <h2 className="quote-section-title">اقوالِ امام علیؑ و تعلیماتِ اہلِ بیتؑ</h2>
-      <div className="qt" key={qs[qi].id} dir="rtl" lang="ur">
+      <div className="qt" key={qs[qi].id} dir="rtl" lang="ur" style={{ fontFamily: "system-ui, 'Noto Naskh Arabic', 'Noto Sans Arabic', sans-serif", lineHeight: 1.9, fontWeight: 400 }}>
         <div className="qn quote-number">قول نمبر {qi + 1}</div>
-        <p className="qb quote-text">{qs[qi].body}</p>
+        <p className="qb quote-text" style={{ fontFamily: "system-ui, 'Noto Naskh Arabic', 'Noto Sans Arabic', sans-serif", fontSize: "clamp(1.05rem, 3.8vw, 1.35rem)", lineHeight: 1.9, fontWeight: 400, textShadow: "none" }}>{qs[qi].body}</p>
         <div className="qr quote-attribution">حضرت امام علیؑ</div><div className="qr quote-source">کتاب: {qs[qi].book}</div><div className="qr quote-source">حوالہ: {qs[qi].ref}</div></div>
       <div className="row quote-controls" dir="ltr"><button className="btn alt quote-nav quote-prev" onClick={() => stepQ(-1)} aria-label="Previous quote" title="Previous quote"><span aria-hidden="true">←</span></button>
         <span>{qi + 1} / {qs.length}</span><button className="btn alt quote-nav quote-next" onClick={() => stepQ(1)} aria-label="Next quote" title="Next quote"><span aria-hidden="true">→</span></button></div></section>}
