@@ -151,7 +151,8 @@ export default function Admin() {
     const { error } = await supabase.from('settings').upsert({ key: 'tutorial_video_url', value });
     setMsg(error ? error.message : (value ? 'Website Tutorial Facebook link saved.' : 'Facebook video link removed.'));
     if (!error) load();
-  }\n  async function uploadTutorial(e) {
+  }
+  async function uploadTutorial(e) {
     e.preventDefault();
     if (!tutorialFile) return setMsg('Choose an MP4 or WebM video first.');
     if (!['video/mp4', 'video/webm'].includes(tutorialFile.type)) return setMsg('Please choose an MP4 or WebM video.');
