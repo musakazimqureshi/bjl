@@ -105,7 +105,7 @@ async function getWebsiteContext() {
 export async function POST(request) {
   try {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      return NextResponse.json({ error: 'Falak's AI Assistant is not configured yet.' }, { status: 503 });
+      return NextResponse.json({ error: "Falak's AI Assistant is not configured yet." }, { status: 503 });
     }
     const body = await request.json();
     const visitor = String(body.visitor || '');
