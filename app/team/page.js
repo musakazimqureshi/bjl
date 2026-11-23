@@ -7,13 +7,13 @@ const pub = p => supabase.storage.from('player-photos').getPublicUrl(p).data.pub
 const ROLE = { batter: 'Batsman', bowler: 'Bowler', all_rounder: 'All-Rounder', wicket_keeper: 'Wicketkeeper' };
 export default function TeamLogin() {
   const { lang } = useLang(); const tx = (e, u) => (lang === 'ur' ? u : e);
-  const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
+  const [username, setUsername] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
   const [user, setUser] = useState(null); const [teams, setTeams] = useState(null);
   const [directory, setDirectory] = useState([]); const [appealPlayer, setAppealPlayer] = useState('');
   const [appealReason, setAppealReason] = useState('Over Age'); const [appealDetails, setAppealDetails] = useState('');
   const [newPassword, setNewPassword] = useState(''); const [accountMsg, setAccountMsg] = useState(''); const [busy, setBusy] = useState(false);
   async function load(u) {
-    const { data, error } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').eq('captain_email', (u.email || '').toLowerCase());
+    const teamId = u.app_metadata?.team_id;\n    if (!teamId || u.app_metadata?.role !== 'captain') { setMsg('This account is not linked to a BJL team. Contact the organizer.'); setTeams([]); return; }\n    const { data, error } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').eq('id', teamId);
     if (error) setMsg(error.message); setTeams(data || []);
     const { data: roster, error: rosterError } = await supabase.rpc('captain_appeal_directory');
     if (!rosterError) setDirectory(roster || []);
@@ -30,7 +30,7 @@ export default function TeamLogin() {
   }, []);
   async function login(e) {
     e.preventDefault(); setMsg('');
-    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: pw });
+    const clean = username.trim().toLowerCase();\n    if (!/^[a-z0-9._-]{4,24}$/.test(clean)) return setMsg(tx('Enter the username given by BJL Admin.', 'ایڈمن کا دیا ہوا درست یوزرنیم درج کریں۔'));\n    const { data, error } = await supabase.auth.signInWithPassword({ email: clean + '@bjl-login.com', password: pw });
     if (error) return setMsg(tx('Wrong email or password.', 'ای میل یا پاسورڈ غلط ہے۔'));
     setUser(data.user); load(data.user);
   }
@@ -71,8 +71,8 @@ export default function TeamLogin() {
       <input placeholder={tx('Password', 'پاسورڈ')} type="password" value={pw} onChange={e => setPw(e.target.value)} dir="ltr" />
       {msg && <div className="err">{msg}</div>}<button className="btn">{tx('Login', 'لاگ اِن')}</button></form>) : (<>
       <button className="btn alt" onClick={logout}>{tx('Logout', 'لاگ آؤٹ')}</button>
-      {user && <div className="card team-account-card"><h3>Account Security</h3><p dir="ltr">{user.email}</p><form onSubmit={changePassword}><label>{tx('Set a new password (12+ characters)', 'نیا پاسورڈ رکھیں (کم از کم 12 حروف)')}</label><input type="password" minLength="12" autoComplete="new-password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder={tx('New password', 'نیا پاسورڈ')} required /><button className="btn" disabled={busy || newPassword.length < 12}>{tx('Change Password', 'پاسورڈ تبدیل کریں')}</button></form>{accountMsg && <p role="status">{accountMsg}</p>}</div>}
-      {teams && teams.length === 0 && <div className="card">{tx('No team is linked to this email yet. Please contact the organizer.', 'اس ای میل سے کوئی ٹیم جڑی ہوئی نہیں۔ براہ کرم منتظم سے رابطہ کریں۔')}</div>}
+      {user && <div className="card team-account-card"><h3>Account Security</h3><p dir="ltr">Username: {user.email?.split('@')[0]}</p><form onSubmit={changePassword}><label>{tx('Set a new password (12+ characters)', 'نیا پاسورڈ رکھیں (کم از کم 12 حروف)')}</label><input type="password" minLength="12" autoComplete="new-password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder={tx('New password', 'نیا پاسورڈ')} required /><button className="btn" disabled={busy || newPassword.length < 12}>{tx('Change Password', 'پاسورڈ تبدیل کریں')}</button></form>{accountMsg && <p role="status">{accountMsg}</p>}</div>}
+      {teams && teams.length === 0 && <div className="card">{tx('No team is linked to this login yet. Please contact the organizer.', 'اس ای میل سے کوئی ٹیم جڑی ہوئی نہیں۔ براہ کرم منتظم سے رابطہ کریں۔')}</div>}
       {(teams || []).map(tm => { const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); return (
         <div className="card" key={tm.id}><h3>{tm.name} <small>{tm.reg_id}</small></h3>
           <span className={'badge ' + (tm.payment === 'verified' ? 'v' : 'n')}>{tm.payment === 'verified' ? '✓ VERIFIED' : 'NOT VERIFIED'}</span>
