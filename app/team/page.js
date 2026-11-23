@@ -22,7 +22,8 @@ export default function TeamLogin() {
     const { data, error } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').eq('id', teamId);
     if (error) setMsg(error.message);
     setTeams(data || []);
-    const { data: messages } = await supabase.from('team_messages').select('*').eq('team_id', teamId).order('created_at', { ascending: true }); setTeamMessages(messages || []);\n    const { data: roster, error: rosterError } = await supabase.rpc('captain_appeal_directory');
+    const { data: messages } = await supabase.from('team_messages').select('*').eq('team_id', teamId).order('created_at', { ascending: true }); setTeamMessages(messages || []);
+    const { data: roster, error: rosterError } = await supabase.rpc('captain_appeal_directory');
     if (!rosterError) setDirectory(roster || []);
   }
   useEffect(() => {
