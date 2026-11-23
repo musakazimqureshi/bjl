@@ -26,7 +26,7 @@ export default function WhatsAppAutomation({ teams = [], objections = [] }) {
   const [targetContact, setTargetContact] = useState('captain1');
   const [targetMember, setTargetMember] = useState('');
   const [language, setLanguage] = useState('en');
-  const [memberContacts, setMemberContacts] = useState({aman:'',waleed:'',m_hasnain:''});
+  const [memberContacts, setMemberContacts] = useState({waleed:'03145453155',m_hasnain:'03350541078'});
   const [messageKind, setMessageKind] = useState('custom');
   const [customText, setCustomText] = useState('');
   const [composerBusy, setComposerBusy] = useState(false);
@@ -34,7 +34,7 @@ export default function WhatsAppAutomation({ teams = [], objections = [] }) {
   const selectedTeam = teams.find(t => t.id === targetTeam);
   const selectedCaptain = (selectedTeam?.players || []).find(p => p.id === selectedTeam?.captain_id);
   const selectedVice = (selectedTeam?.players || []).find(p => p.id === selectedTeam?.vice_captain_id);
-  const memberNames = { aman:'Aman', waleed:'Waleed', m_hasnain:'M. Hasnain' };
+  const memberNames = { waleed:'Waleed Afridi', m_hasnain:'M. Hasnain' };
   const selectedPeople = targetContact === 'members' ? [{name:memberNames[targetMember],mobile:memberContacts[targetMember]}].filter(x=>x.name && x.mobile) :
     targetContact === 'both' ? [{name:selectedCaptain?.name || 'Captain 1',mobile:selectedCaptain?.mobile},{name:selectedVice?.name || 'Captain 2',mobile:selectedVice?.mobile}].filter(x=>x.mobile) :
     targetContact === 'captain2' ? [{name:selectedVice?.name || 'Captain 2',mobile:selectedVice?.mobile}] :
@@ -124,15 +124,21 @@ export default function WhatsAppAutomation({ teams = [], objections = [] }) {
     if (targetContact !== 'members' && !selectedTeam) return setNotice('Please select a team first.');
     if (!selectedPeople.length) return setNotice('No mobile number is saved for the selected recipient.');
     const templates = {
-      payment_reminder: language==='ur' ? 'السلام علیکم! براہِ کرم اپنی ٹیم کی رجسٹریشن فیس جمع کروا کر ادائیگی کا ثبوت ارسال کریں۔ اگر آپ پہلے ہی جمع کروا چکے ہیں تو اس پیغام کو نظر انداز کریں۔' : 'Assalam-o-Alaikum! Please submit your team registration fee and share the payment proof. If you have already submitted it, kindly ignore this message.',
-      match_reminder: language==='ur' ? 'السلام علیکم! آپ کی ٹیم کے میچ کے بارے میں اطلاع ہے۔ براہِ کرم مقررہ وقت سے پہلے گراؤنڈ پہنچیں اور انتظامیہ کی ہدایات پر عمل کریں۔' : 'Assalam-o-Alaikum! This is an update about your team match. Please arrive at the ground before the scheduled time and follow the organizers’ instructions.',
-      objection_notice: language==='ur' ? 'السلام علیکم! آپ کی ٹیم کے ایک کھلاڑی کے حوالے سے اعتراض موصول ہوا ہے۔ براہِ کرم وضاحت اور ضروری کارروائی کے لیے انتظامیہ سے رابطہ کریں۔' : 'Assalam-o-Alaikum! An objection has been received regarding a player from your team. Please contact the organizers for clarification and necessary action.',
+      payment_reminder: language==='ur' ? 'السلام علیکم! بی جے ایل کی رجسٹریشن فیس ابھی زیرِ التوا ہے۔ براہِ کرم ادائیگی مکمل کرکے ثبوت ارسال کریں۔ اگر ادائیگی پہلے ہو چکی ہے تو اس پیغام کو نظر انداز کریں۔ شکریہ۔' : 'Assalam-o-Alaikum! The BJL registration fee is still pending. Please complete the payment and share the proof. If payment has already been made, kindly ignore this reminder. Thank you.',
+      match_reminder: language==='ur' ? 'السلام علیکم! آپ کی ٹیم کے میچ کی اطلاع ہے۔ براہِ کرم مقررہ وقت سے پہلے گراؤنڈ پہنچیں، مکمل ٹیم ساتھ لائیں اور انتظامیہ کی ہدایات پر عمل کریں۔ شکریہ۔' : 'Assalam-o-Alaikum! This is an official reminder about your team’s upcoming match. Please arrive at the ground before the scheduled time with your complete squad and follow the tournament officials’ instructions. Thank you.',
+      objection_notice: language==='ur' ? 'السلام علیکم! آپ کی ٹیم کے ایک کھلاڑی کے متعلق اعتراض موصول ہوا ہے۔ براہِ کرم مقررہ وقت میں اپنی وضاحت اور متعلقہ ثبوت انتظامیہ کو فراہم کریں۔ حتمی فیصلہ ٹورنامنٹ کمیٹی کے قواعد کے مطابق ہوگا۔' : 'Assalam-o-Alaikum. An objection has been received regarding a player from your team. Please provide your explanation and any relevant evidence to the organizers within the given time. The tournament committee will decide in accordance with BJL rules.',
+      duty_reminder: language==='ur' ? 'السلام علیکم! بی جے ایل کے انتظامی امور کے سلسلے میں آپ کی ذمہ داری/ٹاسک زیرِ التوا ہے۔ براہِ کرم اس کام کو ترجیحی بنیاد پر مکمل کرکے مختصر اپڈیٹ شیئر کریں تاکہ ٹورنامنٹ کے معاملات بروقت آگے بڑھ سکیں۔ شکریہ۔' : 'Assalam-o-Alaikum! A BJL tournament duty/task assigned to you is pending. Please prioritize completing it and share a brief update so tournament operations can move forward on time. Thank you.',
+      meeting_reminder: language==='ur' ? 'السلام علیکم! بی جے ایل انتظامیہ کی میٹنگ/مشاورت کے لیے آپ کی شرکت درکار ہے۔ براہِ کرم مقررہ وقت پر دستیاب رہیں۔ مقام اور وقت کی حتمی تفصیل الگ سے شیئر کی جائے گی۔ شکریہ۔' : 'Assalam-o-Alaikum! Your participation is requested for a BJL organizers’ meeting/coordination session. Please remain available at the scheduled time. The confirmed venue and timing will be shared separately. Thank you.',
+      team_followup: language==='ur' ? 'السلام علیکم! بی جے ایل کے ایک انتظامی معاملے میں آپ کی فالو اَپ درکار ہے۔ براہِ کرم متعلقہ ٹیم/ذمہ دار فرد سے رابطہ کرکے پیش رفت کی تصدیق کریں اور انتظامیہ کو اپڈیٹ دیں۔ شکریہ۔' : 'Assalam-o-Alaikum! Follow-up is required on a BJL tournament matter. Please coordinate with the relevant team/responsible person, confirm progress, and update the organizers. Thank you.',
+      score_update: language==='ur' ? 'السلام علیکم! براہِ کرم متعلقہ میچ کا اسکور، نتیجہ اور ضروری تفصیلات تصدیق کرکے جلد انتظامیہ کے ساتھ شیئر کریں تاکہ آفیشل ریکارڈ اپڈیٹ کیا جا سکے۔ شکریہ۔' : 'Assalam-o-Alaikum! Please verify and share the match score, result, and required details with the organizers as soon as possible so the official BJL record can be updated. Thank you.',
+      matchday_coordination: language==='ur' ? 'السلام علیکم! آج کے میچ ڈے کے انتظامات کے لیے براہِ کرم اپنی ذمہ داری کے مطابق گراؤنڈ، ٹیموں کی آمد، اسکورنگ اور نظم و ضبط سے متعلق امور پر نظر رکھیں اور کسی مسئلے کی صورت میں فوری انتظامیہ کو اطلاع دیں۔' : 'Assalam-o-Alaikum! For today’s match-day operations, please coordinate your assigned duties covering the ground, team arrivals, scoring, and discipline. Inform the organizers immediately if any issue arises. Thank you.',
       custom: ''
     };
     const body = customText.trim() || templates[messageKind];
     if (!body) return setNotice('Write a custom message or choose an automatic template.');
     setComposerBusy(true);
-    const inserts = selectedPeople.map(person=>({message_type:messageKind,team_id:selectedTeam?.id || null,recipient_name:person.name,recipient_mobile:person.mobile,message_text:body+signature,due_at:new Date().toISOString()}));
+    const queueType = ['payment_reminder','match_reminder','objection_notice'].includes(messageKind) ? messageKind : 'custom';
+    const inserts = selectedPeople.map(person=>({message_type:queueType,team_id:selectedTeam?.id || null,recipient_name:person.name,recipient_mobile:person.mobile,message_text:body+signature,due_at:new Date().toISOString()}));
     const {error}=await supabase.from('whatsapp_message_queue').insert(inserts);
     setComposerBusy(false);
     if(error) return setNotice('Message could not be prepared: '+error.message);
@@ -197,19 +203,19 @@ export default function WhatsAppAutomation({ teams = [], objections = [] }) {
       {notice && <p role="status">{notice}</p>}
     </div>
     <div className="wa-card"><h3>✉ Create a message</h3>
-      <p className="wa-muted">For teams, messages go only to Captain 1 and/or Captain 2. You can also message the three BJL members separately.</p>
+      <p className="wa-muted">For teams, messages go only to Captain 1 and/or Captain 2. You can also message the BJL team members separately.</p>
       <form onSubmit={createCustomMessage}>
         <label>Recipient Category</label><select value={targetContact} onChange={e=>setTargetContact(e.target.value)}><option value="captain1">Team Captain 1</option><option value="captain2">Team Captain 2</option><option value="both">Both Captains (1 & 2)</option><option value="members">BJL Members</option></select>
         {targetContact==='members' ? <>
-          <label>Select BJL Member</label><select value={targetMember} onChange={e=>setTargetMember(e.target.value)}><option value="">Choose member...</option><option value="aman">Aman</option><option value="waleed">Waleed</option><option value="m_hasnain">M. Hasnain</option></select>
+          <label>Select BJL Member</label><select value={targetMember} onChange={e=>setTargetMember(e.target.value)}><option value="">Choose member...</option><option value="waleed">Waleed</option><option value="m_hasnain">M. Hasnain</option></select>
           <label>Member WhatsApp Number</label><input value={memberContacts[targetMember]||''} onChange={e=>setMemberContacts(v=>({...v,[targetMember]:e.target.value}))} onBlur={e=>targetMember && saveMemberContact(targetMember,e.target.value)} placeholder="03XXXXXXXXX" />
-          <p className="wa-muted">Numbers were not publicly verified online. Enter each member’s confirmed number once; it will be saved for future messages.</p>
+          <p className="wa-muted">Official Help Center contacts are pre-filled. You can update a number here if it changes.</p>
         </> : <>
           <label>Select Team</label><select value={targetTeam} onChange={e=>setTargetTeam(e.target.value)} required><option value="">Choose a team...</option>{teams.map(t=><option key={t.id} value={t.id}>{t.name} · {t.reg_id || ''}</option>)}</select>
           <p className="wa-muted">Selected recipient(s): <b>{selectedName || 'Not selected'}</b><br/>WhatsApp number(s): <b>{selectedMobile || 'Not available'}</b></p>
         </>}
         <label>Message Language</label><select value={language} onChange={e=>setLanguage(e.target.value)}><option value="en">English</option><option value="ur">Urdu</option></select>
-        <label>Message Type / Automatic Template</label><select value={messageKind} onChange={e=>setMessageKind(e.target.value)}><option value="custom">Custom Message</option><option value="payment_reminder">Fee / Payment Reminder</option><option value="match_reminder">Match Information</option><option value="objection_notice">Player Objection Notice</option></select>
+        <label>Message Type / Automatic Template</label><select value={messageKind} onChange={e=>setMessageKind(e.target.value)}><option value="custom">Custom Message</option><option value="payment_reminder">Fee / Payment Reminder</option><option value="match_reminder">Match Information</option><option value="objection_notice">Player Objection / Eligibility Notice</option><option value="duty_reminder">Tournament Duty / Task Reminder</option><option value="meeting_reminder">Organizer Meeting Reminder</option><option value="team_followup">Team Follow-up / Coordination</option><option value="score_update">Score & Result Update Follow-up</option><option value="matchday_coordination">Match-day Coordination</option></select>
         <label>{messageKind==='custom'?'Write Custom Message':'Optional: edit/add to the automatic message'}</label><textarea rows="5" value={customText} onChange={e=>setCustomText(e.target.value)} placeholder={messageKind==='custom'?'Write your message...':'Leave blank to use the selected automatic template, or type your own version.'} />
         <div className="wa-muted" style={{background:'#f1f5f9',padding:12,borderRadius:8,whiteSpace:'pre-wrap'}}>Automatic signature:{signature}</div>
         <div className="wa-actions"><button className="btn wa-primary" disabled={composerBusy || (targetContact!=='members'&&!selectedTeam) || !selectedPeople.length}>{composerBusy?'Preparing...':'Prepare Message(s)'}</button></div>
