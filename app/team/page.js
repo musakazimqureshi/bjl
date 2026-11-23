@@ -9,7 +9,7 @@ export default function TeamLogin() {
   const { lang } = useLang(); const tx = (e, u) => (lang === 'ur' ? u : e);
   const [username, setUsername] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
   const [user, setUser] = useState(null); const [teams, setTeams] = useState(null);
-  const [directory, setDirectory] = useState([]); const [appealPlayer, setAppealPlayer] = useState('');
+  const [directory, setDirectory] = useState([]); const [teamMessages, setTeamMessages] = useState([]); const [replyDraft, setReplyDraft] = useState(''); const [replyBusy, setReplyBusy] = useState(false); const [appealPlayer, setAppealPlayer] = useState('');
   const [appealReason, setAppealReason] = useState('Over Age'); const [appealDetails, setAppealDetails] = useState('');
   const [newPassword, setNewPassword] = useState(''); const [accountMsg, setAccountMsg] = useState(''); const [busy, setBusy] = useState(false);
   async function load(u) {
@@ -22,7 +22,7 @@ export default function TeamLogin() {
     const { data, error } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').eq('id', teamId);
     if (error) setMsg(error.message);
     setTeams(data || []);
-    const { data: roster, error: rosterError } = await supabase.rpc('captain_appeal_directory');
+    const { data: messages } = await supabase.from('team_messages').select('*').eq('team_id', teamId).order('created_at', { ascending: true }); setTeamMessages(messages || []);\n    const { data: roster, error: rosterError } = await supabase.rpc('captain_appeal_directory');
     if (!rosterError) setDirectory(roster || []);
   }
   useEffect(() => {
@@ -47,6 +47,7 @@ export default function TeamLogin() {
     }
     setUser(data.user); load(data.user);
   }
+  async function sendTeamReply(e, team) { e.preventDefault(); const message = replyDraft.trim(); if (!message) return; setReplyBusy(true); const { error } = await supabase.from('team_messages').insert({ team_id: team.id, sender_role: 'captain', message }); setReplyBusy(false); if (error) return setAccountMsg('Reply could not be sent: ' + error.message); setReplyDraft(''); const { data } = await supabase.from('team_messages').select('*').eq('team_id', team.id).order('created_at', { ascending: true }); setTeamMessages(data || []); setAccountMsg('Your reply has been sent to BJL Admin.'); }
   async function submitAppeal(e, sourceTeam) {
     e.preventDefault(); setAccountMsg(''); setBusy(true);
     const target = directory.find(x => x.player_id === appealPlayer);
@@ -90,6 +91,7 @@ export default function TeamLogin() {
         <div className="card" key={tm.id}><h3>{tm.name} <small>{tm.reg_id}</small></h3>
           <span className={'badge ' + (tm.payment === 'verified' ? 'v' : 'n')}>{tm.payment === 'verified' ? '✓ VERIFIED' : 'NOT VERIFIED'}</span>
           <p>{status(tm)}</p>
+          <section className="card team-appeal-card"><h4>✉ Message from Falak</h4><p>Official messages and instructions from BJL Admin appear here.</p><div className="team-message-thread">{teamMessages.map(m => <article key={m.id} className={'team-message-bubble ' + (m.sender_role === 'admin' ? 'from-admin' : 'from-team')}><b>{m.sender_role === 'admin' ? 'Message from Falak' : 'Your Reply'}</b><p style={{ whiteSpace:'pre-wrap' }}>{m.message}</p><small>{new Date(m.created_at).toLocaleString()}</small></article>)}{teamMessages.length === 0 && <p>No messages from admin yet.</p>}</div><form onSubmit={e => sendTeamReply(e, tm)}><label>Reply to Admin</label><textarea rows="3" value={replyDraft} onChange={e => setReplyDraft(e.target.value)} placeholder="Write your reply..." /><button className="btn" disabled={replyBusy || !replyDraft.trim()}>{replyBusy ? 'Sending...' : 'Send Reply'}</button></form></section>
           <div className="team-stat-strip"><div><small>Players</small><b>{ps.length}</b></div><div><small>Squad target</small><b>15</b></div><div><small>Payment</small><b>{tm.payment === 'verified' ? 'Verified' : 'Pending'}</b></div></div>
           <div className="card team-appeal-card"><h4>{tx('Submit an Appeal', 'اعتراض / اپیل جمع کریں')}</h4><p>{tx('Select a player from another team, choose the reason and provide supporting details. BJL Admin will review it.', 'کسی دوسری ٹیم کا کھلاڑی منتخب کریں، وجہ اور مکمل تفصیل لکھیں۔ BJL ایڈمن اس کا جائزہ لے گا۔')}</p>
             <form onSubmit={e => submitAppeal(e, tm)}>
