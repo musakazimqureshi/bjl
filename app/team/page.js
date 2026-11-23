@@ -13,8 +13,15 @@ export default function TeamLogin() {
   const [appealReason, setAppealReason] = useState('Over Age'); const [appealDetails, setAppealDetails] = useState('');
   const [newPassword, setNewPassword] = useState(''); const [accountMsg, setAccountMsg] = useState(''); const [busy, setBusy] = useState(false);
   async function load(u) {
-    const teamId = u.app_metadata?.team_id;\n    if (!teamId || u.app_metadata?.role !== 'captain') { setMsg('This account is not linked to a BJL team. Contact the organizer.'); setTeams([]); return; }\n    const { data, error } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').eq('id', teamId);
-    if (error) setMsg(error.message); setTeams(data || []);
+    const teamId = u.app_metadata?.team_id;
+    if (!teamId || u.app_metadata?.role !== 'captain') {
+      setMsg('This account is not linked to a BJL team. Contact the organizer.');
+      setTeams([]);
+      return;
+    }
+    const { data, error } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').eq('id', teamId);
+    if (error) setMsg(error.message);
+    setTeams(data || []);
     const { data: roster, error: rosterError } = await supabase.rpc('captain_appeal_directory');
     if (!rosterError) setDirectory(roster || []);
   }
@@ -30,8 +37,14 @@ export default function TeamLogin() {
   }, []);
   async function login(e) {
     e.preventDefault(); setMsg('');
-    const clean = username.trim().toLowerCase();\n    if (!/^[a-z0-9._-]{4,24}$/.test(clean)) return setMsg(tx('Enter the username given by BJL Admin.', 'ایڈمن کا دیا ہوا درست یوزرنیم درج کریں۔'));\n    const { data, error } = await supabase.auth.signInWithPassword({ email: clean + '@bjl-login.com', password: pw });
-    if (error) return setMsg(tx('Wrong email or password.', 'ای میل یا پاسورڈ غلط ہے۔'));
+    const clean = username.trim().toLowerCase();
+    if (!/^[a-z0-9._-]{4,24}$/.test(clean)) return setMsg(tx('Enter the username given by BJL Admin.', 'ایڈمن کا دیا ہوا درست یوزرنیم درج کریں۔'));
+    const { data, error } = await supabase.auth.signInWithPassword({ email: clean + '@bjl-login.com', password: pw });
+    if (error) return setMsg(tx('Wrong username or password.', 'یوزرنیم یا پاسورڈ غلط ہے۔'));
+    if (data.user?.app_metadata?.role !== 'captain' || !data.user?.app_metadata?.team_id) {
+      await supabase.auth.signOut({ scope: 'local' });
+      return setMsg(tx('This account is not a BJL captain account.', 'یہ بی جے ایل کپتان کا اکاؤنٹ نہیں ہے۔'));
+    }
     setUser(data.user); load(data.user);
   }
   async function submitAppeal(e, sourceTeam) {
