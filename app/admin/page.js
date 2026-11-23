@@ -49,7 +49,7 @@ export default function Admin() {
   const [tab, setTab] = useState('overview'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
   const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
   const [objections, setObjections] = useState([]); const [objectionPlayer, setObjectionPlayer] = useState(null); const [objectionDraft, setObjectionDraft] = useState({ reason: '', raised_by: '', raised_by_team: '', details: '' });
-  const [captainPasswords, setCaptainPasswords] = useState({}); const [adminAiOpen, setAdminAiOpen] = useState(false); const [adminAiInput, setAdminAiInput] = useState(''); const [adminAiBusy, setAdminAiBusy] = useState(false); const [adminAiMessages, setAdminAiMessages] = useState([{ role: 'assistant', content: 'Assalam-o-Alaikum! Main aapka BJL Admin AI hoon. Main tournament data, teams, payments, matches, website settings aur dashboard ke hawale se madad kar sakta hoon.' }]); const [tutorialFile, setTutorialFile] = useState(null); const [tutorialProgress, setTutorialProgress] = useState(0); const [statusRows, setStatusRows] = useState([]); const [statusFile, setStatusFile] = useState(null); const [statusCaption, setStatusCaption] = useState(''); const [statusDate, setStatusDate] = useState(new Date().toISOString().slice(0,10)); const [statusProgress, setStatusProgress] = useState(0); const [busyTeam, setBusyTeam] = useState('');
+  const [captainPasswords, setCaptainPasswords] = useState({}); const [captainUsernames, setCaptainUsernames] = useState({}); const [adminAiOpen, setAdminAiOpen] = useState(false); const [adminAiInput, setAdminAiInput] = useState(''); const [adminAiBusy, setAdminAiBusy] = useState(false); const [adminAiMessages, setAdminAiMessages] = useState([{ role: 'assistant', content: 'Assalam-o-Alaikum! Main aapka BJL Admin AI hoon. Main tournament data, teams, payments, matches, website settings aur dashboard ke hawale se madad kar sakta hoon.' }]); const [tutorialFile, setTutorialFile] = useState(null); const [tutorialProgress, setTutorialProgress] = useState(0); const [statusRows, setStatusRows] = useState([]); const [statusFile, setStatusFile] = useState(null); const [statusCaption, setStatusCaption] = useState(''); const [statusDate, setStatusDate] = useState(new Date().toISOString().slice(0,10)); const [statusProgress, setStatusProgress] = useState(0); const [busyTeam, setBusyTeam] = useState('');
   async function check() {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -111,7 +111,7 @@ export default function Admin() {
     setObjectionDraft({ reason: '', raised_by: '', raised_by_team: '', details: '' });
     loadObjections();
   }
-  function generateCaptainPassword(teamId) {
+  function generateCaptainUsername(team) { const base = String(team.reg_id || team.name || 'team').toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 14) || 'team'; setCaptainUsernames(v => ({ ...v, [team.id]: v[team.id] || ('bjl' + base) })); }\n  function generateCaptainPassword(teamId) {
     const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
     const bytes = new Uint8Array(16); window.crypto.getRandomValues(bytes);
     const value = Array.from(bytes, b => alphabet[b % alphabet.length]).join('');
@@ -122,10 +122,10 @@ export default function Admin() {
     if (password.length < 12) return setMsg('Password must be at least 12 characters.');
     setBusyTeam(team.id); setMsg('Saving captain login...');
     try {
-      const { data, error } = await supabase.functions.invoke('captain-login-provisioner', { body: { team_id: team.id, password } });
+      const { data, error } = await supabase.functions.invoke('captain-login-provisioner', { body: { team_id: team.id, username, password } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setMsg('Captain login password saved. Copy the credentials now and share them securely.');
+      setCaptainUsernames(v => ({ ...v, [team.id]: data.username || username }));\n      setMsg('Captain username and password saved. Copy credentials securely.');
     } catch (error) {
       let detail = error?.message || 'Unknown error';
       try {
