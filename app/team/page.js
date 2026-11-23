@@ -39,6 +39,17 @@ export default function TeamLogin() {
     });
     return () => { active = false; data.subscription.unsubscribe(); };
   }, []);
+  useEffect(() => {
+    const teamId = user?.app_metadata?.team_id;
+    if (!teamId) return;
+    const channel = supabase.channel('team-dashboard-live-' + teamId)
+      .on('postgres_changes', { event:'*', schema:'public', table:'matches' }, () => load(user))
+      .on('postgres_changes', { event:'*', schema:'public', table:'team_messages', filter:'team_id=eq.' + teamId }, async () => {
+        const { data } = await supabase.from('team_messages').select('*').eq('team_id', teamId).order('created_at', { ascending:true });
+        setTeamMessages(data || []);
+      }).subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id]);
   async function login(e) {
     e.preventDefault(); setMsg('');
     const clean = username.trim().toLowerCase();
