@@ -49,7 +49,7 @@ export default function Admin() {
   const [tab, setTab] = useState('overview'); const [c, setC] = useState({}); const [ann, setAnn] = useState([]); const [teams, setTeams] = useState([]); const [qs, setQs] = useState([]); const [qf, setQf] = useState({ body: '', book: 'نہج البلاغہ (سید رضیؒ)', ref: '' }); const [moms, setMoms] = useState([]); const [mf, setMf] = useState({ caption: '', date: '', files: [] });
   const [f, setF] = useState({ title: '', description: '', date: '', time: '', file: null });
   const [objections, setObjections] = useState([]); const [objectionPlayer, setObjectionPlayer] = useState(null); const [objectionDraft, setObjectionDraft] = useState({ reason: '', raised_by: '', raised_by_team: '', details: '' });
-  const [captainPasswords, setCaptainPasswords] = useState({}); const [captainUsernames, setCaptainUsernames] = useState({}); const [adminAiOpen, setAdminAiOpen] = useState(false); const [adminAiInput, setAdminAiInput] = useState(''); const [adminAiBusy, setAdminAiBusy] = useState(false); const [adminAiMessages, setAdminAiMessages] = useState([{ role: 'assistant', content: 'Assalam-o-Alaikum! Main aapka BJL Admin AI hoon. Main tournament data, teams, payments, matches, website settings aur dashboard ke hawale se madad kar sakta hoon.' }]); const [tutorialFile, setTutorialFile] = useState(null); const [tutorialProgress, setTutorialProgress] = useState(0); const [statusRows, setStatusRows] = useState([]); const [statusFile, setStatusFile] = useState(null); const [statusCaption, setStatusCaption] = useState(''); const [statusDate, setStatusDate] = useState(new Date().toISOString().slice(0,10)); const [statusProgress, setStatusProgress] = useState(0); const [busyTeam, setBusyTeam] = useState('');
+  const [captainPasswords, setCaptainPasswords] = useState({}); const [captainUsernames, setCaptainUsernames] = useState({}); const [teamMsgRows, setTeamMsgRows] = useState([]); const [teamMsgTarget, setTeamMsgTarget] = useState('all'); const [teamMsgDraft, setTeamMsgDraft] = useState(''); const [teamMsgBusy, setTeamMsgBusy] = useState(false); const [adminAiOpen, setAdminAiOpen] = useState(false); const [adminAiInput, setAdminAiInput] = useState(''); const [adminAiBusy, setAdminAiBusy] = useState(false); const [adminAiMessages, setAdminAiMessages] = useState([{ role: 'assistant', content: 'Assalam-o-Alaikum! Main aapka BJL Admin AI hoon. Main tournament data, teams, payments, matches, website settings aur dashboard ke hawale se madad kar sakta hoon.' }]); const [tutorialFile, setTutorialFile] = useState(null); const [tutorialProgress, setTutorialProgress] = useState(0); const [statusRows, setStatusRows] = useState([]); const [statusFile, setStatusFile] = useState(null); const [statusCaption, setStatusCaption] = useState(''); const [statusDate, setStatusDate] = useState(new Date().toISOString().slice(0,10)); const [statusProgress, setStatusProgress] = useState(0); const [busyTeam, setBusyTeam] = useState('');
   async function check() {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -87,6 +87,8 @@ export default function Admin() {
     const { data } = await supabase.from('teams').select('*, players:players!players_team_id_fkey(*), payments(*)').order('created_at', { ascending: false });
     setTeams(data || []);
   }
+  async function loadTeamMessages() { const { data, error } = await supabase.from('team_messages').select('*').order('created_at', { ascending: false }).limit(500); if (!error) setTeamMsgRows(data || []); }
+  async function sendTeamMessage(e) { e.preventDefault(); const message = teamMsgDraft.trim(); if (!message) return setMsg('Write a message first.'); const targets = teamMsgTarget === 'all' ? teams : teams.filter(t => t.id === teamMsgTarget); if (!targets.length) return setMsg('Select a team.'); setTeamMsgBusy(true); const rows = targets.map(t => ({ team_id: t.id, sender_role: 'admin', message })); const { error } = await supabase.from('team_messages').insert(rows); setTeamMsgBusy(false); if (error) return setMsg('Message was not sent: ' + error.message); setTeamMsgDraft(''); setMsg('Message sent to ' + targets.length + ' team(s).'); loadTeamMessages(); }
   async function loadObjections() {
     const { data, error } = await supabase.from('player_objections').select('*').order('created_at', { ascending: false });
     if (error) { setMsg(error.message); return; }
@@ -246,7 +248,7 @@ export default function Admin() {
   useEffect(() => { check(); }, []);
   useEffect(() => {
     if (!isAdmin) return;
-    load(); loadTeams(); loadObjections();
+    load(); loadTeams(); loadObjections(); loadTeamMessages();
     let checking = false;
     const verifyActiveSession = async () => {
       if (checking) return;
@@ -393,7 +395,7 @@ export default function Admin() {
     <header className="admin-topbar"><div><span className="admin-eyebrow">MANAGEMENT CONSOLE</span><h1>BJL Admin Dashboard</h1><p>Manage your tournament, teams, matches and player reviews in one place.</p></div><div className="admin-top-actions"><span className="admin-live"><i /> SYSTEM ONLINE</span><button className="btn admin-logout" onClick={logout}>Logout ↗</button></div></header>
     <datalist id="tn">{teams.map(x => <option key={x.id} value={x.name} />)}</datalist>
     <nav className="tabs admin-tabs" aria-label="Admin sections">
-      {[['overview', '⌂ Overview'], ['teams', '👥 Teams'], ['analytics', '📊 Traffic Analytics'], ['aiReports', '🤖 AI Chat Reports'], ['match', '🏏 Match Center'], ['objections', 'Player Objections'], ['whatsapp', '💬 WhatsApp Automation'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['status', '💀 OS Status'], ['quotes', 'Quotes'], ['video', 'Website Tutorial'], ['set', 'Settings']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
+      {[['overview', '⌂ Overview'], ['teams', '👥 Teams'], ['analytics', '📊 Traffic Analytics'], ['aiReports', '🤖 AI Chat Reports'], ['match', '🏏 Match Center'], ['objections', 'Player Objections'], ['whatsapp', '💬 WhatsApp Automation'], ['teamMessages', '✉ Message from Falak'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['status', '💀 OS Status'], ['quotes', 'Quotes'], ['video', 'Website Tutorial'], ['set', 'Settings']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
       </nav>
     {msg && <div className="good admin-message">{msg}</div>}
     <section className="admin-stats" aria-label="Quick statistics">
@@ -512,6 +514,7 @@ export default function Admin() {
         <button className="btn" onClick={() => save(['moments_fit','moments_zoom'])}>Save Moments Display Settings</button>
       </div>
     </>)}
+    {tab === 'teamMessages' && (<><div className="card"><h3>✉ Message from Falak</h3><p>Send an official message to one team or all registered teams. Captains will see it in their Team Login dashboard.</p><form onSubmit={sendTeamMessage}><label>Send To</label><select value={teamMsgTarget} onChange={e => setTeamMsgTarget(e.target.value)}><option value="all">All Teams ({teams.length})</option>{teams.map(t => <option key={t.id} value={t.id}>{t.name} · {t.reg_id}</option>)}</select><label>Message</label><textarea rows="5" value={teamMsgDraft} onChange={e => setTeamMsgDraft(e.target.value)} placeholder="Write an official message..." required /><button className="btn" disabled={teamMsgBusy || !teamMsgDraft.trim()}>{teamMsgBusy ? 'Sending...' : 'Send Message'}</button></form></div><div className="card"><h3>Message History</h3>{teamMsgRows.length === 0 ? <p>No messages yet.</p> : teamMsgRows.map(m => <article key={m.id} style={{ padding:'12px 0', borderBottom:'1px solid var(--line,#ddd)' }}><b>{m.sender_role === 'admin' ? 'Message from Falak' : 'Captain Reply'}</b> · {teams.find(t => t.id === m.team_id)?.name || 'Team'}<p style={{ whiteSpace:'pre-wrap' }}>{m.message}</p><small>{new Date(m.created_at).toLocaleString()}</small></article>)}</div></>)}
     {tab === 'teams' && (<><div className="card">Total teams: {teams.length} · Verified payments: {teams.filter(x => x.payment === 'verified').length}</div>
       {teams.map(tm => { const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
         return (<div className="card" key={tm.id}><b>{tm.name}</b> <small>{tm.reg_id}</small> {tm.payment === 'verified' ? '✅ VERIFIED' : '❌ NOT VERIFIED'}
