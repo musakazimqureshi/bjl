@@ -46,7 +46,28 @@ Deno.serve(async (req) => {
     }
     const { error: saveError } = await adminClient.from("teams").update({ captain_username: username }).eq("id", team.id);
     if (saveError) throw saveError;
-    return reply({ success: true, team_id: team.id, username });
+    let welcomeSent = false;
+    if (!existing) {
+      const welcome = `Welcome to BJL-01!
+
+Dear Team Captain,
+
+We are delighted to welcome your team to Battagram Junior League (BJL-01). Thank you for registering and becoming part of our tournament family.
+
+We are very happy to have your team with us. Your Team Login dashboard will help you follow your registration, payment status, match schedule, team statistics, official announcements and messages from the organizers.
+
+Please keep your login credentials safe and check your dashboard regularly for updates. We wish your team the very best for the tournament.
+
+Welcome aboard, and best wishes!
+
+From: Falak
+Admin | Organizer
+[BJL-01]`;
+      const { error: welcomeError } = await adminClient.from("team_messages").insert({ team_id: team.id, sender_role: "admin", message: welcome });
+      if (welcomeError) throw welcomeError;
+      welcomeSent = true;
+    }
+    return reply({ success: true, team_id: team.id, username, welcome_sent: welcomeSent });
   } catch (error) {
     return reply({ error: error instanceof Error ? error.message : "Captain login provisioning failed." }, 500);
   }
