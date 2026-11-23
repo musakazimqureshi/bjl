@@ -9,7 +9,7 @@ export default function TeamLogin() {
   const { lang } = useLang(); const tx = (e, u) => (lang === 'ur' ? u : e);
   const [username, setUsername] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState('');
   const [user, setUser] = useState(null); const [teams, setTeams] = useState(null);
-  const [directory, setDirectory] = useState([]); const [teamMatches, setTeamMatches] = useState([]); const [teamMessages, setTeamMessages] = useState([]); const [replyDraft, setReplyDraft] = useState(''); const [replyBusy, setReplyBusy] = useState(false); const [appealPlayer, setAppealPlayer] = useState('');
+  const [directory, setDirectory] = useState([]); const [teamMatches, setTeamMatches] = useState([]); const [teamDirectory, setTeamDirectory] = useState([]); const [teamMessages, setTeamMessages] = useState([]); const [replyDraft, setReplyDraft] = useState(''); const [replyBusy, setReplyBusy] = useState(false); const [appealPlayer, setAppealPlayer] = useState('');
   const [appealReason, setAppealReason] = useState('Over Age'); const [appealDetails, setAppealDetails] = useState('');
   const [newPassword, setNewPassword] = useState(''); const [accountMsg, setAccountMsg] = useState(''); const [busy, setBusy] = useState(false);
   async function load(u) {
@@ -24,6 +24,7 @@ export default function TeamLogin() {
     setTeams(data || []);
     const { data: matchRows, error: matchError } = await supabase.from('matches').select('*').or('team_a.eq.' + teamId + ',team_b.eq.' + teamId).order('match_date', { ascending: true });
     if (!matchError) setTeamMatches(matchRows || []);
+    const { data: allTeams } = await supabase.from('teams').select('id,name'); setTeamDirectory(allTeams || []);
     const { data: messages } = await supabase.from('team_messages').select('*').eq('team_id', teamId).order('created_at', { ascending: true }); setTeamMessages(messages || []);
     const { data: roster, error: rosterError } = await supabase.rpc('captain_appeal_directory');
     if (!rosterError) setDirectory(roster || []);
@@ -111,7 +112,7 @@ export default function TeamLogin() {
             <p style={{fontSize:12,opacity:.75,marginBottom:0}}>Statistics are calculated from published BJL match records. A match is counted as completed only when a winner is recorded.</p>
           </section>
           <div className="team-stat-strip"><div><small>Payment</small><b>{tm.payment === 'verified' ? 'Verified' : 'Pending'}</b></div><div><small>Played</small><b>{completed.length}</b></div><div><small>Squad</small><b>{ps.length}/15</b></div></div>
-          <section className="card" style={{marginTop:14,padding:16,borderRadius:16}}><h4>🏏 Match Centre</h4>{ownMatches.length ? ownMatches.map(m=>{const isA=m.team_a===tm.id;const opponentId=isA?m.team_b:m.team_a;const opponent=teams.find(x=>x.id===opponentId);const result=m.winner_team===tm.id?'WON':m.winner_team?'LOST': 'UPCOMING';return <div key={m.id} style={{padding:'12px 0',borderBottom:'1px solid #e2e8f0',display:'flex',justifyContent:'space-between',gap:12,flexWrap:'wrap'}}><div><b>{opponent?.name || 'BJL Opponent'}</b><div><small>{m.match_date || 'Date TBA'} {m.match_time || ''} · {m.kind || 'Match'}</small></div>{m.result_note && <small>{m.result_note}</small>}</div><b style={{color:result==='WON'?'#16834a':result==='LOST'?'#c0392b':'#2563eb'}}>{result}</b></div>}) : <p>No match records available yet.</p>}<button className="btn alt" onClick={()=>load(user)}>Refresh Statistics</button></section>
+          <section className="card" style={{marginTop:14,padding:16,borderRadius:16}}><h4>🏏 Match Centre</h4>{ownMatches.length ? ownMatches.map(m=>{const isA=m.team_a===tm.id;const opponentId=isA?m.team_b:m.team_a;const opponent=teamDirectory.find(x=>x.id===opponentId);const result=m.winner_team===tm.id?'WON':m.winner_team?'LOST': 'UPCOMING';return <div key={m.id} style={{padding:'12px 0',borderBottom:'1px solid #e2e8f0',display:'flex',justifyContent:'space-between',gap:12,flexWrap:'wrap'}}><div><b>{opponent?.name || 'BJL Opponent'}</b><div><small>{m.match_date || 'Date TBA'} {m.match_time || ''} · {m.kind || 'Match'}</small></div>{m.result_note && <small>{m.result_note}</small>}</div><b style={{color:result==='WON'?'#16834a':result==='LOST'?'#c0392b':'#2563eb'}}>{result}</b></div>}) : <p>No match records available yet.</p>}<button className="btn alt" onClick={()=>load(user)}>Refresh Statistics</button></section>
           <div className="card team-appeal-card"><h4>{tx('Submit an Appeal', 'اعتراض / اپیل جمع کریں')}</h4><p>{tx('Select a player from another team, choose the reason and provide supporting details. BJL Admin will review it.', 'کسی دوسری ٹیم کا کھلاڑی منتخب کریں، وجہ اور مکمل تفصیل لکھیں۔ BJL ایڈمن اس کا جائزہ لے گا۔')}</p>
             <form onSubmit={e => submitAppeal(e, tm)}>
               <label>{tx('Opposing team player', 'دوسری ٹیم کا کھلاڑی')}</label>
