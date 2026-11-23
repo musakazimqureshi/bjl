@@ -93,13 +93,14 @@ export default function Admin() {
     const { data, error } = await supabase.from('player_objections').select('*').order('created_at', { ascending: false });
     if (error) { setMsg(error.message); return; }
     const playerIds = [...new Set((data || []).map(x => x.player_id).filter(Boolean))];
-    const teamIds = [...new Set((data || []).map(x => x.team_id).filter(Boolean))];
-    const [{ data: players }, { data: teamsById }] = await Promise.all([
-      playerIds.length ? supabase.from('players').select('id,name,age,team_id').in('id', playerIds) : Promise.resolve({ data: [] }),
-      teamIds.length ? supabase.from('teams').select('id,name').in('id', teamIds) : Promise.resolve({ data: [] })
+    const teamIds = [...new Set((data || []).flatMap(x => [x.team_id, x.source_team_id]).filter(Boolean))];
+    const [{ data: players, error: playerError }, { data: teamsById, error: teamError }] = await Promise.all([
+      playerIds.length ? supabase.from('players').select('id,name,age,team_id').in('id', playerIds) : Promise.resolve({ data: [], error: null }),
+      teamIds.length ? supabase.from('teams').select('id,name').in('id', teamIds) : Promise.resolve({ data: [], error: null })
     ]);
+    if (playerError || teamError) { setMsg('Objection details could not be loaded: ' + (playerError?.message || teamError?.message)); return; }
     const pm = Object.fromEntries((players || []).map(x => [x.id, x])); const tm = Object.fromEntries((teamsById || []).map(x => [x.id, x]));
-    setObjections((data || []).map(x => ({ ...x, players: pm[x.player_id] || null, teams: tm[x.team_id] || null })));
+    setObjections((data || []).map(x => ({ ...x, players: pm[x.player_id] || null, teams: tm[x.team_id] || null, source_team: tm[x.source_team_id] || null })));
   }
   async function raiseObjection(e, player, team) {
     e.preventDefault();
@@ -422,7 +423,7 @@ export default function Admin() {
       {objections.filter(o => o.status === 'open').map(o => <article className="card admin-objection-card" key={o.id}>
         <div className="admin-objection-head"><div><span className="admin-eyebrow">{o.reason}</span><h3>{o.players?.name || 'Player'} · {o.teams?.name || 'Team'}</h3></div><span className={'admin-objection-status '+o.status}>{o.status.toUpperCase()}</span></div>
         <p>{o.details || 'No description provided.'}</p>
-        <small>Raised by <b>{o.raised_by || 'Not provided'}</b> · {new Date(o.created_at).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</small>
+        <small>Filed by <b>{o.source_team?.name || 'Team not identified'}</b> · Raised by <b>{o.raised_by || 'Not provided'}</b> · {new Date(o.created_at).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</small>
         <div className="row admin-objection-actions"><button className="btn" onClick={() => setObjectionStatus(o,'resolved')} disabled={o.status==='resolved'}>Mark Resolved</button><button className="btn alt" onClick={() => setObjectionStatus(o,'dismissed')} disabled={o.status==='dismissed'}>Dismiss</button><button className="btn alt" onClick={() => setObjectionStatus(o,'open')} disabled={o.status==='open'}>Reopen</button></div>
       </article>)}
     </div>)}
