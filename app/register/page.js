@@ -1,5 +1,6 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { Upload } from 'tus-js-client';
 import { useRouter } from 'next/navigation';
 import { useLang } from '../../lib/i18n';
 import { supabase } from '../../lib/supabase';
@@ -12,7 +13,8 @@ export default function Register() {
   const [team, setTeam] = useState(''); const [email, setEmail] = useState(''); const [open, setOpen] = useState(true);
   useEffect(() => { supabase.rpc('public_stats').then(({ data }) => data && setOpen(data.open !== false)); }, []);
   const [pl, setPl] = useState(Array.from({ length: 15 }, blank));
-  const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(''); const [busy, setBusy] = useState(false); const [uploadStatus, setUploadStatus] = useState('');
+  const folderRef = useRef(''); const uploadedRef = useRef({});
   const up = (i, k, v) => setPl(p => p.map((x, j) => j === i ? { ...x, [k]: v } : x));
   const block = (i, title, mobile) => { const p = pl[i]; return (<div className="card" key={i}><b>{title}</b>
     <input placeholder={t('pname')} value={p.name} onChange={e => up(i, 'name', e.target.value)} />
@@ -34,18 +36,51 @@ export default function Register() {
     if (pl[0].mobile === pl[1].mobile) return setErr(t('eDup'));
     setBusy(true);
     try {
-      const folder = crypto.randomUUID(); const players = [];
+      if (!folderRef.current) folderRef.current = crypto.randomUUID();
+      const folder = folderRef.current; const players = [];
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      const projectId = new URL(supabaseUrl).hostname.split('.')[0];
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token || anonKey;
+
+      const uploadTus = (file, path, index) => new Promise((resolve, reject) => {
+        const task = new Upload(file, {
+          endpoint: 'https://' + projectId + '.storage.supabase.co/storage/v1/upload/resumable',
+          retryDelays: [0, 2000, 5000, 10000, 20000],
+          headers: { apikey: anonKey, authorization: 'Bearer ' + authToken },
+          uploadDataDuringCreation: true,
+          removeFingerprintOnSuccess: true,
+          chunkSize: 6 * 1024 * 1024,
+          metadata: { bucketName: 'player-photos', objectName: path, contentType: 'image/jpeg', cacheControl: '3600' },
+          onError: reject,
+          onProgress: (sent, total) => setUploadStatus('Uploading player ' + (index + 1) + '/15: ' + Math.round(sent / total * 100) + '%'),
+          onSuccess: () => resolve()
+        });
+        task.start();
+      });
+
       for (let i = 0; i < 15; i++) {
-        const p = pl[i]; const path = `${folder}/${i}.jpg`;
-        const blob = await shrink(p.file, 900);
-        const { error } = await supabase.storage.from('player-photos').upload(path, blob, { contentType: 'image/jpeg' });
-        if (error) throw error;
-        players.push({ name: p.name.trim(), mobile: i < 2 ? p.mobile : '', age: +p.age, position: p.position, photo_path: path });
+        const p = pl[i];
+        let saved = uploadedRef.current[i];
+        if (!saved || saved.file !== p.file) {
+          const path = folder + '/' + i + '-' + crypto.randomUUID() + '.jpg';
+          setUploadStatus('Uploading player ' + (i + 1) + '/15...');
+          const blob = await shrink(p.file, 900);
+          await uploadTus(blob, path, i);
+          uploadedRef.current[i] = { file: p.file, path };
+        }
+        players.push({ name: p.name.trim(), mobile: i < 2 ? p.mobile : '', age: +p.age, position: p.position, photo_path: uploadedRef.current[i].path });
       }
+      setUploadStatus('Saving team registration...');
       const { data, error } = await supabase.rpc('submit_team', { t: { name: team.trim(), email: email.trim() }, p: players });
       if (error) throw error;
       router.push('/pay?ref=' + encodeURIComponent(data));
-    } catch (x) { setErr(x.message || String(x)); }
+    } catch (x) {
+      console.error('BJL registration upload failed:', x);
+      setErr(x?.message || String(x));
+      setUploadStatus('');
+    }
     setBusy(false);
   }
   return (<form onSubmit={submit}>
@@ -60,7 +95,7 @@ export default function Register() {
     {block(0, t('cap1'), true)}{block(1, t('cap2'), true)}
     <h3>{t('others13')}</h3>
     {pl.slice(2).map((_, k) => block(k + 2, `${t('player')} ${k + 1} / 13`, false))}
-    {err && <div className="err">{err}</div>}
+    {uploadStatus && <div className="card" role="status">{uploadStatus}</div>}{err && <div className="err">{err}</div>}
     <button className="btn" disabled={busy || !open}>{busy ? t('sending') : t('submit')}</button>
   </form>);
 }
