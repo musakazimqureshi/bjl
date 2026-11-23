@@ -7,6 +7,7 @@ import AdminAnalytics from '../../components/AdminAnalytics';
 import AdminOverview from '../../components/AdminOverview';
 import AIChatReports from '../../components/AIChatReports';
 import WhatsAppAutomation from '../../components/WhatsAppAutomation';
+import MembersCommunication from '../../components/MembersCommunication';
 const ADMIN_EMAIL = 'musakazim373@gmail.com';
 const ext = f => (f.type === 'image/png' ? 'png' : f.type === 'image/webp' ? 'webp' : 'jpg');
 const dateDMY = value => { if (!value) return ''; const [y,m,d] = String(value).slice(0,10).split('-'); return y && m && d ? `${d.padStart(2,'0')} ${m.padStart(2,'0')} ${y}` : value; };
@@ -396,7 +397,7 @@ export default function Admin() {
     <header className="admin-topbar"><div><span className="admin-eyebrow">MANAGEMENT CONSOLE</span><h1>BJL Admin Dashboard</h1><p>Manage your tournament, teams, matches and player reviews in one place.</p></div><div className="admin-top-actions"><span className="admin-live"><i /> SYSTEM ONLINE</span><button className="btn admin-logout" onClick={logout}>Logout ↗</button></div></header>
     <datalist id="tn">{teams.map(x => <option key={x.id} value={x.name} />)}</datalist>
     <nav className="tabs admin-tabs" aria-label="Admin sections">
-      {[['overview', '⌂ Overview'], ['teams', '👥 Teams'], ['analytics', '📊 Traffic Analytics'], ['aiReports', '🤖 AI Chat Reports'], ['match', '🏏 Match Center'], ['objections', 'Player Objections'], ['whatsapp', '💬 WhatsApp Automation'], ['teamMessages', '✉ Message from Falak'], ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['status', '💀 OS Status'], ['quotes', 'Quotes'], ['video', 'Website Tutorial'], ['set', 'Settings']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
+      {[['overview', '⌂ Overview'], ['teams', '👥 Teams'], ['analytics', '📊 Traffic Analytics'], ['aiReports', '🤖 AI Chat Reports'], ['match', '🏏 Match Center'], ['objections', 'Player Objections'], ['whatsapp', '💬 WhatsApp Automation'], ['teamMessages', '✉ Message from Falak'], ['membersComms', '👥 Members Communication'],  ['ann', 'Announcements'], ['people', 'Team Photos'], ['moms', 'BJL Moments'], ['status', '💀 OS Status'], ['quotes', 'Quotes'], ['video', 'Website Tutorial'], ['set', 'Settings']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
       </nav>
     {msg && <div className="good admin-message">{msg}</div>}
     <section className="admin-stats" aria-label="Quick statistics">
@@ -405,7 +406,7 @@ export default function Admin() {
       <article className="admin-stat"><span className="admin-stat-icon amber">◷</span><div><small>Pending Payments</small><strong>{teams.filter(x => x.payment !== 'verified' && x.payment !== 'rejected').length}</strong><em>Awaiting review</em></div></article>
       <article className="admin-stat"><span className="admin-stat-icon violet">▣</span><div><small>Announcements</small><strong>{ann.length}</strong><em>Announcements</em></div></article>
     </section>
-    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({overview:'Dashboard Overview',teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',status:'OS Status',quotes:'Quotes & Content',video:'Website Tutorial',set:'Website Settings',analytics:'Traffic Analytics',aiReports:'AI Chat Reports'})[tab]}</strong></div>
+    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({overview:'Dashboard Overview',teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',status:'OS Status',quotes:'Quotes & Content',video:'Website Tutorial',set:'Website Settings',analytics:'Traffic Analytics',aiReports:'AI Chat Reports',membersComms:'Members Communication'})[tab]}</strong></div>
     <main className="admin-workspace">
     {tab === 'overview' && <AdminOverview supabase={supabase} teams={teams} objections={objections} />}
     {tab === 'analytics' && <AdminAnalytics supabase={supabase} />}
@@ -417,6 +418,7 @@ export default function Admin() {
         {tsel('next_a', 'Team A')}{tsel('next_b', 'Team B')}{inp('next_date', 'Date (DD MM YYYY)', 'date')}{inp('next_time', 'Time', 'time')}{inp('next_venue', 'Venue (Default: Dab Ground, Battagram)')}{show('next_show', 'Show on Homepage')}
         <button className="btn" onClick={() => save(['next_a', 'next_b', 'next_date', 'next_time', 'next_venue', 'next_show'])}>Save Changes</button></div></>)}
     {tab === 'whatsapp' && <WhatsAppAutomation teams={teams} objections={objections} />}
+    {tab === 'membersComms' && <MembersCommunication teams={teams} />}
     {tab === 'objections' && (<div className="admin-objections-list">
       <div className="card"><h3>Live Player Objections</h3><p>{objections.filter(o => o.status === 'open').length} currently active. Resolved and dismissed objections are automatically hidden from this list and from the public teams page.</p></div>
       {objections.filter(o => o.status === 'open').length === 0 && <div className="card">No active player objections.</div>}
