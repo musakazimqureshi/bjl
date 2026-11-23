@@ -64,9 +64,9 @@ export default function Home() {
       </article>
       <article className="card bjl-media-card bjl-status-card">
         <div className="bjl-status-preview" onClick={() => statuses.length && setStatusOpen(0)} role="button" tabIndex={0} onKeyDown={e => { if ((e.key === 'Enter' || e.key === ' ') && statuses.length) setStatusOpen(0); }}>
-          {statuses[0] ? (statuses[0].media_type === 'video' ? <span aria-label="Video update">▶</span> : <img src={img(statuses[0].media_path)} alt="Latest organizer update" loading="lazy" />) : <span>＋</span>}
+          <span aria-label="OS updates">💀</span>
         </div>
-        <div className="bjl-media-copy"><h3>Organizer Updates</h3><p>{statuses.length ? (statuses[0].caption || 'Updates, photos and videos from the organizer') : 'Photos and videos will appear here'}</p><button type="button" className="btn alt" onClick={() => statuses.length && setStatusOpen(0)} disabled={!statuses.length}>View Updates{statuses.length ? ' (' + statuses.length + ')' : ''}</button></div>
+        <div className="bjl-media-copy"><h3>OS Updates</h3><p>{statuses.length ? (statuses[0].caption || 'Updates, photos and videos from the organizer') : 'Photos and videos will appear here'}</p><button type="button" className="btn alt" onClick={() => statuses.length && setStatusOpen(0)} disabled={!statuses.length}>View Updates{statuses.length ? ' (' + statuses.length + ')' : ''}</button></div>
       </article>
     </section>
     {(c.how_to_register || c.tournament_rules || c.prize_details || true) && <section className="bjl-public-guides">
@@ -107,7 +107,7 @@ export default function Home() {
       <div style={{ marginTop: 8 }}><a className="btn" href={`https://wa.me/${x.num}?text=${encodeURIComponent((i === 0 && c.falak_msg) || t(x.msg))}`} target="_blank" rel="noopener noreferrer">{i === 0 ? (c.falak_btn || t('askFalak')) : t('wa')}</a></div></div>))}
     {qs.length > 0 && qs[qi] && <section className="quotes" onMouseEnter={pauseQ} onTouchStart={pauseQ}>
       <h2 className="quote-section-title">اقوالِ امام علیؑ و تعلیماتِ اہلِ بیتؑ</h2>
-      <div className="qt" key={qs[qi].id} dir="rtl" lang="ur" style={{ fontFamily: "system-ui, 'Noto Naskh Arabic', 'Noto Sans Arabic', sans-serif", lineHeight: 1.9, fontWeight: 400 }}>
+      <div className="qt" key={qs[qi].id} dir="rtl" lang="ur" style={{ fontFamily: "'Noto Naskh Arabic', 'Noto Sans Arabic', Tahoma, sans-serif", lineHeight: 1.9, fontWeight: 400 }}>
         <div className="qn quote-number">قول نمبر {qi + 1}</div>
         <p className="qb quote-text" style={{ fontFamily: "system-ui, 'Noto Naskh Arabic', 'Noto Sans Arabic', sans-serif", fontSize: "clamp(1.05rem, 3.8vw, 1.35rem)", lineHeight: 1.9, fontWeight: 400, textShadow: "none" }}>{qs[qi].body}</p>
         <div className="qr quote-attribution">حضرت امام علیؑ</div><div className="qr quote-source">کتاب: {qs[qi].book}</div><div className="qr quote-source">حوالہ: {qs[qi].ref}</div></div>
@@ -115,7 +115,7 @@ export default function Home() {
         <span>{qi + 1} / {qs.length}</span><button className="btn alt quote-nav quote-next" onClick={() => stepQ(1)} aria-label="Next quote" title="Next quote"><span aria-hidden="true">→</span></button></div></section>}
     {tutorialOpen && <div className="modal" onClick={() => setTutorialOpen(false)}><div className="mbox bjl-tutorial-player" onClick={e => e.stopPropagation()}><div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}><h2 style={{ margin: 0 }}>Website Tutorial</h2><button className="btn alt" onClick={() => setTutorialOpen(false)}>✕ {t('close')}</button></div>{c.tutorial_video_url ? <p><a className="btn" href={c.tutorial_video_url} target="_blank" rel="noopener noreferrer">▶ Open Website Tutorial on Facebook</a></p> : c.tutorial_video_path ? <video key={c.tutorial_video_path} controls preload="metadata" playsInline style={{ width: '100%', maxHeight: '75vh', marginTop: 12, background: '#000', borderRadius: 10 }}><source src={img(c.tutorial_video_path)} type={c.tutorial_video_path.endsWith('.webm') ? 'video/webm' : 'video/mp4'}/></video> : <p className="bjl-guide-copy">Website tutorial will appear here once added by the admin.</p>}</div></div>}
     {statusOpen !== null && statuses[statusOpen] && <div className="modal" onClick={() => setStatusOpen(null)}><div className="mbox bjl-status-viewer" onClick={e => e.stopPropagation()}>
-      <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}><h2 style={{ margin: 0 }}>Organizer Updates</h2><button className="btn alt" onClick={() => setStatusOpen(null)}>✕ {t('close')}</button></div>
+      <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}><h2 style={{ margin: 0 }}>OS Updates</h2><button className="btn alt" onClick={() => setStatusOpen(null)}>✕ {t('close')}</button></div>
       {statuses[statusOpen].media_type === 'video' ? <video key={statuses[statusOpen].id} src={img(statuses[statusOpen].media_path)} controls preload="metadata" playsInline style={{ width: '100%', maxHeight: '72vh', background: '#000', borderRadius: 10, marginTop: 12 }} /> : <img src={img(statuses[statusOpen].media_path)} alt={statuses[statusOpen].caption || 'BJL Status'} style={{ width: '100%', maxHeight: '72vh', objectFit: 'contain', borderRadius: 10, marginTop: 12 }} />}
       <p>{statuses[statusOpen].caption}</p><small>{dateDMY(statuses[statusOpen].status_date)}</small>
       <div className="row"><button className="btn alt" disabled={statusOpen <= 0} onClick={() => setStatusOpen(i => Math.max(0, i - 1))}>Previous</button><span>{statusOpen + 1} / {statuses.length}</span><button className="btn alt" disabled={statusOpen >= statuses.length - 1} onClick={() => setStatusOpen(i => Math.min(statuses.length - 1, i + 1))}>Next</button></div>
