@@ -19,7 +19,7 @@ export default function Register() {
   const block = (i, title, mobile) => { const p = pl[i]; return (<div className="card" key={i}><b>{title}</b>
     <input placeholder={t('pname')} value={p.name} onChange={e => up(i, 'name', e.target.value)} />
     {mobile && <input placeholder={t('mobLead')} inputMode="numeric" dir="ltr" value={p.mobile} onChange={e => up(i, 'mobile', e.target.value)} />}
-    <input placeholder={t('age')} type="number" min="5" max="60" value={p.age} onChange={e => up(i, 'age', e.target.value)} />
+    <select aria-label="Player age" value={p.age} onChange={e => up(i, 'age', e.target.value)}><option value="">{t('age')}</option>{[15,16,17,18,19,20].map(age => <option key={age} value={age}>{age} years</option>)}</select>
     <select value={p.position} onChange={e => up(i, 'position', e.target.value)}><option value="">{t('pos')}</option>
       {POS.map(([v, l]) => <option key={v} value={v}>{t(l)}</option>)}</select>
     <label>{t('photo')}</label><input type="file" accept="image/jpeg,image/png" onChange={e => up(i, 'file', e.target.files[0])} /></div>); };
