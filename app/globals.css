@@ -808,26 +808,6 @@ body:has(.hdr){background:#f3f6fc!important;color:#17233b!important}
 @media(max-width:600px){.bjl-admin-ai-fab{left:9px;width:46px;height:46px}.bjl-admin-ai-panel{left:62px;width:calc(100vw - 72px);height:min(590px,calc(100dvh - 24px))}}
 
 
-/* Khalaad Al-Arabeh Urdu quote font. Hosted WOFF2 source; fallback keeps Urdu readable if CDN is unavailable. */
-@font-face{
-  font-family:'Khalaad Al-Arabeh';
-  src:url('https://cdn.jsdelivr.net/gh/kareemhamed001/mada-assets@aef8ae4076bd46bfe99cab47c6673dbcbbe7b48d/assets/fonts/custom-fonts/khalaadal-arabeh2.woff2') format('woff2'),
-      url('https://cdn.jsdelivr.net/gh/kareemhamed001/mada-assets@aef8ae4076bd46bfe99cab47c6673dbcbbe7b48d/assets/fonts/custom-fonts/khalaadal-arabeh2.woff') format('woff');
-  font-style:normal;
-  font-weight:400;
-  font-display:swap;
-}
-.quotes{direction:rtl;text-align:right}
-.quote-section-title,.quote-number,.quote-text,.quote-attribution,.quote-source{
-  font-family:'Khalaad Al-Arabeh','Noto Nastaliq Urdu','Noto Naskh Arabic',serif;
-  direction:rtl;
-  text-align:right;
-}
-.quote-section-title{text-align:center;line-height:1.9}
-.quote-number{color:var(--gold);font-size:1rem;text-align:center}
-.quote-text{font-size:clamp(1.25rem,4.4vw,1.75rem);line-height:2.15;margin:12px auto;color:#fff;text-align:center}
-.quote-attribution{font-size:1.05rem;color:var(--gold);text-align:center}
-.quote-source{font-size:.92rem;line-height:2;color:#ccc}
 .bjl-squad-rules{border-inline-start:4px solid var(--gold);background:linear-gradient(135deg,#211b12,#202026)}
 .bjl-squad-rules p{margin:8px 0 0;line-height:2}
 
@@ -841,22 +821,34 @@ body:has(.hdr){background:#f3f6fc!important;color:#17233b!important}
 @media(max-width:620px){.bjl-cookie-consent{left:10px;right:10px;bottom:10px;display:block;padding:15px}.bjl-cookie-actions{margin-top:12px}.bjl-cookie-actions .btn{flex:1}}
 
 
-/* Urdu quote typography: use a complete Arabic-script font stack with natural shaping. */
-.quotes .qt,
-.quotes .quote-text,
-.quotes .quote-attribution,
-.quotes .quote-source,
-.quotes .quote-number {
-  font-family: "Noto Naskh Arabic", "Noto Sans Arabic", Tahoma, sans-serif !important;
+
+
+/* Final safe Urdu quote typography: use system fonts, no remote custom font dependency. */
+.hdr ~ main .quotes .quote-section-title,
+.hdr ~ main .quotes .quote-number,
+.hdr ~ main .quotes .quote-text,
+.hdr ~ main .quotes .quote-attribution,
+.hdr ~ main .quotes .quote-source,
+.hdr ~ main .quotes .qt,
+.hdr ~ main .quotes .qb {
+  font-family: Tahoma, Arial, sans-serif !important;
   font-weight: 400 !important;
-  font-style: normal;
-  letter-spacing: 0 !important;
+  font-style: normal !important;
+  letter-spacing: normal !important;
   text-shadow: none !important;
-  font-variant-ligatures: normal;
-  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
-}
-.quotes .quote-text {
+  font-feature-settings: normal !important;
   line-height: 2 !important;
+  direction: rtl !important;
+}
+.hdr ~ main .quotes .quote-text {
+  font-size: clamp(1.15rem, 4vw, 1.5rem) !important;
+  text-align: center !important;
   overflow-wrap: anywhere;
   word-break: normal;
+}
+.hdr ~ main .quotes .quote-section-title,
+.hdr ~ main .quotes .quote-attribution,
+.hdr ~ main .quotes .quote-number,
+.hdr ~ main .quotes .quote-source {
+  text-align: center !important;
 }
