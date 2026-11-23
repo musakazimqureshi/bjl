@@ -22,6 +22,18 @@ export default function WhatsAppAutomation({ teams = [], objections = [] }) {
   const [filter, setFilter] = useState('all');
   const [ground, setGround] = useState('Dab Ground, Battagram');
   const [reporting, setReporting] = useState('30 minutes before match');
+  const [targetTeam, setTargetTeam] = useState('');
+  const [targetContact, setTargetContact] = useState('captain');
+  const [messageKind, setMessageKind] = useState('custom');
+  const [customText, setCustomText] = useState('');
+  const [composerBusy, setComposerBusy] = useState(false);
+  const signature = '\\n\\nFrom: Falak\\nAdmin | Organizer\\n[BJL-01]';
+  const selectedTeam = teams.find(t => t.id === targetTeam);
+  const selectedCaptain = (selectedTeam?.players || []).find(p => p.id === selectedTeam?.captain_id);
+  const selectedVice = (selectedTeam?.players || []).find(p => p.id === selectedTeam?.vice_captain_id);
+  const selectedRecipient = targetContact === 'vice' ? selectedVice : targetContact === 'manager' ? null : selectedCaptain;
+  const selectedMobile = targetContact === 'manager' ? selectedTeam?.manager_mobile : selectedRecipient?.mobile || (targetContact === 'captain' ? selectedTeam?.manager_mobile : '');
+  const selectedName = selectedRecipient?.name || (targetContact === 'manager' ? selectedTeam?.manager_name || 'Team Manager' : 'Team Captain');
 
   const loadQueue = useCallback(async () => {
     const { data, error } = await supabase.from('whatsapp_message_queue').select('*').order('due_at', { ascending: true }).limit(250);
@@ -88,13 +100,17 @@ export default function WhatsAppAutomation({ teams = [], objections = [] }) {
   const createMessage = async row => {
     const phone = cleanPhone(row.recipient_mobile);
     if (phone.length < 11) { setNotice('Invalid mobile number for ' + (row.recipient_name || 'recipient')); return; }
-    const url = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(row.message_text);
+    const finalText = row.message_text.includes('From: Falak\\nAdmin | Organizer\\n[BJL-01]') ? row.message_text : row.message_text.trim() + signature;
+    const url = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(finalText);
+    if (finalText !== row.message_text) await supabase.from('whatsapp_message_queue').update({ message_text: finalText, updated_at: new Date().toISOString() }).eq('id', row.id);
     const { error } = await supabase.from('whatsapp_message_queue').update({ status:'opened', opened_at:new Date().toISOString(), updated_at:new Date().toISOString() }).eq('id',row.id);
     if (error) { setNotice(error.message); return; }
     window.open(url, '_blank', 'noopener,noreferrer');
     setNotice('WhatsApp opened. Review the text and press Send inside WhatsApp.');
     loadQueue();
   };
+
+  const createCustomMessage = async e => { e.preventDefault(); if (!selectedTeam) return setNotice('Please select a team first.'); if (!selectedMobile) return setNotice('No phone number is saved for this recipient. Please update team/player contact details first.'); if (!customText.trim()) return setNotice('Write your message first.'); setComposerBusy(true); const text = customText.trim() + signature; const { error } = await supabase.from('whatsapp_message_queue').insert({ message_type: messageKind, team_id: selectedTeam.id, recipient_name: selectedName, recipient_mobile: selectedMobile, message_text: text, due_at: new Date().toISOString() }); setComposerBusy(false); if (error) return setNotice('Message could not be prepared: ' + error.message); setCustomText(''); setNotice('Message prepared for ' + selectedName + '. Check the recipient and press Send on WhatsApp below.'); await loadQueue(); };
 
   const markSent = async row => {
     const { error } = await supabase.from('whatsapp_message_queue').update({ status:'sent', sent_at:new Date().toISOString(), updated_at:new Date().toISOString() }).eq('id',row.id);
@@ -145,11 +161,23 @@ export default function WhatsAppAutomation({ teams = [], objections = [] }) {
 
   return <div className="wa-automation">
     <style>{`
-      .wa-automation{display:grid;gap:16px;color:var(--text,#eee)}.wa-automation .wa-card{background:var(--card,rgba(255,255,255,.04));border:1px solid var(--border,rgba(255,255,255,.12));border-radius:14px;padding:16px}.wa-automation h2,.wa-automation h3{margin:0 0 10px}.wa-automation p{opacity:.8}.wa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}.wa-stat{padding:13px;border-radius:10px;background:rgba(255,255,255,.05)}.wa-stat b{display:block;font-size:24px}.wa-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.wa-actions button,.wa-automation button{cursor:pointer}.wa-muted{font-size:13px;opacity:.72}.wa-row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}.wa-automation textarea,.wa-automation input,.wa-automation select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--border,rgba(255,255,255,.2));background:var(--input,rgba(0,0,0,.2));color:inherit}.wa-item{border-top:1px solid var(--border,rgba(255,255,255,.1));padding:14px 0}.wa-tag{font-size:11px;border-radius:20px;padding:4px 8px;background:rgba(255,255,255,.1)}.wa-primary{background:#167c49!important;color:white!important}.wa-automation .btn{margin:2px}.wa-automation label{display:block;margin:8px 0 4px}@media(max-width:600px){.wa-automation .wa-card{padding:12px}}`}</style>
+      .wa-automation{display:grid;gap:16px;color:#243247}.wa-automation .wa-card{background:#ffffff;color:#243247;border:1px solid #dce4ee;border-radius:14px;padding:16px}.wa-automation h2,.wa-automation h3{margin:0 0 10px}.wa-automation p{opacity:.8}.wa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}.wa-stat{padding:13px;border-radius:10px;background:#f1f5f9;color:#243247}.wa-stat b{display:block;font-size:24px}.wa-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.wa-actions button,.wa-automation button{cursor:pointer}.wa-muted{font-size:13px;opacity:.72}.wa-row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}.wa-automation textarea,.wa-automation input,.wa-automation select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--border,rgba(255,255,255,.2));background:#f8fafc;color:#243247;border-color:#cbd5e1}.wa-item{border-top:1px solid #e2e8f0;padding:14px 0}.wa-tag{font-size:11px;border-radius:20px;padding:4px 8px;background:#e2e8f0;color:#243247}.wa-primary{background:#167c49!important;color:white!important}.wa-automation .btn{margin:2px}.wa-automation label{display:block;margin:8px 0 4px}@media(max-width:600px){.wa-automation .wa-card{padding:12px}}`}</style>
     <div className="wa-card"><div className="wa-row"><div><h2>WhatsApp Automation</h2><p className="wa-muted">Free manual-send workflow. Messages are prepared here and sent only after you confirm inside WhatsApp Business.</p></div><button className="btn alt" onClick={()=>{loadQueue();loadMatches();}}>↻ Refresh</button></div>
       <div className="wa-grid"><div className="wa-stat"><b>{counts.pending}</b><span>Pending</span></div><div className="wa-stat"><b>{counts.opened}</b><span>Opened in WhatsApp</span></div><div className="wa-stat"><b>{counts.sent}</b><span>Marked sent</span></div></div>
       <p className="wa-muted">Payment schedule: at registration and every 12 hours up to 48 hours. Pauses after payment proof is submitted and stops after verification. Schedule checks when this dashboard is opened/refreshed, not while it is closed.</p>
       {notice && <p role="status">{notice}</p>}
+    </div>
+    <div className="wa-card"><h3>✉ Create a message for a team</h3>
+      <p className="wa-muted">Choose the exact team and recipient first. The WhatsApp message will include the official Falak signature automatically.</p>
+      <form onSubmit={createCustomMessage}>
+        <label>Select Team</label><select value={targetTeam} onChange={e=>setTargetTeam(e.target.value)} required><option value="">Choose a team...</option>{teams.map(t=><option key={t.id} value={t.id}>{t.name} · {t.reg_id || ''}</option>)}</select>
+        <label>Send To</label><select value={targetContact} onChange={e=>setTargetContact(e.target.value)}><option value="captain">Team Captain · {selectedTeam ? (selectedCaptain?.mobile || selectedTeam.manager_mobile || 'No number saved') : 'Select team first'}</option><option value="vice">Vice Captain · {selectedTeam ? (selectedVice?.mobile || 'No number saved') : 'Select team first'}</option><option value="manager">Team Manager · {selectedTeam ? (selectedTeam.manager_mobile || 'No number saved') : 'Select team first'}</option></select>
+        <p className="wa-muted">Recipient: <b>{selectedTeam ? selectedName : 'Not selected'}</b> · Number: <b>{selectedMobile || 'Not available'}</b></p>
+        <label>Message Type / Template</label><select value={messageKind} onChange={e=>setMessageKind(e.target.value)}><option value="custom">Custom Message</option><option value="payment_reminder">Fee / Payment Reminder</option><option value="match_reminder">Match Information</option><option value="objection_notice">Player Objection Notice</option></select>
+        <label>Write Message</label><textarea rows="5" value={customText} onChange={e=>setCustomText(e.target.value)} placeholder="Write your message for the selected captain..." required />
+        <div className="wa-muted" style={{background:'#f1f5f9',padding:12,borderRadius:8,whiteSpace:'pre-wrap'}}>Automatic signature:{signature}</div>
+        <div className="wa-actions"><button className="btn wa-primary" disabled={composerBusy || !selectedTeam || !selectedMobile || !customText.trim()}>{composerBusy ? 'Preparing...' : 'Prepare Message'}</button></div>
+      </form>
     </div>
     <div className="wa-card"><h3>Upcoming match reminders</h3><div className="wa-grid"><div><label>Ground / Venue</label><input value={ground} onChange={e=>setGround(e.target.value)} /></div><div><label>Reporting time</label><input value={reporting} onChange={e=>setReporting(e.target.value)} /></div></div>
       {matches.length===0 && <p className="wa-muted">No upcoming matches found in the matches table.</p>}
