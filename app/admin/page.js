@@ -111,7 +111,11 @@ export default function Admin() {
     setObjectionDraft({ reason: '', raised_by: '', raised_by_team: '', details: '' });
     loadObjections();
   }
-  function generateCaptainUsername(team) { const base = String(team.reg_id || team.name || 'team').toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 14) || 'team'; setCaptainUsernames(v => ({ ...v, [team.id]: v[team.id] || ('bjl' + base) })); }\n  function generateCaptainPassword(teamId) {
+  function generateCaptainUsername(team) {
+    const base = String(team.reg_id || team.name || 'team').toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 14) || 'team';
+    setCaptainUsernames(v => ({ ...v, [team.id]: v[team.id] || ('bjl' + base) }));
+  }
+  function generateCaptainPassword(teamId) {
     const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
     const bytes = new Uint8Array(16); window.crypto.getRandomValues(bytes);
     const value = Array.from(bytes, b => alphabet[b % alphabet.length]).join('');
@@ -119,13 +123,17 @@ export default function Admin() {
   }
   async function saveCaptainPassword(team) {
     const password = captainPasswords[team.id] || '';
+    const username = String(captainUsernames[team.id] || team.captain_username || '').trim().toLowerCase();
+    if (!/^[a-z0-9._-]{4,24}$/.test(username)) return setMsg('Username must be 4-24 characters.');
     if (password.length < 12) return setMsg('Password must be at least 12 characters.');
     setBusyTeam(team.id); setMsg('Saving captain login...');
     try {
       const { data, error } = await supabase.functions.invoke('captain-login-provisioner', { body: { team_id: team.id, username, password } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setCaptainUsernames(v => ({ ...v, [team.id]: data.username || username }));\n      setMsg('Captain username and password saved. Copy credentials securely.');
+      setCaptainUsernames(v => ({ ...v, [team.id]: data.username || username }));
+      setMsg('Captain username and password saved. Copy credentials securely.');
+      await loadTeams();
     } catch (error) {
       let detail = error?.message || 'Unknown error';
       try {
@@ -134,16 +142,16 @@ export default function Admin() {
           detail = body?.message || body?.error_description || body?.error || detail;
         }
       } catch (_) {}
-      setMsg('Captain password was NOT saved. ' + detail);
-    }
-    finally { setBusyTeam(''); }
+      setMsg('Captain credentials were NOT saved. ' + detail);
+    } finally { setBusyTeam(''); }
   }
   async function copyCaptainLogin(team) {
     const password = captainPasswords[team.id] || '';
-    if (!password) return setMsg('Generate or enter a password first.');
-    const text = 'BJL Team Login\\nTeam: ' + team.name + '\\nGmail: ' + team.captain_email + '\\nTemporary password: ' + password + '\\nChange this password after your first login.';
+    const username = String(captainUsernames[team.id] || team.captain_username || '').trim().toLowerCase();
+    if (!password || !username) return setMsg('Save username and password first.');
+    const text = 'BJL Team Login\nTeam: ' + team.name + '\nUsername: ' + username + '\nPassword: ' + password + '\nLogin: ' + window.location.origin + '/team\nChange password after first login.';
     try { await navigator.clipboard.writeText(text); setMsg('Team login details copied.'); }
-    catch (_) { setMsg('Clipboard unavailable. Select and copy the Gmail and password manually.'); }
+    catch (_) { setMsg('Clipboard unavailable. Copy username and password manually.'); }
   }
   async function saveTutorialLink(e) {
     e.preventDefault();
@@ -507,8 +515,10 @@ export default function Admin() {
     {tab === 'teams' && (<><div className="card">Total teams: {teams.length} · Verified payments: {teams.filter(x => x.payment === 'verified').length}</div>
       {teams.map(tm => { const ps = (tm.players || []).slice().sort((a, b) => a.seq - b.seq); const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
         return (<div className="card" key={tm.id}><b>{tm.name}</b> <small>{tm.reg_id}</small> {tm.payment === 'verified' ? '✅ VERIFIED' : '❌ NOT VERIFIED'}
-          <div dir="ltr">{tm.captain_email}</div>
+          <div dir="ltr">Registration Email: {tm.captain_email || 'Not provided'}</div>
           <div className="admin-captain-password">
+            <label>Captain Login Username</label>
+            <div className="admin-password-row"><input type="text" autoComplete="off" value={captainUsernames[tm.id] ?? tm.captain_username ?? ''} onChange={e => setCaptainUsernames(v => ({ ...v, [tm.id]: e.target.value }))} placeholder="Create username" /><button type="button" className="btn alt" onClick={() => generateCaptainUsername(tm)}>Generate Username</button></div>
             <label>Captain Login Password (minimum 12 characters)</label>
             <div className="admin-password-row">
               <input type="text" autoComplete="new-password" value={captainPasswords[tm.id] || ''} onChange={e => setCaptainPasswords(v => ({ ...v, [tm.id]: e.target.value }))} placeholder="Enter or generate a password" />
