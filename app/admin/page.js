@@ -405,9 +405,9 @@ export default function Admin() {
         {tsel('next_a', 'Team A')}{tsel('next_b', 'Team B')}{inp('next_date', 'Date (DD MM YYYY)', 'date')}{inp('next_time', 'Time', 'time')}{inp('next_venue', 'Venue (Default: Dab Ground, Battagram)')}{show('next_show', 'Show on Homepage')}
         <button className="btn" onClick={() => save(['next_a', 'next_b', 'next_date', 'next_time', 'next_venue', 'next_show'])}>Save Changes</button></div></>)}
     {tab === 'objections' && (<div className="admin-objections-list">
-      <div className="card"><h3>Player Objections Overview</h3><p>{objections.filter(o => o.status === 'open').length} open · {objections.length} total records</p></div>
-      {objections.length === 0 && <div className="card">No player objections have been submitted.</div>}
-      {objections.map(o => <article className="card admin-objection-card" key={o.id}>
+      <div className="card"><h3>Live Player Objections</h3><p>{objections.filter(o => o.status === 'open').length} currently active. Resolved and dismissed objections are automatically hidden from this list and from the public teams page.</p></div>
+      {objections.filter(o => o.status === 'open').length === 0 && <div className="card">No active player objections.</div>}
+      {objections.filter(o => o.status === 'open').map(o => <article className="card admin-objection-card" key={o.id}>
         <div className="admin-objection-head"><div><span className="admin-eyebrow">{o.reason}</span><h3>{o.players?.name || 'Player'} · {o.teams?.name || 'Team'}</h3></div><span className={'admin-objection-status '+o.status}>{o.status.toUpperCase()}</span></div>
         <p>{o.details || 'No description provided.'}</p>
         <small>Raised by <b>{o.raised_by || 'Not provided'}</b> · {new Date(o.created_at).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</small>
