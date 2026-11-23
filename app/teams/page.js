@@ -23,11 +23,11 @@ export default function Teams() {
     <section className="bjl-public-objections">
       <h2>Player Objections & Admin Operations</h2>
       <p>Objections submitted for registered players, including the reason, reporting team, details and current status.</p>
-      {objections.length === 0 ? <div className="card">No player objections have been submitted.</div> : objections.map(o => (
+      {objections.filter(o => o.status === 'open').length === 0 ? <div className="card">No active player objections.</div> : objections.filter(o => o.status === 'open').map(o => (
         <article className="card bjl-public-objection" key={o.id}>
           <div className="row" style={{justifyContent:'space-between',alignItems:'center',gap:10}}>
             <b>{o.player_name || 'Player'} · {o.team_name || 'Team'}</b>
-            <span className={'badge ' + (o.status === 'resolved' ? 'v' : 'n')}>{String(o.status || 'open').toUpperCase()}</span>
+            <span className="badge n">ACTIVE OBJECTION</span>
           </div>
           <p><b>Reason:</b> {o.reason}</p>
           <p><b>Reported by:</b> {o.source_team_name || o.raised_by || 'Not provided'}</p>
