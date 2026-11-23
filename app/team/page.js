@@ -27,7 +27,8 @@ export default function TeamLogin() {
     const { data: allTeams } = await supabase.from('teams').select('id,name'); setTeamDirectory(allTeams || []);
     const { data: messages } = await supabase.from('team_messages').select('*').eq('team_id', teamId).order('created_at', { ascending: true }); setTeamMessages(messages || []);
     const { data: roster, error: rosterError } = await supabase.rpc('captain_appeal_directory');
-    if (!rosterError) setDirectory(roster || []);
+    if (rosterError) setAccountMsg('Opposing player directory could not load: ' + rosterError.message);
+    else setDirectory(roster || []);
   }
   useEffect(() => {
     let active = true;
@@ -67,13 +68,12 @@ export default function TeamLogin() {
     e.preventDefault(); setAccountMsg(''); setBusy(true);
     const target = directory.find(x => x.player_id === appealPlayer);
     if (!target || target.team_id === sourceTeam.id || !appealDetails.trim()) { setBusy(false); return setAccountMsg('Please select an opposing player and enter full details.'); }
-    const { error } = await supabase.from('player_objections').insert({
-      player_id: target.player_id, team_id: target.team_id, source_team_id: sourceTeam.id,
-      reason: appealReason, details: appealDetails.trim(), raised_by: user.email, status: 'open'
-    });
+    const payload = { player_id: target.player_id, team_id: target.team_id, source_team_id: sourceTeam.id, reason: appealReason, details: appealDetails.trim(), raised_by: user.email, status: 'open' };
+    const { data: inserted, error } = await supabase.from('player_objections').insert(payload).select('id').single();
     setBusy(false);
-    if (error) return setAccountMsg('Appeal could not be submitted: ' + error.message);
-    setAppealPlayer(''); setAppealDetails(''); setAccountMsg('Appeal submitted to BJL Admin for review.');
+    if (error) return setAccountMsg('Appeal could not be submitted: ' + error.message + ' Please take a screenshot and contact BJL Admin.');
+    if (!inserted?.id) return setAccountMsg('Submission was not confirmed by the server. Please try again.');
+    setAppealPlayer(''); setAppealDetails(''); setAccountMsg('Successfully submitted. Your objection is now recorded for BJL Admin review. Reference: ' + inserted.id.slice(0,8));
   }
   async function changePassword(e) {
     e.preventDefault(); setAccountMsg('');
