@@ -4,6 +4,8 @@ import { useMemo, useState } from 'react';
 const MEMBERS = [
   { id: 'hasnain', name: 'Muhammad Hasnain', short: 'Hasnain', phone: '923350541078' },
   { id: 'waleed', name: 'Waleed Afridi', short: 'Waleed', phone: '923145453155' }
+  { id: 'team-details-request', group: 'Registration & payments', title: 'Request details about a specific team', en: (n, team, details) => `Assalam-o-Alaikum ${n} bhai! Please share a complete update about this team: ${team || '[Team name]'}. ${details ? `Focus on: ${details}. ` : ''}Please include its registration status, captain and player details, payment information, documents, any communication so far, and anything still required. Send the information and any relevant screenshots directly to Falak. Do not change any dashboard or official records.`, ur: (n, team, details) => `السلام علیکم ${n} بھائی! براہِ کرم اس ٹیم کے بارے میں مکمل اپڈیٹ دیں: ${team || '[ٹیم کا نام]'}. ${details ? `خاص طور پر: ${details}۔ ` : ''}ٹیم کی رجسٹریشن کی صورتحال، کپتان اور کھلاڑیوں کی تفصیلات، ادائیگی، دستاویزات، اب تک ہونے والی گفتگو اور باقی ضروری معلومات شامل کریں۔ متعلقہ اسکرین شاٹس سمیت تمام تفصیل براہِ راست فلک کو بھیج دیں۔ ڈیش بورڈ یا آفیشل ریکارڈ میں کوئی تبدیلی نہ کریں۔` },
+  { id: 'daily-work-report', group: 'Website & admin', title: 'Daily work and pending tasks report', en: n => `Assalam-o-Alaikum ${n} bhai! Please share your work report for today. What tasks did you handle and complete? What is still pending? Did you face any issue, difficulty, or need help with anything? Please mention the details clearly and send any relevant screenshots directly to Falak. Thank you.`, ur: n => `السلام علیکم ${n} بھائی! براہِ کرم آج کے دن کی اپنی مکمل ورک رپورٹ بھیج دیں۔ آج آپ نے کون کون سے کام سنبھالے اور مکمل کیے؟ کون سے کام ابھی باقی ہیں؟ کیا کسی کام میں کوئی مسئلہ یا دشواری پیش آئی، یا کسی مدد کی ضرورت ہے؟ تمام تفصیلات واضح طور پر لکھ کر متعلقہ اسکرین شاٹس سمیت براہِ راست فلک کو بھیج دیں۔ شکریہ۔` },
 ];
 
 const TEMPLATES = [
@@ -25,12 +27,14 @@ export default function MembersCommunication({ teams = [] }) {
   const [templateId, setTemplateId] = useState('meeting');
   const [language, setLanguage] = useState('ur');
   const [custom, setCustom] = useState('');
+  const [teamMention, setTeamMention] = useState('');
+  const [teamDetails, setTeamDetails] = useState('');
   const [useCustom, setUseCustom] = useState(false);
   const [notice, setNotice] = useState('');
   const pendingPayments = useMemo(() => teams.filter(t => t.payment !== 'verified' && t.payment !== 'rejected'), [teams]);
   const selected = MEMBERS.filter(m => recipients.includes(m.id));
   const template = TEMPLATES.find(t => t.id === templateId) || TEMPLATES[0];
-  const buildMessage = member => (useCustom ? custom : template[language](member.short)).trim();
+  const buildMessage = member => (useCustom ? custom : template[language](member.short, teamMention.trim(), teamDetails.trim())).trim();
   const toggleRecipient = id => setRecipients(v => v.includes(id) ? v.filter(x => x !== id) : [...v, id]);
   const openWhatsApp = member => {
     const message = buildMessage(member);
@@ -66,12 +70,18 @@ export default function MembersCommunication({ teams = [] }) {
           {TEMPLATES.filter(t => t.group === group).map(t => <option key={t.id} value={t.id}>{t.title}</option>)}
         </optgroup>)}
       </select>
+      {templateId === 'team-details-request' && !useCustom && <div style={{display:'grid',gap:8,margin:'12px 0'}}>
+        <label htmlFor="team-mention">Team name to mention / ٹیم کا نام</label>
+        <input id="team-mention" value={teamMention} onChange={e => setTeamMention(e.target.value)} placeholder="Enter team name" />
+        <label htmlFor="team-details">Specific details to ask about (optional) / خاص تفصیل</label>
+        <textarea id="team-details" rows="3" value={teamDetails} onChange={e => setTeamDetails(e.target.value)} placeholder="e.g. captain, player list, payment, registration issue..." />
+      </div>}
       <div className="row" style={{justifyContent:'flex-start',margin:'12px 0'}}>
         <button type="button" className={'btn' + (!useCustom ? '' : ' alt')} onClick={() => setUseCustom(false)}>Use ready-made message</button>
         <button type="button" className={'btn' + (useCustom ? '' : ' alt')} onClick={() => setUseCustom(true)}>✍ Custom message</button>
       </div>
       <label htmlFor="member-message">Message preview · Editable</label>
-      <textarea id="member-message" dir={language === 'ur' && !useCustom ? 'rtl' : 'auto'} rows="8" style={{width:'100%',textAlign:language === 'ur' && !useCustom ? 'right' : 'left'}} value={useCustom ? custom : (selected[0] ? template[language](selected[0].short) : template[language]('Member'))} onChange={e => { setCustom(e.target.value); setUseCustom(true); }} placeholder="Write your custom message here..." />
+      <textarea id="member-message" dir={language === 'ur' && !useCustom ? 'rtl' : 'auto'} rows="8" style={{width:'100%',textAlign:language === 'ur' && !useCustom ? 'right' : 'left'}} value={useCustom ? custom : (selected[0] ? buildMessage(selected[0]) : template[language]('Member', teamMention.trim(), teamDetails.trim()))} onChange={e => { setCustom(e.target.value); setUseCustom(true); }} placeholder="Write your custom message here..." />
       {useCustom ? <small>Custom text will be used as written for the selected member(s). Add each recipient's name manually if needed.</small> : <small>Recipient name and Falak's name are included automatically. {teams.length} team records are currently loaded; {pendingPayments.length} payments are unverified/pending. Verify status before taking action.</small>}
       {notice && <p role="status" className="admin-message">{notice}</p>}
       <div style={{display:'grid',gap:10,marginTop:16}}>
