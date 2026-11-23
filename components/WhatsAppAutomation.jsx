@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { adminSupabase as supabase } from '../lib/adminSupabase';
 
 const cleanPhone = value => {
-  let n = String(value || '').replace(/\\D/g, '');
+  let n = String(value || '').replace(/\D/g, '');
   if (n.startsWith('00')) n = n.slice(2);
   if (n.startsWith('0')) n = '92' + n.slice(1);
   if (n.length === 10 && n.startsWith('3')) n = '92' + n;
@@ -27,7 +27,7 @@ export default function WhatsAppAutomation({ teams = [], objections = [] }) {
   const [messageKind, setMessageKind] = useState('custom');
   const [customText, setCustomText] = useState('');
   const [composerBusy, setComposerBusy] = useState(false);
-  const signature = '\\n\\nFrom: Falak\\nAdmin | Organizer\\n[BJL-01]';
+  const signature = '\n\nFrom: Falak\nAdmin | Organizer\n[BJL-01]';
   const selectedTeam = teams.find(t => t.id === targetTeam);
   const selectedCaptain = (selectedTeam?.players || []).find(p => p.id === selectedTeam?.captain_id);
   const selectedVice = (selectedTeam?.players || []).find(p => p.id === selectedTeam?.vice_captain_id);
@@ -100,7 +100,7 @@ export default function WhatsAppAutomation({ teams = [], objections = [] }) {
   const createMessage = async row => {
     const phone = cleanPhone(row.recipient_mobile);
     if (phone.length < 11) { setNotice('Invalid mobile number for ' + (row.recipient_name || 'recipient')); return; }
-    const finalText = row.message_text.includes('From: Falak\\nAdmin | Organizer\\n[BJL-01]') ? row.message_text : row.message_text.trim() + signature;
+    const finalText = row.message_text.includes('From: Falak\nAdmin | Organizer\n[BJL-01]') ? row.message_text : row.message_text.trim() + signature;
     const url = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(finalText);
     if (finalText !== row.message_text) await supabase.from('whatsapp_message_queue').update({ message_text: finalText, updated_at: new Date().toISOString() }).eq('id', row.id);
     const { error } = await supabase.from('whatsapp_message_queue').update({ status:'opened', opened_at:new Date().toISOString(), updated_at:new Date().toISOString() }).eq('id',row.id);
