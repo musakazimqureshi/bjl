@@ -79,8 +79,8 @@ export default function TeamLogin() {
   return (<>
     <h2>{tx('Team Login', 'ٹیم لاگ اِن')}</h2>
     {!user ? (<form className="card" onSubmit={login}>
-      <p>{tx('Your login is created by the organizer. Use the Gmail you gave at registration.', 'آپ کا لاگ اِن منتظم بناتا ہے۔ وہی جی میل استعمال کریں جو رجسٹریشن میں دیا تھا۔')}</p>
-      <input placeholder="Gmail" value={email} onChange={e => setEmail(e.target.value)} dir="ltr" />
+      <p>{tx('Use the username and password created by BJL Admin. Gmail is not required.', 'بی جے ایل ایڈمن کا دیا ہوا یوزرنیم اور پاسورڈ استعمال کریں۔ جی میل ضروری نہیں۔')}</p>
+      <label>{tx('Team Username', 'ٹیم یوزرنیم')}</label><input placeholder="Username" autoCapitalize="none" autoComplete="username" value={username} onChange={e => setUsername(e.target.value)} dir="ltr" required />
       <input placeholder={tx('Password', 'پاسورڈ')} type="password" value={pw} onChange={e => setPw(e.target.value)} dir="ltr" />
       {msg && <div className="err">{msg}</div>}<button className="btn">{tx('Login', 'لاگ اِن')}</button></form>) : (<>
       <button className="btn alt" onClick={logout}>{tx('Logout', 'لاگ آؤٹ')}</button>
