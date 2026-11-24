@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { adminSupabase as supabase } from '../../lib/adminSupabase';
 import { shrink } from '../../lib/img';
 import { formatDate, formatDateTime } from '../../lib/date';
+import PlayerRosterEditor from '../../components/PlayerRosterEditor';
 const ADMIN_EMAIL = 'musakazim373@gmail.com';
 const ext = f => (f.type === 'image/png' ? 'png' : f.type === 'image/webp' ? 'webp' : 'jpg');
 const okImg = f => f && ['image/jpeg', 'image/png', 'image/webp'].includes(f.type) && f.size <= 15 * 1024 * 1024;
@@ -303,7 +304,7 @@ export default function Admin() {
   return (<div className="admin-shell">
     <aside className="admin-brand"><div className="admin-brand-mark">BJL</div><div><strong>BJL CONTROL</strong><small>SEASON 1 · ADMIN</small></div>
       <nav className="tabs admin-tabs admin-sidebar-nav" aria-label="Admin sections">
-        {[['overview', 'Overview'], ['teams', 'Teams'], ['match', 'Match'], ['objections', 'Objections' + (openObjections > 0 ? ' • ' + openObjections : '')], ['ann', 'Announcements'], ['people', 'People'], ['moms', 'Moments'], ['quotes', 'Quotes'], ['set', 'Settings'], ['profile', 'My Profile']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
+        {[['overview', 'Overview'], ['teams', 'Teams'], ['playerEdit', 'Player Changes'], ['match', 'Match'], ['objections', 'Objections' + (openObjections > 0 ? ' • ' + openObjections : '')], ['ann', 'Announcements'], ['people', 'People'], ['moms', 'Moments'], ['quotes', 'Quotes'], ['set', 'Settings'], ['profile', 'My Profile']].map(([k, l]) => <button key={k} className={'btn alt' + (tab === k ? ' on' : '')} onClick={() => { setTab(k); setMsg(''); }}>{l}</button>)}
       </nav>
     </aside>
     <header className="admin-topbar"><div><span className="admin-eyebrow">MANAGEMENT CONSOLE</span><h1>BJL Admin Dashboard</h1><p>Manage your tournament, teams, matches and player reviews in one place.</p></div><div className="admin-top-actions"><button className="admin-profile-chip" onClick={() => { setTab('profile'); setMsg(''); }} aria-label="Open your admin profile"><span className="admin-profile-chip-photo">{profile.photo_path ? <img src={pa(profile.photo_path)} alt="" /> : 'MK'}</span><span><b>{profile.name || 'Musa Kazim'}</b><small>Administrator</small></span></button><span className="admin-live"><i /> SYSTEM ONLINE</span><button className="btn admin-logout" onClick={logout}>Logout ↗</button></div></header>
@@ -318,7 +319,7 @@ export default function Admin() {
       <article className="admin-stat"><span className="admin-stat-icon blue">▣</span><div><small>Announcements</small><strong>{ann.length}</strong><em>Published and draft items</em></div></article>
       <article className="admin-stat"><span className="admin-stat-icon green">!</span><div><small>Open Objections</small><strong>{openObjections}</strong><em>Need administrator review</em></div></article>
     </section>
-    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({overview:'Tournament Overview',teams:'Team Management',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',quotes:'Quotes & Content',set:'Website Settings',profile:'My Admin Profile'})[tab]}</strong></div>
+    <div className="admin-content-label"><span>WORKSPACE</span><strong>{({overview:'Tournament Overview',teams:'Team Management',playerEdit:'Player Replacement & Editing',match:'Match Center',objections:'Player Objections',ann:'Announcements',people:'Team Photos',moms:'BJL Moments',quotes:'Quotes & Content',set:'Website Settings',profile:'My Admin Profile'})[tab]}</strong></div>
     <main className="admin-workspace">
     {tab === 'profile' && (<section className="admin-profile-page">
       <div className="admin-overview-heading"><div><span className="admin-eyebrow">PERSONAL ADMIN ACCOUNT</span><h2>Your profile</h2><p>Manage the name, portrait and introduction shown in your BJL admin workspace.</p></div><span className="admin-updated">● Private admin profile</span></div>
@@ -434,6 +435,7 @@ export default function Admin() {
         <button className="btn" onClick={() => save(['moments_fit','moments_zoom'])}>Save Moments Display Settings</button>
       </div>
     </>)}
+    {tab === 'playerEdit' && <PlayerRosterEditor teams={teams} supabase={supabase} onUpdated={loadTeams} />}
     {tab === 'teams' && (<><section className="card admin-operations-panel">
         <div className="admin-operations-heading"><div><span className="admin-eyebrow">REGISTERED TEAMS</span><h2>Operations by Admin / Objections</h2><p>Select a team and player, record the reason and complaint details. Active objections appear publicly on that team's profile.</p></div><span className="admin-objection-status open">{objections.filter(o => o.status === 'open' || o.status === 'under_review').length} ACTIVE</span></div>
         <form className="admin-objection-form" onSubmit={e => { const team = teams.find(x => String(x.id) === operationTeamId); const player = team?.players?.find(x => String(x.id) === operationPlayerId); if (!team || !player) { e.preventDefault(); setMsg('Please select both a team and a player.'); return; } raiseObjection(e, player, team); }}>
