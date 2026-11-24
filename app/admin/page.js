@@ -7,6 +7,7 @@ import AdminAnalytics from '../../components/AdminAnalytics';
 import AdminOverview from '../../components/AdminOverview';
 import AIChatReports from '../../components/AIChatReports';
 import WhatsAppAutomation from '../../components/WhatsAppAutomation';
+import AdminPlayerManager from '../../components/AdminPlayerManager';
 import MembersCommunication from '../../components/MembersCommunication';
 const ADMIN_EMAIL = 'musakazim373@gmail.com';
 const ext = f => (f.type === 'image/png' ? 'png' : f.type === 'image/webp' ? 'webp' : 'jpg');
@@ -239,9 +240,23 @@ export default function Admin() {
     if (status === 'rejected') { reason = prompt('Enter the rejection reason'); if (!reason) return; }
     const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
     const val = status === 'verified' ? 'verified' : status === 'rejected' ? 'rejected' : (last ? 'submitted' : 'pending');
+    const wasVerified = tm.payment === 'verified';
     const { error } = await supabase.from('teams').update({ payment: val, payment_rejection_reason: reason }).eq('id', tm.id);
-    if (!error && last) await supabase.from('payments').update({ status: val === 'verified' ? 'verified' : val === 'rejected' ? 'rejected' : 'submitted', rejection_reason: reason }).eq('id', last.id);
-    setMsg(error ? error.message : 'Done ✔'); loadTeams();
+    if (error) { setMsg(error.message); return; }
+    if (last) {
+      const { error: paymentError } = await supabase.from('payments').update({ status: val === 'verified' ? 'verified' : val === 'rejected' ? 'rejected' : 'submitted', rejection_reason: reason }).eq('id', last.id);
+      if (paymentError) { setMsg('Team payment status updated, but payment record update failed: ' + paymentError.message); await loadTeams(); return; }
+    }
+    if (status === 'verified' && !wasVerified) {
+      const captain = (tm.players || []).find(p => p.id === tm.captain_id) || (tm.players || []).slice().sort((a,b)=>a.seq-b.seq)[0];
+      const mobile = captain?.mobile || tm.manager_mobile;
+      if (mobile) {
+        const message = `Dear ${captain?.name || 'Captain'},\n\nYour payment of Rs. 5,000 for team "${tm.name}" has been successfully received and verified. Your team's BJL Season 1 registration payment is confirmed. Thank you for being part of Battagram Junior League.\n\nمحترم کپتان!\n\nآپ کی ٹیم "${tm.name}" کی 5,000 روپے رجسٹریشن فیس کامیابی سے موصول اور تصدیق ہو چکی ہے۔ آپ کی ٹیم کی بی جے ایل سیزن 1 کی رجسٹریشن فیس کنفرم ہوگئی ہے۔ بیٹگرام جونیئر لیگ کا حصہ بننے کا شکریہ۔\n\nBest regards / نیک تمناؤں کے ساتھ،\nBJL Management | From: Falak\nAdmin | Organizer\n[BJL-01]`;
+        const { error: queueError } = await supabase.from('whatsapp_message_queue').insert({ message_type:'payment_confirmation', team_id:tm.id, recipient_name:captain?.name || tm.name, recipient_mobile:mobile, message_text:message, due_at:new Date().toISOString() });
+        setMsg(queueError ? 'Payment verified, but WhatsApp confirmation could not be queued: ' + queueError.message : 'Payment verified. Bilingual WhatsApp confirmation added to the queue. Open WhatsApp Automation to send it.');
+      } else setMsg('Payment verified, but no captain mobile number is saved, so no WhatsApp confirmation was queued.');
+    } else setMsg('Done ✔');
+    await loadTeams();
   }
   async function delTeam(tm) {
     if (!confirm('Permanently delete this entire team?')) return;
@@ -550,6 +565,7 @@ export default function Admin() {
               </form>}
               {objections.filter(o => o.player_id === pp.id).map(o => <div className="admin-objection-mini" key={o.id}><b>{o.reason}</b> · {o.status.toUpperCase()}<br/><small>Raised by {o.raised_by || 'Not provided'} · {new Date(o.created_at).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</small><div>{o.details}</div></div>)}
             </div></div>))}</details>
+          <AdminPlayerManager team={tm} players={ps} onSaved={loadTeams} />
           <div className="row" style={{ justifyContent: 'flex-start' }}>
             <button className="btn" onClick={() => setPay(tm, 'verified')}>✓ Verify Payment</button>
             <button className="btn alt" onClick={() => setPay(tm, 'notverified')}>Mark Unverified</button>
