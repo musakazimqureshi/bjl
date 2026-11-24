@@ -141,6 +141,18 @@ export default function Admin() {
     loadObjections();
   }
   const pub = p => supabase.storage.from('player-photos').getPublicUrl(p).data.publicUrl;
+  function openTeamConfirmation(tm, captain, language) {
+    if (tm.payment !== 'verified') return setMsg('Verify the team payment before sending a confirmation.');
+    const rawPhone = String(captain?.mobile || '').replace(/[\\s()-]/g, '');
+    const phone = rawPhone.startsWith('+') ? rawPhone.slice(1) : rawPhone.startsWith('03') ? '92' + rawPhone.slice(1) : rawPhone;
+    if (!/^923\\d{9}$/.test(phone)) return setMsg('Captain 1 mobile number is missing or invalid. Update the captain number first.');
+    const teamName = tm.name || 'your team';
+    const regId = tm.reg_id || 'BJL-01';
+    const message = language === 'ur'
+      ? `🏏 مبارک ہو! آپ کی ٹیم BJL Season 1 کے لیے کنفرم ہو گئی ہے۔\\n\\nمحترم کپتان!\\n\\nآپ کی ٹیم کی آن لائن رجسٹریشن کامیابی سے مکمل ہو چکی ہے اور آپ کی جمع کروائی گئی فیس بھی تصدیق شدہ ہے۔\\n\\nاب آپ کی ٹیم Battagram Junior League (BJL) Season 1 – Tape Ball Cricket میں شرکت کے لیے مکمل طور پر اہل اور کنفرم ہے۔ 🎉\\n\\nBJL کا حصہ بننے اور ہم پر اعتماد کرنے کا بہت شکریہ۔ آپ اور آپ کی پوری ٹیم کے لیے نیک خواہشات۔\\n\\nFrom: Falak\\nAdmin | Organizer\\n[BJL-01]`
+      : `🏏 Congratulations! Your team is officially confirmed for BJL Season 1.\\n\\nDear Captain,\\n\\nYour team's online registration has been successfully completed, and your submitted entry fee has been verified.\\n\\nYour team, ${teamName} (${regId}), is now fully eligible and confirmed to participate in Battagram Junior League (BJL) Season 1 – Tape Ball Cricket. 🎉\\n\\nThank you for being part of BJL and for placing your trust in us. Best wishes to you and your entire team.\\n\\nFrom: Falak\\nAdmin | Organizer\\n[BJL-01]`;
+    window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer');
+  }
   async function shot(pay) {
     const { data, error } = await supabase.storage.from('payments').createSignedUrl(pay.screenshot_path, 600);
     if (error) return setMsg(error.message); window.open(data.signedUrl, '_blank');
@@ -467,6 +479,11 @@ export default function Admin() {
               </form>}
               {objections.filter(o => o.player_id === pp.id).map(o => <div className="admin-objection-mini" key={o.id}><b>{o.reason}</b> · {o.status.toUpperCase()}<br/><small>Raised by {o.raised_by || 'Not provided'} · {formatDateTime(o.created_at)}</small><div>{o.details}</div></div>)}
             </div></div>))}</details>
+          {tm.payment === 'verified' && <div className="admin-wa-confirm">
+            <b>Send Team Confirmation on WhatsApp</b>
+            <button className="btn" type="button" onClick={() => openTeamConfirmation(tm, ps[0], 'ur')}>WhatsApp · اردو</button>
+            <button className="btn alt" type="button" onClick={() => openTeamConfirmation(tm, ps[0], 'en')}>WhatsApp · English</button>
+          </div>}
           <div className="row" style={{ justifyContent: 'flex-start' }}>
             <button className="btn" onClick={() => setPay(tm, 'verified')}>✓ Verify Payment</button>
             <button className="btn alt" onClick={() => setPay(tm, 'notverified')}>Mark Unverified</button>
