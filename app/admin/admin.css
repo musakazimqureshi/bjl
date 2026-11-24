@@ -338,3 +338,31 @@
     justify-content:center!important;padding:10px 14px!important;
   }
 }
+
+
+/* Player replacement workspace */
+.player-roster-manager{display:flex;flex-direction:column;gap:14px;min-width:0}
+.player-roster-manager>.card{min-width:0}
+.player-roster-manager h2{margin:8px 0;color:#203653;font-size:1.35rem}
+.player-roster-manager p{color:#73839a;font-size:.82rem;line-height:1.65}
+.player-roster-manager label{display:block;margin:12px 0 6px;color:#526782;font-size:.76rem;font-weight:800}
+.player-roster-manager input:not([type=file]),.player-roster-manager select{width:100%;min-width:0;padding:11px 12px;border:1px solid #dce5f0;border-radius:10px;background:#fbfcfe;color:#233752;font:inherit}
+.player-roster-summary{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.player-roster-summary h3{margin:5px 0;color:#203653}
+.player-roster-summary p{margin:4px 0 0}
+.player-roster-summary>strong{flex:none;padding:9px 13px;border-radius:12px;background:#eaf8f0;color:#218653;font-size:1rem}
+.player-roster-summary>strong.roster-count-warning{background:#fff3e5;color:#a86c14}
+.player-roster-card{padding:15px!important}
+.player-roster-top{display:flex;align-items:center;gap:12px;min-width:0}
+.player-roster-top>img{width:58px;height:58px;flex:none;object-fit:cover;border-radius:13px;background:#edf2f8}
+.player-roster-info{display:flex;flex:1;flex-direction:column;gap:4px;min-width:0}
+.player-roster-info b{color:#203653;overflow-wrap:anywhere}
+.player-roster-info small{color:#7d8ba0;font-size:.7rem}
+.player-roster-top>.btn{flex:none}
+.player-roster-edit-form{display:grid;grid-template-columns:minmax(0,1fr);gap:7px;margin-top:15px;padding:15px;border:1px solid #dce7f4;border-radius:13px;background:#f7faff}
+.player-roster-edit-form>small{color:#7b8ba2;font-size:.7rem;line-height:1.5}
+.player-roster-edit-form>.btn{margin-top:7px}
+.player-roster-notice{padding:12px 15px;border-radius:11px;font-size:.82rem}
+.player-roster-warning{border-color:#f1d5a8!important;background:#fffaf1!important;color:#8a611e}
+.player-roster-empty{text-align:center;color:#8190a5;padding:28px!important}
+@media(max-width:520px){.player-roster-top{align-items:flex-start;flex-wrap:wrap}.player-roster-top>.btn{margin-left:70px}.player-roster-summary{align-items:flex-start}}
