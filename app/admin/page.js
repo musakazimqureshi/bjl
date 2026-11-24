@@ -235,27 +235,37 @@ export default function Admin() {
     const { data, error } = await supabase.storage.from('payments').createSignedUrl(pay.screenshot_path, 600);
     if (error) return setMsg(error.message); window.open(data.signedUrl, '_blank');
   }
+  async function queuePaymentConfirmation(tm) {
+    const captain = (tm.players || []).find(p => p.id === tm.captain_id) || (tm.players || []).slice().sort((x,y)=>(x.seq||0)-(y.seq||0))[0];
+    const mobile = captain?.mobile || tm.manager_mobile;
+    if (!mobile) { setMsg('Payment is verified, but this team has no saved captain/manager mobile number.'); return; }
+    const marker = '[BJL-PAYMENT-CONFIRMATION]';
+    const { data: existing, error: checkError } = await supabase.from('whatsapp_message_queue')
+      .select('id,status').eq('team_id', tm.id).eq('message_type', 'custom')
+      .ilike('message_text', '%' + marker + '%').in('status', ['pending','opened','sent']).limit(1);
+    if (checkError) { setMsg('Could not check existing WhatsApp confirmations: ' + checkError.message); return; }
+    if (existing?.length) { setMsg('A payment confirmation is already in the WhatsApp queue (status: ' + existing[0].status + '). Open WhatsApp Automation to review it.'); return; }
+    const message = `[BJL-PAYMENT-CONFIRMATION]\n\nDear ${captain?.name || 'Captain'},\n\nYour payment of Rs. 5,000 for team "${tm.name}" has been successfully received and verified. Your team's BJL Season 1 registration payment is confirmed. Thank you for being part of Battagram Junior League.\n\nمحترم کپتان!\n\nآپ کی ٹیم "${tm.name}" کی 5,000 روپے رجسٹریشن فیس کامیابی سے موصول اور تصدیق ہو چکی ہے۔ آپ کی ٹیم کی بی جے ایل سیزن 1 کی رجسٹریشن فیس کنفرم ہوگئی ہے۔ بیٹگرام جونیئر لیگ کا حصہ بننے کا شکریہ۔\n\nBest regards / نیک تمناؤں کے ساتھ،\nBJL Management | From: Falak\nAdmin | Organizer\n[BJL-01]`;
+    const { error } = await supabase.from('whatsapp_message_queue').insert({
+      message_type: 'custom', team_id: tm.id, recipient_name: captain?.name || tm.name,
+      recipient_mobile: mobile, message_text: message, due_at: new Date().toISOString()
+    });
+    setMsg(error ? 'Payment is verified, but WhatsApp confirmation could not be queued: ' + error.message : 'Bilingual payment confirmation prepared for ' + (captain?.name || tm.name) + '. Open WhatsApp Automation and press Open WhatsApp to send.');
+  }
+
   async function setPay(tm, status) {
     let reason = null;
     if (status === 'rejected') { reason = prompt('Enter the rejection reason'); if (!reason) return; }
     const last = (tm.payments || []).slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
     const val = status === 'verified' ? 'verified' : status === 'rejected' ? 'rejected' : (last ? 'submitted' : 'pending');
-    const wasVerified = tm.payment === 'verified';
     const { error } = await supabase.from('teams').update({ payment: val, payment_rejection_reason: reason }).eq('id', tm.id);
     if (error) { setMsg(error.message); return; }
     if (last) {
       const { error: paymentError } = await supabase.from('payments').update({ status: val === 'verified' ? 'verified' : val === 'rejected' ? 'rejected' : 'submitted', rejection_reason: reason }).eq('id', last.id);
       if (paymentError) { setMsg('Team payment status updated, but payment record update failed: ' + paymentError.message); await loadTeams(); return; }
     }
-    if (status === 'verified' && !wasVerified) {
-      const captain = (tm.players || []).find(p => p.id === tm.captain_id) || (tm.players || []).slice().sort((a,b)=>a.seq-b.seq)[0];
-      const mobile = captain?.mobile || tm.manager_mobile;
-      if (mobile) {
-        const message = `Dear ${captain?.name || 'Captain'},\n\nYour payment of Rs. 5,000 for team "${tm.name}" has been successfully received and verified. Your team's BJL Season 1 registration payment is confirmed. Thank you for being part of Battagram Junior League.\n\nمحترم کپتان!\n\nآپ کی ٹیم "${tm.name}" کی 5,000 روپے رجسٹریشن فیس کامیابی سے موصول اور تصدیق ہو چکی ہے۔ آپ کی ٹیم کی بی جے ایل سیزن 1 کی رجسٹریشن فیس کنفرم ہوگئی ہے۔ بیٹگرام جونیئر لیگ کا حصہ بننے کا شکریہ۔\n\nBest regards / نیک تمناؤں کے ساتھ،\nBJL Management | From: Falak\nAdmin | Organizer\n[BJL-01]`;
-        const { error: queueError } = await supabase.from('whatsapp_message_queue').insert({ message_type:'payment_confirmation', team_id:tm.id, recipient_name:captain?.name || tm.name, recipient_mobile:mobile, message_text:message, due_at:new Date().toISOString() });
-        setMsg(queueError ? 'Payment verified, but WhatsApp confirmation could not be queued: ' + queueError.message : 'Payment verified. Bilingual WhatsApp confirmation added to the queue. Open WhatsApp Automation to send it.');
-      } else setMsg('Payment verified, but no captain mobile number is saved, so no WhatsApp confirmation was queued.');
-    } else setMsg('Done ✔');
+    if (status === 'verified') await queuePaymentConfirmation(tm);
+    else setMsg('Done ✔');
     await loadTeams();
   }
   async function delTeam(tm) {
@@ -550,6 +560,7 @@ export default function Admin() {
           <div dir="ltr">C1: {ps[0] && ps[0].name} {ps[0] && ps[0].mobile} | C2: {ps[1] && ps[1].name} {ps[1] && ps[1].mobile}</div>
           {last && <div dir="ltr">Txn: {last.transaction_id || '-'} <button className="btn alt" onClick={() => shot(last)}>Screenshot</button></div>}
           {tm.payment_rejection_reason && <small>Payment rejection reason: {tm.payment_rejection_reason}</small>}
+          <AdminPlayerManager team={tm} players={ps} onSaved={loadTeams} />
           <details><summary>View Players</summary>{ps.map(pp => (<div key={pp.id} className="admin-player-row">
             <img src={pub(pp.photo_path)} alt="" width="48" height="48" style={{ borderRadius: 10, objectFit: 'cover' }} />
             <div className="admin-player-main"><div><b>{pp.name}</b> · Age {pp.age} · {pp.position}</div>
@@ -565,7 +576,6 @@ export default function Admin() {
               </form>}
               {objections.filter(o => o.player_id === pp.id).map(o => <div className="admin-objection-mini" key={o.id}><b>{o.reason}</b> · {o.status.toUpperCase()}<br/><small>Raised by {o.raised_by || 'Not provided'} · {new Date(o.created_at).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</small><div>{o.details}</div></div>)}
             </div></div>))}</details>
-          <AdminPlayerManager team={tm} players={ps} onSaved={loadTeams} />
           <div className="row" style={{ justifyContent: 'flex-start' }}>
             <button className="btn" onClick={() => setPay(tm, 'verified')}>✓ Verify Payment</button>
             <button className="btn alt" onClick={() => setPay(tm, 'notverified')}>Mark Unverified</button>
