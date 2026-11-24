@@ -239,13 +239,13 @@ export default function Admin() {
     const captain = (tm.players || []).find(p => p.id === tm.captain_id) || (tm.players || []).slice().sort((x,y)=>(x.seq||0)-(y.seq||0))[0];
     const mobile = captain?.mobile || tm.manager_mobile;
     if (!mobile) { setMsg('Payment is verified, but this team has no saved captain/manager mobile number.'); return; }
-    const marker = '[BJL-PAYMENT-CONFIRMATION]';
+    const confirmationPhrase = 'Your payment of Rs. 5,000';
     const { data: existing, error: checkError } = await supabase.from('whatsapp_message_queue')
       .select('id,status').eq('team_id', tm.id).eq('message_type', 'custom')
-      .ilike('message_text', '%' + marker + '%').in('status', ['pending','opened','sent']).limit(1);
+      .ilike('message_text', '%' + confirmationPhrase + '%').in('status', ['pending','opened','sent']).limit(1);
     if (checkError) { setMsg('Could not check existing WhatsApp confirmations: ' + checkError.message); return; }
     if (existing?.length) { setMsg('A payment confirmation is already in the WhatsApp queue (status: ' + existing[0].status + '). Open WhatsApp Automation to review it.'); return; }
-    const message = `[BJL-PAYMENT-CONFIRMATION]\n\nDear ${captain?.name || 'Captain'},\n\nYour payment of Rs. 5,000 for team "${tm.name}" has been successfully received and verified. Your team's BJL Season 1 registration payment is confirmed. Thank you for being part of Battagram Junior League.\n\nمحترم کپتان!\n\nآپ کی ٹیم "${tm.name}" کی 5,000 روپے رجسٹریشن فیس کامیابی سے موصول اور تصدیق ہو چکی ہے۔ آپ کی ٹیم کی بی جے ایل سیزن 1 کی رجسٹریشن فیس کنفرم ہوگئی ہے۔ بیٹگرام جونیئر لیگ کا حصہ بننے کا شکریہ۔\n\nBest regards / نیک تمناؤں کے ساتھ،\nBJL Management | From: Falak\nAdmin | Organizer\n[BJL-01]`;
+    const message = `Dear ${captain?.name || 'Captain'},\n\nYour payment of Rs. 5,000 for team "${tm.name}" has been successfully received and verified. Your team's BJL Season 1 registration payment is confirmed. Thank you for being part of Battagram Junior League.\n\nمحترم کپتان!\n\nآپ کی ٹیم "${tm.name}" کی 5,000 روپے رجسٹریشن فیس کامیابی سے موصول اور تصدیق ہو چکی ہے۔ آپ کی ٹیم کی بی جے ایل سیزن 1 کی رجسٹریشن فیس کنفرم ہوگئی ہے۔ بیٹگرام جونیئر لیگ کا حصہ بننے کا شکریہ۔\n\nBest regards / نیک تمناؤں کے ساتھ،\nBJL Management | From: Falak\nAdmin | Organizer\n[BJL-01]`;
     const { error } = await supabase.from('whatsapp_message_queue').insert({
       message_type: 'custom', team_id: tm.id, recipient_name: captain?.name || tm.name,
       recipient_mobile: mobile, message_text: message, due_at: new Date().toISOString()
@@ -578,6 +578,7 @@ export default function Admin() {
             </div></div>))}</details>
           <div className="row" style={{ justifyContent: 'flex-start' }}>
             <button className="btn" onClick={() => setPay(tm, 'verified')}>✓ Verify Payment</button>
+             {tm.payment === 'verified' && <button className="btn alt" onClick={() => queuePaymentConfirmation(tm)}>✉ Prepare Payment Confirmation</button>}
             <button className="btn alt" onClick={() => setPay(tm, 'notverified')}>Mark Unverified</button>
             <button className="btn alt" onClick={() => setPay(tm, 'rejected')}>Reject Payment</button>
             <button className="btn alt" onClick={() => delTeam(tm)}>Delete Team</button></div></div>); })}</>)}
